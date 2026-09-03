@@ -18,7 +18,7 @@ class AutoPolicyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'AutoPolicy Cyber SOC',
+      title: 'AutoPolicy — Zero Trust IoT Security',
       debugShowCheckedModeBanner: false,
       theme: CyberTheme.darkTheme,
       home: const SplashScreen(),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
 import 'login_screen.dart';
+import 'landing_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -85,7 +86,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void _navigateToLogin() {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => const LandingScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -137,18 +138,18 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Neon cyber shield badge (Electric Cyan)
+                            // Neon cyber shield badge (Olive & Lime glow)
                             Container(
                               padding: const EdgeInsets.all(22),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: CyberColors.neonCyan.withOpacity(0.35 * _logoOpacityAnimation.value),
+                                  color: const Color(0xFF80A416).withOpacity(0.45 * _logoOpacityAnimation.value),
                                   width: 1.5,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: CyberColors.neonCyan.withOpacity(0.18 * _logoOpacityAnimation.value),
+                                    color: const Color(0xFF80A416).withOpacity(0.30 * _logoOpacityAnimation.value),
                                     blurRadius: 25,
                                     spreadRadius: 1.5,
                                   )
@@ -157,11 +158,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                               child: const Icon(
                                 Icons.shield_outlined,
                                 size: 68,
-                                color: CyberColors.neonCyan,
+                                color: Color(0xFFBBF438),
                               ),
                             ),
                             const SizedBox(height: 28),
-                            // Platform Title Text (Vibrant white & cyan glow)
+                            // Platform Title Text (Vibrant white & lime glow)
                             Text(
                               'AUTOPOLICY',
                               style: CyberTextStyles.displayTitle(
@@ -175,7 +176,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                               'AI-POWERED ZERO TRUST SECURITY PLATFORM',
                               style: CyberTextStyles.technical(
                                 fontSize: 13.0,
-                                color: CyberColors.neonCyan,
+                                color: const Color(0xFFC5C764),
                               ),
                             ),
                           ],
@@ -255,7 +256,9 @@ class _SplashCircuitPainter extends CustomPainter {
   final List<_CircuitComponent> components = [];
   final List<_CircuitGrid> grids = [];
   
-  final Color neonBlue = const Color(0xFF00A2FF); // cobalt electric blue
+  final Color neonBlue = const Color(0xFF80A416); // Olive green trace
+  final Color neonLime = const Color(0xFFC5C764); // Lime gold trace
+  final Color brightLime = const Color(0xFFBBF438); // Bright neon lime trace
   
   _SplashCircuitPainter({
     required this.progress,
@@ -403,7 +406,7 @@ class _SplashCircuitPainter extends CustomPainter {
         );
         
         final double lineAlpha = (1.0 - activeScatter) * opacity;
-        final Color themeColor = trace.isMajor ? CyberColors.neonCyan : neonBlue;
+        final Color themeColor = trace.isMajor ? brightLime : neonBlue;
         
         // Double paint technique for glowing neon vector trace
         final widePaint = Paint()
@@ -446,7 +449,7 @@ class _SplashCircuitPainter extends CustomPainter {
             ..style = PaintingStyle.fill;
             
           final dotGlow = Paint()
-            ..color = CyberColors.neonCyan.withOpacity(0.4 * opacity)
+            ..color = neonLime.withOpacity(0.4 * opacity)
             ..style = PaintingStyle.fill;
             
           canvas.drawCircle(dotPos, 4.0, dotGlow);
