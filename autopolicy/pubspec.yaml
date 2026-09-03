@@ -1,0 +1,26 @@
+name: autopolicy
+description: A futuristic cinematic AI-powered cybersecurity dashboard using Flutter.
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.4.9
+  flutter_animate: ^4.5.0
+  fl_chart: ^0.66.0
+  google_fonts: ^6.1.0
+  shared_preferences: ^2.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/

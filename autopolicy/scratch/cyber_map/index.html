@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Futuristic Cyber Command Center - 3D GNN Map</title>
+    <!-- Sci-fi Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --neon-red: #ff3366;
+            --neon-pink: #ff007f;
+            --neon-purple: #a855f7;
+            --neon-cyan: #00f5ff;
+            --glass-bg: rgba(6, 10, 24, 0.45);
+            --glass-border: rgba(0, 245, 255, 0.18);
+            --glass-shadow: rgba(168, 85, 247, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #060919 0%, #000000 100%);
+            font-family: 'Outfit', sans-serif;
+            color: #ffffff;
+        }
+
+        /* 3D WebGL Canvas */
+        #webgl-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Scanline Overlay Effect */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.12) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* Sci-Fi HUD Panels Overlay */
+        .hud-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+            display: grid;
+            grid-template-columns: 320px 1fr 340px;
+            grid-template-rows: 80px 1fr 180px;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* Interactive Elements Pointer-Events */
+        .interactive {
+            pointer-events: auto;
+        }
+
+        /* Glassmorphism Panel Template */
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 8px 32px 0 var(--glass-shadow);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--neon-cyan), transparent);
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(0, 245, 255, 0.35);
+            box-shadow: 0 8px 32px 0 rgba(0, 245, 255, 0.08);
+        }
+
+        /* Corner HUD Accents */
+        .hud-corners::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            border-bottom: 2px solid var(--neon-cyan);
+            border-right: 2px solid var(--neon-cyan);
+        }
+
+        /* Header UI (Top Row) */
+        header {
+            grid-column: 1 / 4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 100%;
+        }
+
+        .header-title {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-title h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 20px;
+            letter-spacing: 2px;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-title h1::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--neon-red);
+            box-shadow: 0 0 8px var(--neon-red);
+            animation: pulse-red 2s infinite;
+        }
+
+        .header-title span {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: var(--neon-cyan);
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        .system-status-banner {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .status-card {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .status-card label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 1px;
+        }
+
+        .status-card value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+        }
+
+        .status-card value.alert-active {
+            color: var(--neon-red);
+            text-shadow: 0 0 8px rgba(255, 51, 102, 0.4);
+        }
+
+        /* Telemetry Sidebar (Left Panel) */
+        .left-sidebar {
+            grid-column: 1;
+            grid-row: 2 / 4;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .panel-heading {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            margin-bottom: 12px;
+            border-left: 3px solid var(--neon-cyan);
+            padding-left: 8px;
+            text-transform: uppercase;
+        }
+
+        .metrics-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+
+        .metric-row label {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .metric-row span {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--neon-cyan);
+        }
+
+        /* Real-Time OPA Log Panel */
+        .log-panel {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .logs-container {
+            flex-grow: 1;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.7);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-right: 4px;
+        }
+
+        .logs-container::-webkit-scrollbar {
+            width: 2px;
+        }
+
+        .logs-container::-webkit-scrollbar-thumb {
+            background: var(--neon-cyan);
+        }
+
+        .log-line {
+            line-height: 1.2;
+            word-break: break-all;
+        }
+
+        .log-line.warn {
+            color: var(--neon-red);
+        }
+
+        .log-line.info {
+            color: var(--neon-purple);
+        }
+
+        /* Threat Core Inspector (Right Panel) */
+        .right-sidebar {
+            grid-column: 3;
+            grid-row: 2 / 4;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .threat-meter-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 0;
+            gap: 10px;
+        }
+
+        .dial-ring {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 6px dashed var(--neon-pink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            animation: spin 35s linear infinite;
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.15);
+        }
+
+        .dial-ring::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 245, 255, 0.2);
+        }
+
+        .dial-inner {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: rgba(6, 10, 24, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: spin-reverse 35s linear infinite;
+        }
+
+        .dial-inner h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 900;
+            color: var(--neon-red);
+            text-shadow: 0 0 8px rgba(255, 51, 102, 0.4);
+        }
+
+        .dial-inner span {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 8px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 2px;
+        }
+
+        /* Active Core detail card */
+        .core-details-card {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .core-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .core-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .core-header .badge {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 8px;
+            background: rgba(255, 51, 102, 0.18);
+            color: var(--neon-red);
+            border: 1px solid var(--neon-red);
+            padding: 2px 6px;
+            border-radius: 2px;
+            font-weight: bold;
+        }
+
+        .core-header .badge.secured {
+            background: rgba(0, 245, 255, 0.12);
+            color: var(--neon-cyan);
+            border-color: var(--neon-cyan);
+        }
+
+        .core-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 11px;
+        }
+
+        .stat-bar-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 4px;
+        }
+
+        .stat-bar-header {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .stat-bar-bg {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan));
+            width: 0%;
+            border-radius: 2px;
+            transition: width 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* Holographic Tooltip Popover */
+        .hologram-tooltip {
+            position: absolute;
+            z-index: 100;
+            pointer-events: none;
+            width: 200px;
+            background: rgba(3, 7, 18, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--neon-cyan);
+            border-radius: 4px;
+            padding: 10px;
+            box-shadow: 0 0 15px rgba(0, 245, 255, 0.2);
+            display: none;
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .hologram-tooltip h4 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(0, 245, 255, 0.2);
+            padding-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .hologram-tooltip p {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.4;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .hologram-tooltip p span {
+            color: var(--neon-cyan);
+            font-weight: bold;
+        }
+
+        /* 3D Viewport Controls (Bottom Center HUD Overlay) */
+        .bottom-hud {
+            grid-column: 2;
+            grid-row: 3;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .controls-glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 8px 32px 0 var(--glass-shadow);
+        }
+
+        .hud-btn {
+            background: none;
+            border: 1px solid rgba(0, 245, 255, 0.2);
+            color: var(--neon-cyan);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .hud-btn:hover {
+            background: rgba(0, 245, 255, 0.12);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 10px rgba(0, 245, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .hud-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        /* Keyframes Animations */
+        @keyframes pulse-red {
+            0% {
+                transform: scale(0.9);
+                opacity: 0.6;
+                box-shadow: 0 0 0 0 rgba(255, 51, 102, 0.7);
+            }
+            70% {
+                transform: scale(1.1);
+                opacity: 1;
+                box-shadow: 0 0 0 8px rgba(255, 51, 102, 0);
+            }
+            100% {
+                transform: scale(0.9);
+                opacity: 0.6;
+                box-shadow: 0 0 0 0 rgba(255, 51, 102, 0);
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes spin-reverse {
+            0% { transform: rotate(360deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        /* Interactive Map Guide (Center screen helper) */
+        .instruction-tag {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            background: rgba(6, 10, 24, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 9px;
+            font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.6);
+            pointer-events: none;
+            text-transform: uppercase;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: breathing-guide 3s ease-in-out infinite;
+        }
+
+        @keyframes breathing-guide {
+            0% { opacity: 0.45; }
+            50% { opacity: 0.90; }
+            100% { opacity: 0.45; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- WebGL Canvas Backdrop -->
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- Scanline Screen Effect -->
+    <div class="scanlines"></div>
+
+    <!-- Interactive Instruction Tag -->
+    <div class="instruction-tag">DRAG NODES TO RE-ARRANGE | TAP TO LOCK CAMERA FOCUS</div>
+
+    <!-- Holographic Tooltip Popover -->
+    <div id="hover-tooltip" class="hologram-tooltip">
+        <h4 id="tooltip-title">Node Reactor</h4>
+        <p>TYPE: <span id="tooltip-type">Unknown</span></p>
+        <p>RISK: <span id="tooltip-risk">0%</span></p>
+        <p>BANDWIDTH: <span id="tooltip-bandwidth">0.0 KB/s</span></p>
+    </div>
+
+    <!-- Sci-Fi HUD Control Panels -->
+    <div class="hud-overlay">
+        
+        <!-- Header -->
+        <header class="glass-panel interactive hud-corners">
+            <div class="header-title">
+                <h1>SOC CORE RELATIONSHIP NETWORK</h1>
+                <span>3D NEON TOPOLOGY MESH | SYSTEM ENFORCEMENT ENGINE</span>
+            </div>
+            <div class="system-status-banner">
+                <div class="status-card">
+                    <label>THREAT STATUS</label>
+                    <value class="alert-active">CRITICAL THREATS</value>
+                </div>
+                <div class="status-card">
+                    <label>GNN MODEL STABILITY</label>
+                    <value>99.82%</value>
+                </div>
+                <div class="status-card">
+                    <label>OPA AGENT DEPLOY</label>
+                    <value>SECURED</value>
+                </div>
+            </div>
+        </header>
+
+        <!-- Left Sidebar: System Diagnostics & OPA logs -->
+        <section class="left-sidebar">
+            <div class="glass-panel interactive hud-corners" style="height: 220px;">
+                <h3 class="panel-heading">SOC SYSTEM DIAGNOSTICS</h3>
+                <div class="metrics-list">
+                    <div class="metric-row">
+                        <label>NETWORK INTEGRITY</label>
+                        <span>98.65%</span>
+                    </div>
+                    <div class="metric-row">
+                        <label>THREAT MITIGATION</label>
+                        <span>88.42%</span>
+                    </div>
+                    <div class="metric-row">
+                        <label>BLOCKED ENCRYPTIONS</label>
+                        <span>1,424 ATTACKS</span>
+                    </div>
+                    <div class="metric-row">
+                        <label>ACTIVE POLICY LINKS</label>
+                        <span>24 EDGE CORES</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="glass-panel interactive hud-corners log-panel">
+                <h3 class="panel-heading">REAL-TIME SYSTEM TRACE</h3>
+                <div id="logs-feed" class="logs-container">
+                    <div class="log-line info">[INFO] OPA Policy Compiler initialized.</div>
+                    <div class="log-line">[SYS] Initializing WebGL network graph...</div>
+                    <div class="log-line">[SYS] Generating specular 3D shaders...</div>
+                    <div class="log-line">[SYS] Injecting starry constellational drift...</div>
+                    <div class="log-line warn">[ALARM] Suspicious packet transfer detected on SCADA-Turbine-Ctrl</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Sidebar: Threat Level Dial & Core Inspector -->
+        <section class="right-sidebar">
+            <div class="glass-panel interactive hud-corners" style="height: 220px; display: flex; flex-direction: column;">
+                <h3 class="panel-heading">CYBER THREAT ASSESSMENT</h3>
+                <div class="threat-meter-container">
+                    <div class="dial-ring">
+                        <div class="dial-inner">
+                            <h3 id="threat-score-label">76%</h3>
+                            <span>CRITICAL RISK</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel interactive hud-corners core-details-card">
+                <h3 class="panel-heading">CORE INTERROGATION</h3>
+                
+                <div class="core-header">
+                    <h2 id="core-name">SELECT CORE NODE</h2>
+                    <span id="core-status-badge" class="badge">PENDING</span>
+                </div>
+                
+                <div class="core-stats">
+                    <div class="stat-bar-container">
+                        <div class="stat-bar-header">
+                            <span>BANDWIDTH LOAD</span>
+                            <span id="core-stat-bandwidth">0.0 KB/S</span>
+                        </div>
+                        <div class="stat-bar-bg">
+                            <div id="bar-bandwidth" class="stat-bar-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="stat-bar-container">
+                        <div class="stat-bar-header">
+                            <span>CPU METRIC UTILIZATION</span>
+                            <span id="core-stat-cpu">0.0%</span>
+                        </div>
+                        <div class="stat-bar-bg">
+                            <div id="bar-cpu" class="stat-bar-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="stat-bar-container">
+                        <div class="stat-bar-header">
+                            <span>RAM MEMORY DEPLETION</span>
+                            <span id="core-stat-ram">0.0%</span>
+                        </div>
+                        <div class="stat-bar-bg">
+                            <div id="bar-ram" class="stat-bar-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="font-size: 10px; font-family: 'Share Tech Mono', monospace; color: rgba(255,255,255,0.6); margin-top: 10px; line-height: 1.4;">
+                    * INTERACTION TRIGGER: Tap any node to lock target, orbit orbital particle nodes, and trigger holographic shockwaves.
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom HUD Navigation -->
+        <section class="bottom-hud">
+            <div class="controls-glass interactive">
+                <button id="btn-zoom-in" class="hud-btn" title="Zoom In">
+                    <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                </button>
+                <button id="btn-zoom-out" class="hud-btn" title="Zoom Out">
+                    <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg>
+                </button>
+                <button id="btn-reset" class="hud-btn" title="Reset View">
+                    <svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                </button>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Three.js and GSAP libraries from CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <!-- Post-processing and Bloom Shaders -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+    <script>
+        // --- 1. DATA AND NETWORK TOPOLOGY SETUP ---
+        const devices = [
+            { id: 'DEV-001', name: 'GNN-Gateway-Alpha', type: 'Industrial Gateway', risk: 0.12, status: 'safe', bandwidth: 320.5, cpu: 22.4, ram: 45.1, connections: ['DEV-002', 'DEV-003', 'DEV-004', 'DEV-007'], isHub: true },
+            { id: 'DEV-002', name: 'SmartLock-Vault-01', type: 'Smart Lock', risk: 0.05, status: 'safe', bandwidth: 12.8, cpu: 4.2, ram: 12.8, connections: ['DEV-001'], isHub: false },
+            { id: 'DEV-003', name: 'SOC-Camera-South', type: 'IP Camera', risk: 0.28, status: 'safe', bandwidth: 1450.0, cpu: 68.1, ram: 54.6, connections: ['DEV-001', 'DEV-008'], isHub: false },
+            { id: 'DEV-004', name: 'SmartLock-Main-Exit', type: 'Smart Lock', risk: 0.08, status: 'safe', bandwidth: 8.4, cpu: 3.1, ram: 11.2, connections: ['DEV-001', 'DEV-005'], isHub: false },
+            { id: 'DEV-005', name: 'Thermal-Sensor-Core', type: 'Industrial Sensor', risk: 0.15, status: 'safe', bandwidth: 45.2, cpu: 14.8, ram: 28.3, connections: ['DEV-004', 'DEV-006'], isHub: false },
+            { id: 'DEV-006', name: 'PLC-Water-Pump', type: 'Industrial PLC', risk: 0.02, status: 'safe', bandwidth: 18.2, cpu: 8.5, ram: 19.4, connections: ['DEV-005', 'DEV-007'], isHub: false },
+            { id: 'DEV-007', name: 'SCADA-Turbine-Ctrl', type: 'Industrial SCADA', risk: 0.94, status: 'warning', bandwidth: 88.0, cpu: 95.1, ram: 84.0, connections: ['DEV-001', 'DEV-006', 'DEV-009'], isHub: true },
+            { id: 'DEV-008', name: 'Cardiac-Gateway-B3', type: 'Medical Device', risk: 0.10, status: 'safe', bandwidth: 110.4, cpu: 18.2, ram: 35.8, connections: ['DEV-003', 'DEV-010'], isHub: false },
+            { id: 'DEV-009', name: 'Ventilator-NICU-04', type: 'Medical Device', risk: 0.04, status: 'safe', bandwidth: 64.2, cpu: 9.3, ram: 22.7, connections: ['DEV-007', 'DEV-010'], isHub: false },
+            { id: 'DEV-010', name: 'PAC-Server-Main', type: 'Medical PACS', risk: 0.35, status: 'safe', bandwidth: 2450.0, cpu: 45.4, ram: 78.2, connections: ['DEV-008', 'DEV-009', 'DEV-011', 'DEV-012'], isHub: true },
+            { id: 'DEV-011', name: 'Infusion-Pump-5A', type: 'Medical Device', risk: 0.09, status: 'safe', bandwidth: 15.6, cpu: 5.6, ram: 14.8, connections: ['DEV-010'], isHub: false },
+            { id: 'DEV-012', name: 'Lab-Analyzer-X1', type: 'Medical Device', risk: 0.18, status: 'safe', bandwidth: 180.5, cpu: 32.4, ram: 40.5, connections: ['DEV-010'], isHub: false }
+        ];
+
+        // Layout concentric rings mapping in 3D
+        const baseRadiusInner = 28;
+        const baseRadiusOuter = 48;
+        const nodeCoordinates = {};
+
+        devices.forEach((device, index) => {
+            const angle = (index * 2 * Math.PI) / devices.length;
+            const radius = (index % 2 === 0) ? baseRadiusInner : baseRadiusOuter;
+            // Introduce subtle height variance for a deep 3D spatial field
+            const yOffset = (Math.sin(index) * 8); 
+            nodeCoordinates[device.id] = new THREE.Vector3(
+                Math.cos(angle) * radius,
+                yOffset,
+                Math.sin(angle) * radius
+            );
+        });
+
+        // --- 2. THREE.JS ENGINE INITIALIZATION ---
+        const canvas = document.getElementById('webgl-canvas');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2('#02030a', 0.0075);
+
+        // Perspective Camera
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 50, 95);
+
+        // WebGL Renderer
+        const renderer = new THREE.WebGLRenderer({
+            canvas: canvas,
+            antialias: true,
+            alpha: false,
+            powerPreference: "high-performance"
+        });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ReinhardToneMapping;
+        renderer.toneMappingExposure = 1.25;
+
+        // Post-Processing Bloom Setup
+        const renderScene = new THREE.RenderPass(scene, camera);
+        const bloomPass = new THREE.UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            1.8,  // strength
+            0.4,  // radius
+            0.15  // threshold
+        );
+        const composer = new THREE.EffectComposer(renderer);
+        composer.addPass(renderScene);
+        composer.addPass(bloomPass);
+
+        // OrbitControls
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxDistance = 180;
+        controls.minDistance = 20;
+
+        // Ambient and point lights
+        const ambientLight = new THREE.AmbientLight(0x0a102d, 1.5);
+        scene.add(ambientLight);
+
+        // Neon Red Point light at SCADA Ctrl node (warning status)
+        const warningLight = new THREE.PointLight(0xff3366, 12, 60);
+        warningLight.position.copy(nodeCoordinates['DEV-007']);
+        scene.add(warningLight);
+
+        // Neon Cyan Point light at PACS Server Main (DEV-010)
+        const mainLight = new THREE.PointLight(0x00f5ff, 8, 50);
+        mainLight.position.copy(nodeCoordinates['DEV-010']);
+        scene.add(mainLight);
+
+        // --- 3. CREATING GRAPH GRAPHICS ---
+        const nodesGroup = new THREE.Group();
+        const edgesGroup = new THREE.Group();
+        const wireframesGroup = new THREE.Group();
+        scene.add(nodesGroup);
+        scene.add(edgesGroup);
+        scene.add(wireframesGroup);
+
+        const nodeMeshMap = {};
+        const edgeLineMap = [];
+        const wireframeMap = {};
+
+        // Generate glowing specular material
+        function createSpecularNodeMaterial(colorHex, emissiveHex, isGlossy = true) {
+            return new THREE.MeshPhongMaterial({
+                color: colorHex,
+                emissive: emissiveHex,
+                emissiveIntensity: 1.2,
+                specular: 0xffffff,
+                shininess: isGlossy ? 100 : 20,
+                flatShading: false
+            });
+        }
+
+        const materials = {
+            hub: createSpecularNodeMaterial(0xff7043, 0xff5722),      // glowing red-orange
+            satellite: createSpecularNodeMaterial(0xff3d00, 0xd84315),// specular orange
+            warning: createSpecularNodeMaterial(0xff1744, 0xb71c1c),  // warning red
+            isolated: createSpecularNodeMaterial(0xe040fb, 0x4a148c)  // purple
+        };
+
+        // Render Nodes
+        devices.forEach((device) => {
+            const coord = nodeCoordinates[device.id];
+            const size = device.isHub ? 3.0 : 1.4;
+
+            // Container group representing the node's coordinate space
+            const container = new THREE.Group();
+            container.position.copy(coord);
+            nodesGroup.add(container);
+
+            // Core faceted mesh (using Icosahedron for specular shimmer)
+            const geom = new THREE.IcosahedronGeometry(size, 2);
+            let mat = device.isHub ? materials.hub : materials.satellite;
+            if (device.status === 'warning') mat = materials.warning;
+            
+            const coreMesh = new THREE.Mesh(geom, mat);
+            container.add(coreMesh);
+
+            // Cache node userData in coreMesh for Raycasting hit-test (Raycaster returns the mesh)
+            coreMesh.userData = { 
+                deviceId: device.id, 
+                name: device.name, 
+                isHub: device.isHub, 
+                baseSize: size,
+                spinSpeed: 0.015,
+                containerGroup: container
+            };
+
+            nodeMeshMap[device.id] = container; // We map the ID to the container for translation/tilting
+
+            // Add orthogonal glowing tech rings around the node core
+            const ringGeom = new THREE.RingGeometry(size * 1.25, size * 1.35, 32);
+            const ringMat = new THREE.MeshBasicMaterial({
+                color: device.status === 'warning' ? 0xff1744 : (device.isHub ? 0xff9800 : 0x00f5ff),
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.16
+            });
+
+            const ringX = new THREE.Mesh(ringGeom, ringMat);
+            ringX.rotation.x = Math.PI / 2;
+            container.add(ringX);
+
+            const ringY = new THREE.Mesh(ringGeom, ringMat);
+            ringY.rotation.y = Math.PI / 2;
+            container.add(ringY);
+
+            // Store references in container for updates
+            container.userData = {
+                coreMesh: coreMesh,
+                ringX: ringX,
+                ringY: ringY,
+                deviceId: device.id
+            };
+
+            // Render rotating geometric wireframe 3D cages for hubs
+            if (device.isHub) {
+                const cageGeom = new THREE.IcosahedronGeometry(size * 1.65, 1);
+                const cageMat = new THREE.MeshBasicMaterial({
+                    color: device.status === 'warning' ? 0xff3366 : 0xff9800,
+                    wireframe: true,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const cageMesh = new THREE.Mesh(cageGeom, cageMat);
+                cageMesh.position.copy(coord);
+                wireframesGroup.add(cageMesh);
+                wireframeMap[device.id] = cageMesh;
+            }
+        });
+
+        // Render Connection Edges (WebGL Straight Lines)
+        const edgeGlowMaterial = new THREE.LineBasicMaterial({
+            color: 0xff5722,
+            transparent: true,
+            opacity: 0.25,
+            linewidth: 1
+        });
+
+        const activeEdgeMaterial = new THREE.LineBasicMaterial({
+            color: 0x00f5ff,
+            transparent: true,
+            opacity: 0.85,
+            linewidth: 2
+        });
+
+        const packetGeometry = new THREE.SphereGeometry(0.35, 8, 8);
+        const packetMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const flowingPackets = [];
+
+        devices.forEach((device) => {
+            const srcCoord = nodeCoordinates[device.id];
+            
+            device.connections.forEach((connId) => {
+                // Prevent duplicate line drawing
+                if (device.id.hashCode() > connId.hashCode()) return;
+                
+                const destCoord = nodeCoordinates[connId];
+                
+                // Draw Edge line
+                const edgePoints = [srcCoord, destCoord];
+                const edgeGeom = new THREE.BufferGeometry().setFromPoints(edgePoints);
+                const edgeLine = new THREE.Line(edgeGeom, edgeGlowMaterial);
+                edgesGroup.add(edgeLine);
+
+                edgeLineMap.push({
+                    src: device.id,
+                    dest: connId,
+                    line: edgeLine,
+                    defaultMaterial: edgeGlowMaterial
+                });
+
+                // Set up flowing specular white packet cores on straight vectors
+                const packetCount = device.isHub ? 2 : 1;
+                for (let p = 0; p < packetCount; p++) {
+                    const packetMesh = new THREE.Mesh(packetGeometry, packetMaterial);
+                    scene.add(packetMesh);
+                    
+                    // Faint outer neon ring glow
+                    const ringGeom = new THREE.RingGeometry(0.6, 0.8, 16);
+                    const ringMat = new THREE.MeshBasicMaterial({
+                        color: device.status === 'warning' ? 0xff1744 : 0xff5722,
+                        side: THREE.DoubleSide,
+                        transparent: true,
+                        opacity: 0.65
+                    });
+                    const ringMesh = new THREE.Mesh(ringGeom, ringMat);
+                    packetMesh.add(ringMesh);
+
+                    flowingPackets.push({
+                        mesh: packetMesh,
+                        src: srcCoord,
+                        dest: destCoord,
+                        progress: Math.random(),
+                        speed: 0.003 + Math.random() * 0.005
+                    });
+                }
+            });
+        });
+
+        // String Hash utility for visual indexing
+        String.prototype.hashCode = function() {
+            let hash = 0;
+            for (let i = 0; i < this.length; i++) {
+                hash = this.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return hash;
+        };
+
+        // --- 4. ADVANCED POST-PROCESSING SHADERS & EFFECTS ---
+        
+        // A. WebGL Background Particle Starfield (GPU Optimized)
+        const starCount = 650;
+        const starGeom = new THREE.BufferGeometry();
+        const starPositions = new Float32Array(starCount * 3);
+        const starColors = new Float32Array(starCount * 3);
+
+        const starColorOptions = [
+            new THREE.Color(0xffffff),
+            new THREE.Color(0x00f5ff),
+            new THREE.Color(0xa855f7)
+        ];
+
+        for (let i = 0; i < starCount; i++) {
+            // Position stars inside spherical shell to represent data cosmos
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos((Math.random() * 2) - 1);
+            const dist = 120 + Math.random() * 200;
+
+            starPositions[i * 3] = Math.sin(phi) * Math.cos(theta) * dist;
+            starPositions[i * 3 + 1] = Math.sin(phi) * Math.sin(theta) * dist;
+            starPositions[i * 3 + 2] = Math.cos(phi) * dist;
+
+            const baseColor = starColorOptions[Math.floor(Math.random() * starColorOptions.length)];
+            starColors[i * 3] = baseColor.r;
+            starColors[i * 3 + 1] = baseColor.g;
+            starColors[i * 3 + 2] = baseColor.b;
+        }
+
+        starGeom.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        starGeom.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
+        // Pulsing starry point texture mapping
+        const starTexture = createCircleTexture();
+        const starMaterial = new THREE.PointsMaterial({
+            size: 2.2,
+            vertexColors: true,
+            map: starTexture,
+            transparent: true,
+            opacity: 0.78,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const starfield = new THREE.Points(starGeom, starMaterial);
+        scene.add(starfield);
+
+        // Procedural dot mapping texture helper
+        function createCircleTexture() {
+            const canvasTex = document.createElement('canvas');
+            canvasTex.width = 16;
+            canvasTex.height = 16;
+            const ctxTex = canvasTex.getContext('2d');
+            const grad = ctxTex.createRadialGradient(8, 8, 0, 8, 8, 8);
+            grad.addColorStop(0, 'rgba(255,255,255,1)');
+            grad.addColorStop(1, 'rgba(255,255,255,0)');
+            ctxTex.fillStyle = grad;
+            ctxTex.fillRect(0, 0, 16, 16);
+
+            const texture = new THREE.CanvasTexture(canvasTex);
+            return texture;
+        }
+
+        // B. Active Holographic Spinner Ring & Shockwave Ripples
+        const spinnerRing = new THREE.Mesh(
+            new THREE.RingGeometry(5.2, 5.5, 32),
+            new THREE.MeshBasicMaterial({
+                color: 0x00f5ff,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0
+            })
+        );
+        scene.add(spinnerRing);
+
+        const shockwaveRipple = new THREE.Mesh(
+            new THREE.RingGeometry(0.1, 0.4, 64),
+            new THREE.MeshBasicMaterial({
+                color: 0xff3366,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0
+            })
+        );
+        scene.add(shockwaveRipple);
+
+        // C. Locked Active Orbiting Particles
+        const orbitParticleCount = 85;
+        const orbitGeometry = new THREE.BufferGeometry();
+        const orbitPosArr = new Float32Array(orbitParticleCount * 3);
+        const orbitSpeeds = [];
+        const orbitDistances = [];
+        const orbitRotationalAngles = [];
+
+        for (let i = 0; i < orbitParticleCount; i++) {
+            orbitPosArr[i * 3] = 0;
+            orbitPosArr[i * 3 + 1] = 0;
+            orbitPosArr[i * 3 + 2] = 0;
+
+            orbitSpeeds.push(0.02 + Math.random() * 0.05);
+            orbitDistances.push(6 + Math.random() * 12);
+            orbitRotationalAngles.push(Math.random() * Math.PI * 2);
+        }
+
+        orbitGeometry.setAttribute('position', new THREE.BufferAttribute(orbitPosArr, 3));
+        const orbitMaterial = new THREE.PointsMaterial({
+            size: 1.1,
+            color: 0x00f5ff,
+            map: starTexture,
+            transparent: true,
+            opacity: 0,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+
+        const orbitPoints = new THREE.Points(orbitGeometry, orbitMaterial);
+        scene.add(orbitPoints);
+
+        // --- 5. RAYCASTING & INTERACTION SYSTEM ---
+        const raycaster = new THREE.Raycaster();
+        const mouseVector = new THREE.Vector2();
+        let hoveredNodeId = null;
+        let selectedNodeId = null;
+
+        // Hover tooltip overlay
+        const tooltip = document.getElementById('hover-tooltip');
+        const tooltipTitle = document.getElementById('tooltip-title');
+        const tooltipType = document.getElementById('tooltip-type');
+        const tooltipRisk = document.getElementById('tooltip-risk');
+        const tooltipBandwidth = document.getElementById('tooltip-bandwidth');
+
+        // Sidebar detail fields
+        const sidebarName = document.getElementById('core-name');
+        const sidebarBadge = document.getElementById('core-status-badge');
+        const sidebarBandwidth = document.getElementById('core-stat-bandwidth');
+        const sidebarCpu = document.getElementById('core-stat-cpu');
+        const sidebarRam = document.getElementById('core-stat-ram');
+        const barBandwidth = document.getElementById('bar-bandwidth');
+        const barCpu = document.getElementById('bar-cpu');
+        const barRam = document.getElementById('bar-ram');
+        const threatDialScore = document.getElementById('threat-score-label');
+
+        // Drag node state configurations
+        let isDragging = false;
+        let draggedMesh = null;
+        const dragPlane = new THREE.Plane();
+        const planeNormal = new THREE.Vector3();
+        const dragIntersection = new THREE.Vector3();
+        const dragOffset = new THREE.Vector3();
+        let dragInitialPosition = new THREE.Vector3();
+
+        // Cursor coordinates track for mouse parallax tilt
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetTiltX = 0;
+        let targetTiltY = 0;
+        let lastInteractionTime = Date.now();
+
+        window.addEventListener('mousemove', (event) => {
+            // Screen tracking
+            mouseX = (event.clientX / window.innerWidth) - 0.5;
+            mouseY = (event.clientY / window.innerHeight) - 0.5;
+
+            // Normalized coordinates for Raycaster
+            mouseVector.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouseVector.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            if (isDragging && draggedMesh) {
+                // Lock dragging vector plane relative to camera
+                planeNormal.copy(camera.position).normalize();
+                dragPlane.setFromNormalAndCoplanarPoint(planeNormal, draggedMesh.position);
+                
+                raycaster.setFromCamera(mouseVector, camera);
+                if (raycaster.ray.intersectPlane(dragPlane, dragIntersection)) {
+                    // Update node position based on drag values
+                    draggedMesh.position.copy(dragIntersection.sub(dragOffset));
+                    
+                    // Re-calculate warning light if dragging
+                    if (draggedMesh.userData.deviceId === 'DEV-007') {
+                        warningLight.position.copy(draggedMesh.position);
+                    } else if (draggedMesh.userData.deviceId === 'DEV-010') {
+                        mainLight.position.copy(draggedMesh.position);
+                    }
+
+                    // Shift cage
+                    if (wireframeMap[draggedMesh.userData.deviceId]) {
+                        wireframeMap[draggedMesh.userData.deviceId].position.copy(draggedMesh.position);
+                    }
+
+                    // Update corresponding edges dynamically
+                    const dragId = draggedMesh.userData.deviceId;
+                    nodeCoordinates[dragId].copy(draggedMesh.position);
+
+                    edgeLineMap.forEach((edge) => {
+                        if (edge.src === dragId || edge.dest === dragId) {
+                            const newSrc = nodeCoordinates[edge.src];
+                            const newDest = nodeCoordinates[edge.dest];
+                            edge.line.geometry.setFromPoints([newSrc, newDest]);
+                        }
+                    });
+                }
+                lastInteractionTime = Date.now();
+                return;
+            }
+
+            // Raycast intersection tests (recursive = true to hit Icosahedron inside Group)
+            raycaster.setFromCamera(mouseVector, camera);
+            const intersections = raycaster.intersectObjects(nodesGroup.children, true);
+
+            if (intersections.length > 0) {
+                document.body.style.cursor = 'pointer';
+                const node = intersections[0].object; // this is the coreMesh
+                const devId = node.userData.deviceId;
+
+                if (hoveredNodeId !== devId) {
+                    hoveredNodeId = devId;
+                    
+                    // Display animated metrics details panel
+                    const device = devices.find(d => d.id === devId);
+                    tooltipTitle.innerText = device.name;
+                    tooltipType.innerText = device.type;
+                    tooltipRisk.innerText = `${(device.risk * 100).toFixed(0)}%`;
+                    tooltipBandwidth.innerText = `${device.bandwidth.toFixed(1)} KB/S`;
+
+                    tooltip.style.display = 'block';
+                    gsap.to(tooltip, { opacity: 1, scale: 1, duration: 0.18, overwrite: "auto" });
+
+                    // Scale node slightly and smoothly accelerate its spin on hover
+                    gsap.to(node.scale, { x: 1.35, y: 1.35, z: 1.35, duration: 0.24, ease: "power2.out" });
+                    gsap.to(node.userData, { spinSpeed: 0.08, duration: 0.5, ease: "power2.out" });
+
+                    // Highlight connected edges
+                    highlightConnectedEdges(devId, true);
+                }
+
+                // Update active target node tilt values
+                targetTiltX = -mouseY * 0.65;
+                targetTiltY = mouseX * 0.65;
+
+                // Follow cursor position smoothly
+                tooltip.style.left = `${event.clientX + 16}px`;
+                tooltip.style.top = `${event.clientY + 16}px`;
+            } else {
+                document.body.style.cursor = 'default';
+                if (hoveredNodeId) {
+                    const container = nodeMeshMap[hoveredNodeId];
+                    const core = container.userData.coreMesh;
+                    
+                    if (selectedNodeId !== hoveredNodeId) {
+                        gsap.to(core.scale, { x: 1.0, y: 1.0, z: 1.0, duration: 0.24, ease: "power2.out" });
+                        gsap.to(core.userData, { spinSpeed: 0.015, duration: 1.0, ease: "power2.out" });
+                    }
+                    
+                    highlightConnectedEdges(hoveredNodeId, false);
+                    hoveredNodeId = null;
+
+                    gsap.to(tooltip, { opacity: 0, scale: 0.9, duration: 0.15, onComplete: () => {
+                        tooltip.style.display = 'none';
+                    }});
+                }
+
+                if (selectedNodeId) {
+                    targetTiltX = -mouseY * 0.35;
+                    targetTiltY = mouseX * 0.35;
+                } else {
+                    targetTiltX = 0;
+                    targetTiltY = 0;
+                }
+            }
+        });
+
+        // Click / Touch events
+        window.addEventListener('mousedown', (event) => {
+            if (event.button !== 0) return; // Only process left-click
+
+            raycaster.setFromCamera(mouseVector, camera);
+            const intersections = raycaster.intersectObjects(nodesGroup.children, true);
+
+            if (intersections.length > 0) {
+                const node = intersections[0].object; // coreMesh
+                const container = node.userData.containerGroup;
+                const devId = node.userData.deviceId;
+
+                isDragging = true;
+                draggedMesh = container; // Drag the container group
+                dragInitialPosition.copy(container.position);
+
+                // Calculate dragging offsets
+                planeNormal.copy(camera.position).normalize();
+                dragPlane.setFromNormalAndCoplanarPoint(planeNormal, container.position);
+                if (raycaster.ray.intersectPlane(dragPlane, dragIntersection)) {
+                    dragOffset.copy(dragIntersection).sub(container.position);
+                }
+
+                // Target Lock-On Camera zoom and ring ripples
+                triggerNodeActivation(node);
+                lastInteractionTime = Date.now();
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (isDragging && draggedMesh) {
+                // Spring back physics logic
+                const devId = draggedMesh.userData.deviceId;
+                
+                // Target origin orbit position
+                const angle = (devices.findIndex(d => d.id === devId) * 2 * Math.PI) / devices.length;
+                const radius = (devices.findIndex(d => d.id === devId) % 2 === 0) ? baseRadiusInner : baseRadiusOuter;
+                const targetOrigin = new THREE.Vector3(
+                    Math.cos(angle) * radius,
+                    (Math.sin(devices.findIndex(d => d.id === devId)) * 8),
+                    Math.sin(angle) * radius
+                );
+
+                // Spring back animation using GSAP elastic easing
+                gsap.to(draggedMesh.position, {
+                    x: targetOrigin.x,
+                    y: targetOrigin.y,
+                    z: targetOrigin.z,
+                    duration: 1.25,
+                    ease: "elastic.out(1, 0.45)",
+                    onUpdate: () => {
+                        // Re-align connection meshes during elastic transition
+                        nodeCoordinates[devId].copy(draggedMesh.position);
+                        if (devId === 'DEV-007') warningLight.position.copy(draggedMesh.position);
+                        if (devId === 'DEV-010') mainLight.position.copy(draggedMesh.position);
+                        
+                        if (wireframeMap[devId]) {
+                            wireframeMap[devId].position.copy(draggedMesh.position);
+                        }
+
+                        edgeLineMap.forEach((edge) => {
+                            if (edge.src === devId || edge.dest === devId) {
+                                edge.line.geometry.setFromPoints([nodeCoordinates[edge.src], nodeCoordinates[edge.dest]]);
+                            }
+                        });
+                    }
+                });
+            }
+            isDragging = false;
+            draggedMesh = null;
+        });
+
+        // Mobile touch handles mapping
+        window.addEventListener('touchstart', (event) => {
+            if (event.touches.length === 0) return;
+            const touch = event.touches[0];
+            mouseVector.x = (touch.clientX / window.innerWidth) * 2 - 1;
+            mouseVector.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouseVector, camera);
+            const intersections = raycaster.intersectObjects(nodesGroup.children, true);
+
+            if (intersections.length > 0) {
+                const node = intersections[0].object;
+                triggerNodeActivation(node);
+            }
+        });
+
+        // Edge highlights on hovered/active nodes
+        function highlightConnectedEdges(deviceId, active) {
+            edgeLineMap.forEach((edge) => {
+                if (edge.src === deviceId || edge.dest === deviceId) {
+                    edge.line.material = active ? activeEdgeMaterial : edge.defaultMaterial;
+                }
+            });
+        }
+
+        // Camera transitions, Holographic rings, Shockwaves, and Orbital draws
+        function triggerNodeActivation(node) {
+            const devId = node.userData.deviceId;
+            selectedNodeId = devId;
+
+            const container = node.userData.containerGroup;
+            const device = devices.find(d => d.id === devId);
+
+            // 1. Zoom Camera to target focus node container smoothly
+            const offset = new THREE.Vector3(0, 16, 25);
+            const targetPos = container.position.clone().add(offset);
+            
+            gsap.to(camera.position, {
+                x: targetPos.x,
+                y: targetPos.y,
+                z: targetPos.z,
+                duration: 1.5,
+                ease: "power3.inOut",
+                onUpdate: () => {
+                    controls.target.copy(container.position);
+                }
+            });
+
+            // 2. Holographic Ring Spin-up
+            spinnerRing.position.copy(container.position);
+            spinnerRing.rotation.x = Math.PI / 2;
+            gsap.set(spinnerRing.material, { opacity: 0.85 });
+            gsap.fromTo(spinnerRing.scale, 
+                { x: 0.1, y: 0.1 }, 
+                { x: 1.0, y: 1.0, duration: 0.8, ease: "back.out(2)" }
+            );
+
+            // 3. Flat WebGL Shockwave ripple ring
+            shockwaveRipple.position.copy(container.position);
+            shockwaveRipple.rotation.x = Math.PI / 2;
+            gsap.fromTo(shockwaveRipple.material, 
+                { opacity: 0.9 }, 
+                { opacity: 0, duration: 1.2, ease: "power2.out" }
+            );
+            gsap.fromTo(shockwaveRipple.scale, 
+                { x: 0.1, y: 0.1 }, 
+                { x: 45.0, y: 45.0, duration: 1.2, ease: "power2.out" }
+            );
+
+            // 4. Draw nearby stars into orbital locks around target node
+            orbitPoints.position.copy(container.position);
+            gsap.to(orbitPoints.material, { opacity: 0.85, duration: 0.3 });
+
+            // 5. Spin coreMesh in true 3D on Y and X axes dynamically (decelerating inertia rotation!)
+            gsap.fromTo(node.rotation,
+                { y: 0, x: 0 },
+                { 
+                    y: Math.PI * 4, 
+                    x: Math.PI * 2, 
+                    duration: 1.8, 
+                    ease: "power3.out" // physical spin deceleration with inertia
+                }
+            );
+
+            // 6. Expand glowing size slightly on active core
+            devices.forEach((d) => {
+                const c = nodeMeshMap[d.id];
+                const mesh = c.userData.coreMesh;
+                if (d.id === devId) {
+                    gsap.to(mesh.scale, { x: 1.4, y: 1.4, z: 1.4, duration: 0.4, ease: "back.out(1.7)" });
+                    gsap.to(mesh.userData, { spinSpeed: 0.08, duration: 0.4 });
+                } else {
+                    gsap.to(mesh.scale, { x: 1.0, y: 1.0, z: 1.0, duration: 0.3, ease: "power2.out" });
+                    gsap.to(mesh.userData, { spinSpeed: 0.015, duration: 0.6 });
+                }
+            });
+
+            // 7. Update Sidebar glass container info
+            sidebarName.innerText = device.name.toUpperCase();
+            sidebarBadge.innerText = device.status.toUpperCase();
+            
+            if (device.status === 'warning') {
+                sidebarBadge.className = 'badge';
+            } else {
+                sidebarBadge.className = 'badge secured';
+            }
+
+            // Animate details bar gauges
+            sidebarBandwidth.innerText = `${device.bandwidth.toFixed(1)} KB/S`;
+            sidebarCpu.innerText = `${device.cpu.toFixed(1)}%`;
+            sidebarRam.innerText = `${device.ram.toFixed(1)}%`;
+
+            barBandwidth.style.width = `${Math.min(100, (device.bandwidth / 2500) * 100)}%`;
+            barCpu.style.width = `${device.cpu}%`;
+            barRam.style.width = `${device.ram}%`;
+
+            threatDialScore.innerText = `${(device.risk * 100).toFixed(0)}%`;
+
+            // Push threat logs feed
+            const feed = document.getElementById('logs-feed');
+            const line = document.createElement('div');
+            line.className = device.status === 'warning' ? 'log-line warn' : 'log-line info';
+            line.innerText = `[TARGET LOCK] Inspected core ${device.name} - Status: ${device.status.toUpperCase()}`;
+            feed.insertBefore(line, feed.firstChild);
+        }
+
+        // HUD Viewport Buttons actions bind
+        document.getElementById('btn-zoom-in').addEventListener('click', () => {
+            gsap.to(camera, { fov: Math.max(25, camera.fov - 12), duration: 0.5, onUpdate: () => camera.updateProjectionMatrix() });
+        });
+
+        document.getElementById('btn-zoom-out').addEventListener('click', () => {
+            gsap.to(camera, { fov: Math.min(90, camera.fov + 12), duration: 0.5, onUpdate: () => camera.updateProjectionMatrix() });
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            selectedNodeId = null;
+            gsap.to(camera.position, { x: 0, y: 50, z: 95, duration: 1.5, ease: "power3.inOut" });
+            gsap.to(controls.target, { x: 0, y: 0, z: 0, duration: 1.5, ease: "power3.inOut" });
+            gsap.to(orbitPoints.material, { opacity: 0, duration: 0.5 });
+            
+            devices.forEach((d) => {
+                const c = nodeMeshMap[d.id];
+                const mesh = c.userData.coreMesh;
+                gsap.to(mesh.scale, { x: 1.0, y: 1.0, z: 1.0, duration: 0.4, ease: "power2.out" });
+                gsap.to(mesh.userData, { spinSpeed: 0.015, duration: 0.6 });
+            });
+        });
+
+        // --- 6. REAL-TIME RENDER LOOP & CONTINUOUS MOTION ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime();
+
+            // 1. Idle auto-rotation of entire graph when no interaction
+            const timeSinceLastInteract = Date.now() - lastInteractionTime;
+            if (timeSinceLastInteract > 4000) {
+                // Slowly spin the groups for alive depth
+                nodesGroup.rotation.y = elapsedTime * 0.035;
+                edgesGroup.rotation.y = elapsedTime * 0.035;
+                wireframesGroup.rotation.y = elapsedTime * 0.035;
+            } else {
+                // Return groups slowly to zero rotation to align with layout axes
+                nodesGroup.rotation.y += (0 - nodesGroup.rotation.y) * 0.05;
+                edgesGroup.rotation.y += (0 - edgesGroup.rotation.y) * 0.05;
+                wireframesGroup.rotation.y += (0 - wireframesGroup.rotation.y) * 0.05;
+            }
+
+            // Spin wireframe cages around hubs & continuous Y-axis/hoops rotation
+            devices.forEach((device) => {
+                const container = nodeMeshMap[device.id];
+                const core = container.userData.coreMesh;
+
+                // Animate tech hoops rotation continuously
+                container.userData.ringX.rotation.z += 0.008;
+                container.userData.ringY.rotation.x += 0.012;
+
+                // Continuous Y-axis spinning of the core faceted mesh
+                core.rotation.y += core.userData.spinSpeed;
+                core.rotation.x += core.userData.spinSpeed * 0.4;
+
+                if (wireframeMap[device.id]) {
+                    wireframeMap[device.id].position.copy(container.position);
+                    wireframeMap[device.id].rotation.x = elapsedTime * 0.15;
+                    wireframeMap[device.id].rotation.y = elapsedTime * 0.25;
+                }
+            });
+
+            // 2. Parallax mouse cursor tilt on active/hovered node group container
+            devices.forEach((device) => {
+                const container = nodeMeshMap[device.id];
+                if (device.id === hoveredNodeId || device.id === selectedNodeId) {
+                    // Leaning tilt towards active cursor coordinates
+                    container.rotation.x += (targetTiltX - container.rotation.x) * 0.08;
+                    container.rotation.y += (targetTiltY - container.rotation.y) * 0.08;
+                } else {
+                    // Decelerate tilt back to idle state
+                    container.rotation.x += (0 - container.rotation.x) * 0.08;
+                    container.rotation.y += (0 - container.rotation.y) * 0.08;
+                }
+            });
+
+            // 3. Flowing energy packets updates along vectors using World Positions
+            flowingPackets.forEach((packet) => {
+                packet.progress += packet.speed;
+                if (packet.progress >= 1.0) {
+                    packet.progress = 0;
+                }
+
+                const srcId = devices.find(d => nodeCoordinates[d.id] === packet.src).id;
+                const destId = devices.find(d => nodeCoordinates[d.id] === packet.dest).id;
+
+                const srcPos = new THREE.Vector3();
+                nodeMeshMap[srcId].getWorldPosition(srcPos);
+
+                const destPos = new THREE.Vector3();
+                nodeMeshMap[destId].getWorldPosition(destPos);
+
+                packet.mesh.position.lerpVectors(srcPos, destPos, packet.progress);
+                packet.mesh.children[0].rotation.z = elapsedTime * 2;
+            });
+
+            // 4. Update orbiting particles around active selection node
+            if (selectedNodeId && orbitPoints.material.opacity > 0) {
+                const posAttr = orbitGeometry.attributes.position;
+                
+                for (let i = 0; i < orbitParticleCount; i++) {
+                    orbitRotationalAngles[i] += orbitSpeeds[i];
+                    
+                    const dist = orbitDistances[i];
+                    const angle = orbitRotationalAngles[i];
+                    
+                    // Render in flat orbital circle around selection center
+                    posAttr.setX(i, Math.cos(angle) * dist);
+                    posAttr.setY(i, Math.sin(elapsedTime * 0.2) * 1.5); // minor vertical wobble
+                    posAttr.setZ(i, Math.sin(angle) * dist);
+                }
+                posAttr.needsUpdate = true;
+            }
+
+            // 5. Holographic Ring Spin update
+            if (selectedNodeId) {
+                spinnerRing.rotation.z = elapsedTime * 0.8;
+            }
+
+            // 6. Breathing pulse animations on nodes
+            devices.forEach((device) => {
+                const container = nodeMeshMap[device.id];
+                const core = container.userData.coreMesh;
+                if (device.id !== selectedNodeId && device.id !== hoveredNodeId) {
+                    const scalePulse = 1.0 + Math.sin(elapsedTime * 2.2 + device.id.hashCode()) * (device.isHub ? 0.06 : 0.03);
+                    core.scale.set(scalePulse, scalePulse, scalePulse);
+                }
+            });
+
+            // 7. Update camera controls
+            controls.update();
+
+            // 8. Composite bloom renderer
+            composer.render();
+        }
+
+        // --- 7. TELEMETRY MONITOR SIMULATION heartbeats ---
+        setInterval(() => {
+            const lines = [
+                `[SEC] Localized OPA policy quarantine evaluated for SCADA-Turbine-Ctrl`,
+                `[SYS] CPU load stabilized at 42.45% across regional core meshes`,
+                `[WS] WebSocket connection healthy. Telemetry speed: 1.4MB/s`,
+                `[ALARM] Intrusion vector neutralized on main SOC database node`
+            ];
+
+            const feed = document.getElementById('logs-feed');
+            const line = document.createElement('div');
+            line.className = Math.random() > 0.65 ? 'log-line warn' : 'log-line';
+            line.innerText = lines[Math.floor(Math.random() * lines.length)];
+            feed.insertBefore(line, feed.firstChild);
+
+            if (feed.children.length > 25) {
+                feed.removeChild(feed.lastChild);
+            }
+        }, 3000);
+
+        // Fluid screen adjustments resizing
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Initialize render loop
+        animate();
+    </script>
+</body>
+</html>
