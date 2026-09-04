@@ -16,22 +16,35 @@ class _PipelineParticle {
   });
 }
 
-class PipelineParticleCanvas extends StatefulWidget {
-  const PipelineParticleCanvas({super.key});
+class PipelineParticles extends StatefulWidget {
+  final int particleCount;
+  final double linkDistance;
+  final double grabDistance;
+  final double boundsX;
+  final double boundsY;
+  final double boundsZ;
+  final bool contained;
+
+  const PipelineParticles({
+    super.key,
+    this.particleCount = 120,
+    this.linkDistance = 62,
+    this.grabDistance = 0,
+    this.boundsX = 110,
+    this.boundsY = 132,
+    this.boundsZ = 20,
+    this.contained = true,
+  });
 
   @override
-  State<PipelineParticleCanvas> createState() => _PipelineParticleCanvasState();
+  State<PipelineParticles> createState() => _PipelineParticlesState();
 }
 
-class _PipelineParticleCanvasState extends State<PipelineParticleCanvas>
+class _PipelineParticlesState extends State<PipelineParticles>
     with SingleTickerProviderStateMixin {
   late final Ticker _ticker;
   final List<_PipelineParticle> _particles = [];
   final Random _rand = Random();
-
-  static const int count = 120;
-  static const double linkDist = 62.0;
-  static const double bounds = 110.0;
 
   static const Color colorLine = Color(0xFF80A416);
   static const Color colorNode = Color(0xFFC5C764);
@@ -52,11 +65,11 @@ class _PipelineParticleCanvasState extends State<PipelineParticleCanvas>
 
   void _initParticles() {
     _particles.clear();
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < widget.particleCount; i++) {
       _particles.add(_PipelineParticle(
-        x: (_rand.nextDouble() - 0.5) * bounds * 2,
-        y: (_rand.nextDouble() - 0.5) * bounds * 2.4,
-        z: (_rand.nextDouble() - 0.5) * 40,
+        x: (_rand.nextDouble() - 0.5) * widget.boundsX * 2,
+        y: (_rand.nextDouble() - 0.5) * widget.boundsY * 2,
+        z: (_rand.nextDouble() - 0.5) * widget.boundsZ * 2,
         vx: (_rand.nextDouble() - 0.5) * 0.4,
         vy: (_rand.nextDouble() - 0.5) * 0.4,
         vz: (_rand.nextDouble() - 0.5) * 0.2,
@@ -70,9 +83,9 @@ class _PipelineParticleCanvasState extends State<PipelineParticleCanvas>
       p.y += p.vy;
       p.z += p.vz;
 
-      if (p.x.abs() > bounds) p.vx *= -1;
-      if (p.y.abs() > bounds * 1.2) p.vy *= -1;
-      if (p.z.abs() > 25) p.vz *= -1;
+      if (p.x.abs() > widget.boundsX) p.vx *= -1;
+      if (p.y.abs() > widget.boundsY) p.vy *= -1;
+      if (p.z.abs() > widget.boundsZ) p.vz *= -1;
     }
   }
 
@@ -94,6 +107,7 @@ class _PipelineParticleCanvasState extends State<PipelineParticleCanvas>
           child: CustomPaint(
             painter: _PipelineParticlePainter(
               particles: _particles,
+              linkDistance: widget.linkDistance,
               colorLine: colorLine,
               colorNode: colorNode,
               colorBright: colorBright,
@@ -107,12 +121,14 @@ class _PipelineParticleCanvasState extends State<PipelineParticleCanvas>
 
 class _PipelineParticlePainter extends CustomPainter {
   final List<_PipelineParticle> particles;
+  final double linkDistance;
   final Color colorLine;
   final Color colorNode;
   final Color colorBright;
 
   _PipelineParticlePainter({
     required this.particles,
+    required this.linkDistance,
     required this.colorLine,
     required this.colorNode,
     required this.colorBright,
@@ -122,7 +138,6 @@ class _PipelineParticlePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     const cameraZ = 220.0;
-    const linkDist = 62.0;
 
     final int c = particles.length;
     final List<Offset> proj = List.filled(c, Offset.zero);
@@ -147,8 +162,8 @@ class _PipelineParticlePainter extends CustomPainter {
         final dz = p1.z - p2.z;
         final double dist = sqrt(dx * dx + dy * dy + dz * dz);
 
-        if (dist < linkDist) {
-          final double alpha = (1.0 - dist / linkDist) * 0.45;
+        if (dist < linkDistance) {
+          final double alpha = (1.0 - dist / linkDistance) * 0.45;
           final pt2 = proj[j];
 
           final linePaint = Paint()
@@ -161,19 +176,19 @@ class _PipelineParticlePainter extends CustomPainter {
       }
     }
 
-    // Nodes
+    // Nodes (glowing yellow-green points matching HTML spec)
     for (int i = 0; i < c; i++) {
       final pt = proj[i];
       final scale = scales[i];
       final double radius = 3.5 * scale;
 
       final haloPaint = Paint()
-        ..color = colorNode.withOpacity(0.5)
+        ..color = colorBright.withOpacity(0.55)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
       canvas.drawCircle(pt, radius * 1.4, haloPaint);
 
       final corePaint = Paint()
-        ..color = Colors.white.withOpacity(0.9)
+        ..color = colorNode.withOpacity(0.95)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(pt, max(0.8, radius * 0.5), corePaint);
     }

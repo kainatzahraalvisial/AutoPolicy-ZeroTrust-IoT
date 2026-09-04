@@ -26,29 +26,28 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
     
-    // Increased duration to 7 seconds to give each phase standard, premium room to breathe
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 7000),
+      duration: const Duration(milliseconds: 3800),
     );
 
-    // 1. Motherboard grows from 0.0 to 1.0 (Timeline: 0.0 -> 0.40 = 2.80s)
+    // 1. Circuit maze grows from 0.0 to 1.0
     _mazeBuildAnimation = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.0, 0.40, curve: Curves.easeOutCubic),
+      curve: const Interval(0.0, 0.60, curve: Curves.easeOutCubic),
     );
 
-    // 2. Scatter progress goes from 0.0 to 1.0 (Timeline: 0.40 -> 0.65 = 1.75s)
+    // 2. Scatter progress goes from 0.0 to 1.0
     _mazeScatterAnimation = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.40, 0.65, curve: Curves.fastOutSlowIn),
+      curve: const Interval(0.50, 1.0, curve: Curves.fastOutSlowIn),
     );
 
-    // 3. Motherboard opacity goes from 1.0 to 0.0 during scatter (Timeline: 0.40 -> 0.62 = 1.54s)
+    // 3. Motherboard opacity fades out during scatter
     _mazeOpacityAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.40, 0.62, curve: Curves.easeOut),
+        curve: const Interval(0.60, 1.0, curve: Curves.easeOut),
       ),
     );
 
@@ -109,84 +108,19 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // 1. Render custom animated motherboard circuitry grid
-          if (progress < 0.65)
-            Positioned.fill(
-              child: RepaintBoundary(
-                child: CustomPaint(
-                  painter: _SplashCircuitPainter(
-                    progress: _mazeBuildAnimation.value,
-                    isScattered: progress > 0.40,
-                    scatterProgress: _mazeScatterAnimation.value,
-                    opacity: _mazeOpacityAnimation.value,
-                  ),
+          // Render custom animated motherboard circuitry grid
+          Positioned.fill(
+            child: RepaintBoundary(
+              child: CustomPaint(
+                painter: _SplashCircuitPainter(
+                  progress: _mazeBuildAnimation.value,
+                  isScattered: progress > 0.50,
+                  scatterProgress: _mazeScatterAnimation.value,
+                  opacity: _mazeOpacityAnimation.value,
                 ),
               ),
             ),
-
-          // 3. Render Logo Zoom & Target Locking brackets
-          if (progress >= 0.50)
-            Positioned.fill(
-              child: Stack(
-                children: [
-                  // Zooming shield logo and platform titles
-                  Center(
-                    child: Opacity(
-                      opacity: _logoOpacityAnimation.value,
-                      child: Transform.scale(
-                        scale: _logoScaleAnimation.value,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // Neon cyber shield badge (Olive & Lime glow)
-                            Container(
-                              padding: const EdgeInsets.all(22),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: const Color(0xFF80A416).withOpacity(0.45 * _logoOpacityAnimation.value),
-                                  width: 1.5,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF80A416).withOpacity(0.30 * _logoOpacityAnimation.value),
-                                    blurRadius: 25,
-                                    spreadRadius: 1.5,
-                                  )
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.shield_outlined,
-                                size: 68,
-                                color: Color(0xFFBBF438),
-                              ),
-                            ),
-                            const SizedBox(height: 28),
-                            // Platform Title Text (Vibrant white & lime glow)
-                            Text(
-                              'AUTOPOLICY',
-                              style: CyberTextStyles.displayTitle(
-                                fontSize: 38.0,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            // Tactical Subtitle
-                            Text(
-                              'AI-POWERED ZERO TRUST SECURITY PLATFORM',
-                              style: CyberTextStyles.technical(
-                                fontSize: 13.0,
-                                color: const Color(0xFFC5C764),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          ),
         ],
       ),
     );
