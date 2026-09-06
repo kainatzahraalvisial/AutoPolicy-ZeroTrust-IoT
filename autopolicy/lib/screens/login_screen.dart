@@ -81,7 +81,8 @@ class BtnClipper extends CustomClipper<Path> {
 class VrFrame extends StatelessWidget {
   final Widget child;
   final double maxWidth;
-  const VrFrame({super.key, required this.child, this.maxWidth = 400});
+  final EdgeInsetsGeometry? padding;
+  const VrFrame({super.key, required this.child, this.maxWidth = 400, this.padding});
 
   @override
   Widget build(BuildContext context) {
@@ -112,7 +113,7 @@ class VrFrame extends StatelessWidget {
                 clipper: VrFrameClipper(cut: 16),
                 child: Container(
                   color: AP.bg,
-                  padding: const EdgeInsets.fromLTRB(26, 28, 26, 20),
+                  padding: padding ?? const EdgeInsets.fromLTRB(26, 28, 26, 20),
                   child: Stack(
                     children: [
                       Positioned(
@@ -513,7 +514,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       ),
                       const SizedBox(height: 4),
                       Text('Authenticate to the zero-trust console',
-                        style: TextStyle(fontSize: 11.5, color: AP.muted),
+                        style: GoogleFonts.spaceGrotesk(fontSize: 13.5, color: const Color(0xFFD5E5D3)),
                       ),
                       const SizedBox(height: 22),
 
@@ -522,7 +523,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       FieldShell(
                         child: TextFormField(
                           controller: _email,
-                          style: const TextStyle(color: AP.white, fontSize: 13.5),
+                          style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 14),
                           decoration: _inputDeco('operator@network.io'),
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
@@ -544,7 +545,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         child: TextFormField(
                           controller: _password,
                           obscureText: _obscure,
-                          style: const TextStyle(color: AP.white, fontSize: 13.5),
+                          style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 14),
                           decoration: _inputDeco('••••••••••••').copyWith(
                             suffixIcon: TextButton(
                               onPressed: () => setState(() => _obscure = !_obscure),
@@ -582,7 +583,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ),
                           const SizedBox(width: 7),
                           Text('Stay authenticated',
-                            style: TextStyle(fontSize: 11, color: AP.muted)),
+                            style: GoogleFonts.spaceGrotesk(fontSize: 12.5, color: AP.muted)),
                           const Spacer(),
                           MouseRegion(
                             cursor: SystemMouseCursors.click,
@@ -599,7 +600,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       if (_errorMessage.isNotEmpty) ...[
                         Text(
                           _errorMessage,
-                          style: const TextStyle(fontSize: 11, color: Colors.redAccent),
+                          style: GoogleFonts.spaceGrotesk(fontSize: 12, color: Colors.redAccent),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 10),
@@ -628,7 +629,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text('No clearance yet? ',
-                            style: TextStyle(fontSize: 11.5, color: AP.muted)),
+                            style: GoogleFonts.spaceGrotesk(fontSize: 13.0, color: AP.muted)),
                           GestureDetector(
                             onTap: () => Navigator.pushReplacement(
                               context,

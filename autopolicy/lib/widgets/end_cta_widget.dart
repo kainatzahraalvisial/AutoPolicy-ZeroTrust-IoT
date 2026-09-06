@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'chamfered_cyber_button.dart';
 import '../screens/login_screen.dart';
+import '../screens/signup_screen.dart';
 
 class EndCtaWidget extends StatefulWidget {
   final bool isActive;
@@ -92,6 +93,18 @@ class _EndCtaWidgetState extends State<EndCtaWidget> {
     );
   }
 
+  void _navigateToSignup() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => const SignupPage(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 600),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -101,43 +114,52 @@ class _EndCtaWidgetState extends State<EndCtaWidget> {
       color: Colors.black,
       child: Stack(
         children: [
-          // 1. Bottom-Up Linear Green Gradient (matching .bg-gradient-bottom to top)
-          Positioned.fill(
+          // 1. Bottom-Up Linear Accent Gradient with #80A416 (compact area)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: size.height * 0.35,
             child: Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                   colors: [
-                    Color(0x8C08652C), // 0.55 forest green at bottom
-                    Color(0x59032820), // 0.35 dark emerald at 28%
-                    Colors.black,      // transparent/black at top 65%
-                  ],
-                  stops: [0.0, 0.28, 0.65],
-                ),
-              ),
-            ),
-          ),
-
-          // Bottom Radial Glow Overlay (matching radial-gradient at 40% 110% and 70% 100%)
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: RadialGradient(
-                  center: Alignment(0.2, 1.2),
-                  radius: 0.9,
-                  colors: [
-                    Color(0x6680A416),
-                    Color(0x59BBF438),
+                    const Color(0xFF80A416).withOpacity(0.85),
+                    const Color(0xFF80A416).withOpacity(0.40),
+                    const Color(0xFF80A416).withOpacity(0.12),
                     Colors.transparent,
                   ],
-                  stops: [0.0, 0.4, 0.85],
+                  stops: const [0.0, 0.35, 0.70, 1.0],
                 ),
               ),
             ),
           ),
 
-          // 2. Cyber Tile Grid Overlay
+          // 2. Subtle Radial Glow at bottom center using #80A416
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: size.height * 0.32,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0.0, 1.0),
+                  radius: 0.85,
+                  colors: [
+                    const Color(0xFF80A416).withOpacity(0.60),
+                    const Color(0xFF80A416).withOpacity(0.18),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.50, 1.0],
+                ),
+              ),
+            ),
+          ),
+
+          // 3. Cyber Tile Grid Overlay
           Positioned.fill(
             child: CustomPaint(
               painter: _CyberGridPainter(),
@@ -192,7 +214,7 @@ class _EndCtaWidgetState extends State<EndCtaWidget> {
                           fontSize: isDesktop ? 52 : 32,
                           fontWeight: FontWeight.w900,
                           height: 1.12,
-                          color: const Color(0xFFC5C764),
+                          color: const Color(0xFF80A416),
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -202,24 +224,25 @@ class _EndCtaWidgetState extends State<EndCtaWidget> {
 
                   // Typewriter Subtitle
                   Container(
-                    constraints: const BoxConstraints(minHeight: 56, maxWidth: 520),
+                    constraints: const BoxConstraints(minHeight: 56, maxWidth: 580),
                     child: RichText(
                       textAlign: TextAlign.center,
                       text: TextSpan(
-                        style: GoogleFonts.inter(
-                          fontSize: isDesktop ? 16 : 14,
-                          fontWeight: FontWeight.w300,
-                          height: 1.75,
-                          color: const Color(0xFF829A80),
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: isDesktop ? 18.0 : 15.5,
+                          fontWeight: FontWeight.w400,
+                          height: 1.6,
+                          color: const Color(0xFFD5E5D3),
                         ),
                         children: [
                           TextSpan(text: _typedText),
                           if (!_isTypingDone)
                             TextSpan(
                               text: ' |',
-                              style: GoogleFonts.inter(
-                                color: const Color(0xFFC5C764),
+                              style: GoogleFonts.spaceGrotesk(
+                                color: const Color(0xFFBBF438),
                                 fontWeight: FontWeight.bold,
+                                fontSize: isDesktop ? 18.0 : 15.5,
                               ),
                             ),
                         ],
@@ -246,7 +269,10 @@ class _EndCtaWidgetState extends State<EndCtaWidget> {
                         children: [
                           ChamferedCyberButton(
                             text: 'CREATE ACCOUNT',
-                            onTap: _navigateToLogin,
+                            backgroundColor: const Color(0xFF80A416),
+                            hoverColor: const Color(0xFFBBF438),
+                            textColor: Colors.black,
+                            onTap: _navigateToSignup,
                           ),
                           _GhostCyberButton(
                             text: 'SIGN IN',
@@ -283,12 +309,12 @@ class _EndCtaWidgetState extends State<EndCtaWidget> {
                   const SizedBox(height: 8),
                   Text(
                     'ZERO TRUST · IOT SECURITY · AUTOMATED ENFORCEMENT\n© 2025 AUTOPOLICY',
-                    style: GoogleFonts.inter(
-                      fontSize: 9.5,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 10.5,
                       fontWeight: FontWeight.w400,
-                      letterSpacing: 2.2,
+                      letterSpacing: 2.0,
                       height: 1.7,
-                      color: const Color(0xFF829A80),
+                      color: const Color(0xFF9EBA9C),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -337,14 +363,21 @@ class _GhostCyberButtonState extends State<_GhostCyberButton> {
               padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
               decoration: BoxDecoration(
                 color: _isHovered
-                    ? const Color(0xFF80A416).withOpacity(0.18)
-                    : const Color(0xFF08140C).withOpacity(0.85),
+                    ? const Color(0xFFC5C764).withOpacity(0.24)
+                    : const Color(0xFFBBF438).withOpacity(0.12),
                 border: Border.all(
                   color: _isHovered
                       ? const Color(0xFFC5C764)
-                      : const Color(0xFF80A416).withOpacity(0.35),
-                  width: 1,
+                      : const Color(0xFFBBF438),
+                  width: 1.4,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (_isHovered ? const Color(0xFFC5C764) : const Color(0xFFBBF438)).withOpacity(_isHovered ? 0.65 : 0.35),
+                    blurRadius: _isHovered ? 20 : 12,
+                    spreadRadius: 1,
+                  ),
+                ],
               ),
               child: Text(
                 widget.text,
@@ -352,7 +385,7 @@ class _GhostCyberButtonState extends State<_GhostCyberButton> {
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.8,
-                  color: const Color(0xFFC5C764),
+                  color: _isHovered ? const Color(0xFFC5C764) : const Color(0xFFBBF438),
                 ),
               ),
             ),

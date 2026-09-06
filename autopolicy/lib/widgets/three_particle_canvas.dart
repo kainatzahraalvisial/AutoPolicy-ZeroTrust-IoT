@@ -70,9 +70,9 @@ class _ThreeParticleCanvasState extends State<ThreeParticleCanvas>
       final double y = (_rand.nextDouble() - 0.5) * by * 2;
       final double z = (_rand.nextDouble() - 0.5) * bz * 2;
 
-      final double vx = (_rand.nextDouble() - 0.5) * 0.60;
-      final double vy = (_rand.nextDouble() - 0.5) * 0.60;
-      final double vz = (_rand.nextDouble() - 0.5) * 0.28;
+      final double vx = (_rand.nextDouble() - 0.5) * 4.2;
+      final double vy = (_rand.nextDouble() - 0.5) * 4.2;
+      final double vz = (_rand.nextDouble() - 0.5) * 2.0;
 
       final double r = _rand.nextDouble();
       Color c;

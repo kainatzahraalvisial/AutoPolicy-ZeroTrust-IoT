@@ -9,7 +9,7 @@ import '../theme/colors.dart';
 import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
 import '../widgets/cyber_grid.dart';
-import '../widgets/glass_container.dart';
+import '../widgets/cyber_hud_frame.dart';
 
 // Screens placeholder imports (we will write them next)
 import 'dashboard_overview.dart';
@@ -243,17 +243,9 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
           // Base background color or Midnight Indigo / Lavender-Blue gradient
           Container(
             decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF0C071A) : const Color(0xFFE5DEFF),
+              color: isDarkMode ? const Color(0xFF000000) : const Color(0xFFE5DEFF),
               gradient: isDarkMode 
-                  ? const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF06040C), // Deepest warm violet-black
-                        Color(0xFF0D081E), // Rich warm midnight-violet
-                        Color(0xFF050308), // Deep black-violet
-                      ],
-                    )
+                  ? null // Pure obsidian black for authentic cyber hacking terminal
                   : const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -266,50 +258,6 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                     ),
             ),
           ),
-          
-          // Aurora Glow Clouds (Disabled to keep Light Mode clean and plain white)
-          if (false) ...[
-            // Top Right Blue Glow
-            Positioned(
-              top: -150,
-              right: -150,
-              child: Container(
-                width: 500,
-                height: 500,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF0052D4).withOpacity(0.06),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF00F5FF).withOpacity(0.05),
-                      blurRadius: 150,
-                      spreadRadius: 50,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Bottom Left Violet Glow
-            Positioned(
-              bottom: -150,
-              left: -150,
-              child: Container(
-                width: 500,
-                height: 500,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF7000FF).withOpacity(0.05),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFC700FF).withOpacity(0.04),
-                      blurRadius: 150,
-                      spreadRadius: 50,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
 
           // Main Layout Grid & Elements
           CyberGrid(
@@ -323,12 +271,12 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
                         color: isDarkMode 
-                            ? const Color(0xFF0D081E).withOpacity(0.40) 
+                            ? const Color(0xFF0F0F0F) 
                             : Colors.white.withOpacity(0.15), // frosted light glass
                         border: Border(
                           bottom: BorderSide(
                             color: isDarkMode 
-                                ? const Color(0xFF261545).withOpacity(0.40) 
+                                ? const Color(0xFF337418).withOpacity(0.45) 
                                 : const Color(0xFFD6D6F2).withOpacity(0.40), // thin soft lavender border
                             width: 1,
                           ),
@@ -560,12 +508,12 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                           width: sidebarWidth,
                           decoration: BoxDecoration(
                             color: isDarkMode 
-                                ? const Color(0xFF06040C).withOpacity(0.50) 
+                                ? const Color(0xFF0F0F0F) 
                                 : Colors.white.withOpacity(0.15), // frosted light glass
                             border: Border(
                               right: BorderSide(
                                 color: isDarkMode 
-                                    ? const Color(0xFF261545).withOpacity(0.40) 
+                                    ? const Color(0xFF337418).withOpacity(0.45) 
                                     : const Color(0xFFD6D6F2).withOpacity(0.40), // thin warm purple border
                                 width: 1,
                               ),
@@ -583,9 +531,9 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                                     final int screenIdx = item['index'] as int;
                                     final bool isSelected = _activeTab == screenIdx;
                                     final itemColor = isSelected
-                                        ? const Color(0xFF7B96EC) // Premium Periwinkle Selected
-                                        : (isDarkMode ? const Color(0xFF64748B) : Colors.black54);
- 
+                                        ? (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF1E3A8A))
+                                        : (isDarkMode ? const Color(0xFF888888) : Colors.black54);
+
                                     return GestureDetector(
                                       behavior: HitTestBehavior.opaque,
                                       onTap: () => setState(() => _activeTab = screenIdx),
@@ -594,12 +542,12 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                                         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                         decoration: BoxDecoration(
                                           color: isSelected 
-                                              ? CyberColors.panelBg.withOpacity(0.4) 
+                                              ? (isDarkMode ? const Color(0xFF337418).withOpacity(0.32) : CyberColors.panelBg.withOpacity(0.4)) 
                                               : Colors.transparent,
-                                          borderRadius: BorderRadius.circular(6),
+                                          borderRadius: BorderRadius.circular(4),
                                           border: Border.all(
                                             color: isSelected 
-                                                ? CyberColors.neonGreen.withOpacity(0.3) 
+                                                ? (isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.65) : CyberColors.neonGreen.withOpacity(0.3)) 
                                                 : Colors.transparent,
                                           ),
                                         ),
@@ -618,8 +566,9 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                                                   style: CyberTextStyles.technical(
                                                     fontSize: 11.0,
                                                     color: isSelected
-                                                        ? (isDarkMode ? Colors.white : Colors.black)
-                                                        : (isDarkMode ? const Color(0xFF64748B) : Colors.black54),
+                                                        ? (isDarkMode ? const Color(0xFF5DD62C) : Colors.black)
+                                                        : (isDarkMode ? const Color(0xFF888888) : Colors.black54),
+                                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                                                   ),
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
@@ -647,16 +596,19 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
             ),
           ),
 
-            // 3. FLOATING GLASS GLOBAL NOTIFICATIONS DRAWER OVERLAY
+            // 3. FLOATING CYBER HUD NOTIFICATIONS DRAWER OVERLAY
             if (_isNotificationPanelOpen)
               Positioned(
                 top: 60,
                 right: 16,
                 bottom: isMobile ? 80 : 20,
-                child: GlassContainer(
+                child: CyberHudFrame(
                   width: isMobile ? Responsive.screenWidth(context) - 32 : 360,
-                  borderColor: CyberColors.neonCyan,
-                  glow: CyberColors.cyanGlow,
+                  design: CyberFrameDesign.tacticalBrackets,
+                  baseBorderColor: isDarkMode ? const Color(0xFF337418) : CyberColors.neonCyan,
+                  hoverBorderColor: const Color(0xFFC5C764),
+                  surfaceColor: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
+                  showGrid: true,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -697,7 +649,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                                     padding: const EdgeInsets.all(8),
                                     margin: const EdgeInsets.only(bottom: 8),
                                     decoration: BoxDecoration(
-                                      color: Colors.white10,
+                                      color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white10,
                                       border: Border(left: BorderSide(color: statusColor, width: 3)),
                                     ),
                                     child: Column(
@@ -719,7 +671,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                                         const SizedBox(height: 4),
                                         Text(
                                           n.message.toUpperCase(),
-                                          style: CyberTextStyles.interface(fontSize: 11.0, color: Colors.white),
+                                          style: CyberTextStyles.interface(fontSize: 11.0, color: isDarkMode ? Colors.white : Colors.black87),
                                         ),
                                       ],
                                     ),
@@ -755,11 +707,11 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
       bottomNavigationBar: isMobile
           ? Container(
               decoration: BoxDecoration(
-                color: isDarkMode ? CyberColors.cardBg : Colors.white,
+                color: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
                 border: Border(
                   top: BorderSide(
                     color: isDarkMode 
-                        ? CyberColors.borderNeonCyan 
+                        ? const Color(0xFF337418).withOpacity(0.45) 
                         : const Color(0xFF0F1530).withOpacity(0.08), 
                     width: 1,
                   ),
@@ -774,9 +726,9 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                     _activeTab = menuItems[navIdx]['index'] as int;
                   });
                 },
-                backgroundColor: isDarkMode ? CyberColors.cardBg : Colors.white,
-                selectedItemColor: isDarkMode ? CyberColors.neonGreen : const Color(0xFF00875A),
-                unselectedItemColor: isDarkMode ? CyberColors.textMuted : const Color(0xFF64748B),
+                backgroundColor: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
+                selectedItemColor: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF00875A),
+                unselectedItemColor: isDarkMode ? const Color(0xFF888888) : const Color(0xFF64748B),
                 selectedLabelStyle: CyberTextStyles.technical(fontSize: 9.0),
                 unselectedLabelStyle: CyberTextStyles.technical(fontSize: 8.0),
                 type: BottomNavigationBarType.fixed,

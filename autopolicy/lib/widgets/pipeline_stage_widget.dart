@@ -1,9 +1,12 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'pipeline_particle_canvas.dart';
+import 'cyber_hud_frame.dart';
 
 // ─────────────────────────────────────────────────────────────
-// PIPELINE PAGE  (page index 1)
-// Exact structure of original HTML #page-1 with replay capability
+// PIPELINE PAGE (Landing Screen Page 2)
+// Full-screen graph -> side panels close in -> central cluster -> sequential reveal
 // ─────────────────────────────────────────────────────────────
 
 class PipelinePage extends StatefulWidget {
@@ -18,44 +21,54 @@ class _PipelinePageState extends State<PipelinePage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _shadeCtrl;
 
-  // Same data as the HTML
+  // Pipeline steps (01 to 05)
   static const leftSteps = [
     _Step('01', 'Capture',
-        'Zeek monitors IoT flows in real time — extracting IPs, ports, protocols, and duration into structured buffers.'),
+        'Zeek monitors IoT network flows in real time — extracting IPs, ports, protocols, and durations into structured buffers.'),
     _Step('03', 'Model',
-        'GNN maps device relationships as a graph — exposing abnormal communication invisible to rule-based IDS.'),
+        'GNN maps device relationships as a live graph — exposing abnormal communication invisible to rule-based IDS.'),
     _Step('05', 'Enforce',
-        'OPA deploys policies in real time. Role-based dashboard lets admins review, approve, and manage.'),
+        'OPA engine deploys policies dynamically. Role-based dashboard lets administrators review, approve, and manage in real time.'),
   ];
 
   static const rightSteps = [
     _Step('02', 'Detect',
-        'Hybrid ML classifier identifies 33 attack categories including DDoS, lateral movement, and Mirai botnet.'),
+        'Hybrid ML classifier identifies 33 attack categories including DDoS, lateral movement, and Mirai botnet telemetry.'),
     _Step('04', 'Generate',
-        'Transformer model converts detected patterns into zero-trust JSON policies automatically.'),
+        'Transformer model automatically converts detected abnormal traffic into zero-trust JSON authorization policies.'),
   ];
 
   @override
   void initState() {
     super.initState();
-    // Matches CSS: transition width 3.2s cubic-bezier(.22, 1, .36, 1)
+    // Fast & smooth panel closing animation over 1.3s
     _shadeCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3200),
+      duration: const Duration(milliseconds: 1300),
     );
     if (widget.isActive) {
-      _shadeCtrl.forward();
+      _startSequence();
     }
+  }
+
+  void _startSequence() {
+    _shadeCtrl.reset();
+    // Decreased time: network graph shows full screen for just 140ms before panels close in
+    Future.delayed(const Duration(milliseconds: 140), () {
+      if (mounted && widget.isActive) {
+        _shadeCtrl.forward();
+      }
+    });
   }
 
   @override
   void didUpdateWidget(covariant PipelinePage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isActive && !oldWidget.isActive) {
-      _shadeCtrl.reset();
-      _shadeCtrl.forward();
+      _startSequence();
     } else if (!widget.isActive && oldWidget.isActive) {
-      _shadeCtrl.reset();
+      // Exit animation: smoothly slide panels back out when leaving page two
+      _shadeCtrl.reverse();
     }
   }
 
@@ -68,138 +81,189 @@ class _PipelinePageState extends State<PipelinePage>
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final isNarrow = size.width < 960;
+    final isMobile = size.width < 680;
 
-    // Final shade width = clamp(200px, 28vw, 340px)  ← exact CSS
-    final shadeW = isNarrow ? 0.0 : (size.width * 0.28).clamp(200.0, 340.0);
-
-    if (isNarrow) {
+    // Mobile fallback layout
+    if (isMobile) {
       return SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 100, 24, 40),
+        padding: const EdgeInsets.fromLTRB(24, 90, 24, 40),
         child: Column(
           children: [
-            const SizedBox(
-              height: 200,
-              child: PipelineParticles(),
+            SizedBox(
+              height: 220,
+              child: PipelineParticles(isActive: widget.isActive),
             ),
-            const SizedBox(height: 24),
-            ...[...leftSteps, ...rightSteps].map(
-              (s) => Padding(
-                padding: const EdgeInsets.only(bottom: 28),
-                child: PipelineItem(
+            const SizedBox(height: 28),
+            ...[...leftSteps, ...rightSteps].asMap().entries.map((entry) {
+              final idx = entry.key;
+              final s = entry.value;
+              final design = switch (idx) {
+                0 => CyberFrameDesign.topTabWedge,
+                1 => CyberFrameDesign.hazardStripes,
+                2 => CyberFrameDesign.techDots,
+                3 => CyberFrameDesign.ladderFins,
+                _ => CyberFrameDesign.tacticalBrackets,
+              };
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: _PipelineItem(
                   step: s,
-                  delayMs: 0,
+                  delayMs: 200 + (idx * 350),
                   alignRight: false,
                   isActive: widget.isActive,
+                  design: design,
                 ),
-              ),
-            ),
+              );
+            }),
           ],
         ),
       );
     }
 
-    return Stack(
-      children: [
-        // 1. Full-bleed particle field (pipeline-window)
-        const Positioned.fill(child: PipelineParticles()),
+    // Decreased central graph boundary: Panels take 33% width clamped between 300px and 440px
+    final shadeW = (size.width * 0.33).clamp(300.0, 440.0);
+    final fullBoundsX = size.width * 0.52;
+    // Decreased boundary for central graph cluster: tighter bounds in the center
+    final centerHalfW = ((size.width - (2 * shadeW)) * 0.38).clamp(90.0, 240.0);
 
-        // 2. Black side panels that slowly close in
-        AnimatedBuilder(
-          animation: _shadeCtrl,
-          builder: (_, __) {
-            final t = Curves.easeOutCubic.transform(_shadeCtrl.value);
-            final w = t * shadeW;
-            return Stack(
-              children: [
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: w,
-                  child: const ColoredBox(color: Colors.black),
-                ),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: w,
-                  child: const ColoredBox(color: Colors.black),
-                ),
-              ],
-            );
-          },
-        ),
+    return AnimatedBuilder(
+      animation: _shadeCtrl,
+      builder: (context, _) {
+        final t = Curves.easeInOutCubic.transform(_shadeCtrl.value);
+        final currentPanelW = t * shadeW;
+        // Bound shrinks smoothly from full-screen to the tighter central rectangle
+        final currentBoundsX = lerpDouble(fullBoundsX, centerHalfW, t)!;
 
-        // 3. Left text column (sits on the left shade)
-        Positioned(
-          left: 0,
-          top: 0,
-          bottom: 0,
-          width: shadeW,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 48, 28, 48),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // delays match original: 1.6s, 2.8s, 4.0s
-                PipelineItem(
-                  step: leftSteps[0],
-                  delayMs: 1600,
-                  alignRight: true,
-                  isActive: widget.isActive,
-                ),
-                const SizedBox(height: 40),
-                PipelineItem(
-                  step: leftSteps[1],
-                  delayMs: 2800,
-                  alignRight: true,
-                  isActive: widget.isActive,
-                ),
-                const SizedBox(height: 40),
-                PipelineItem(
-                  step: leftSteps[2],
-                  delayMs: 4000,
-                  alignRight: true,
-                  isActive: widget.isActive,
-                ),
-              ],
+        return Stack(
+          children: [
+            // 1. Interactive network graph — spans full screen briefly, then clusters into central rectangle
+            Positioned.fill(
+              child: PipelineParticles(
+                isActive: widget.isActive,
+                currentBoundsX: currentBoundsX,
+              ),
             ),
-          ),
-        ),
 
-        // 4. Right text column
-        Positioned(
-          right: 0,
-          top: 0,
-          bottom: 0,
-          width: shadeW,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(28, 48, 20, 48),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // delays match original: 2.2s, 3.4s
-                PipelineItem(
-                  step: rightSteps[0],
-                  delayMs: 2200,
-                  alignRight: false,
-                  isActive: widget.isActive,
-                ),
-                const SizedBox(height: 40),
-                PipelineItem(
-                  step: rightSteps[1],
-                  delayMs: 3400,
-                  alignRight: false,
-                  isActive: widget.isActive,
-                ),
-              ],
+            // 2. Left solid black panel (slides in smoothly; reverses on page exit)
+            Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: currentPanelW,
+              child: const ColoredBox(color: Colors.black),
             ),
-          ),
-        ),
-      ],
+
+            // 3. Right solid black panel (slides in smoothly; reverses on page exit)
+            Positioned(
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: currentPanelW,
+              child: const ColoredBox(color: Colors.black),
+            ),
+
+            // 4. Left content column (Steps 01, 03, 05) - Each with distinct HUD frame design
+            if (_shadeCtrl.value > 0.05)
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: shadeW,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    size.width > 1100 ? 44 : 24,
+                    80,
+                    24,
+                    60,
+                  ),
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          // Sequential reveal: 01 Capture starts at 1100ms
+                          _PipelineItem(
+                            step: leftSteps[0],
+                            delayMs: 1100,
+                            alignRight: true,
+                            isActive: widget.isActive,
+                            design: CyberFrameDesign.topTabWedge,
+                          ),
+                          const SizedBox(height: 38),
+                          // 03 Model starts at 2100ms
+                          _PipelineItem(
+                            step: leftSteps[1],
+                            delayMs: 2100,
+                            alignRight: true,
+                            isActive: widget.isActive,
+                            design: CyberFrameDesign.techDots,
+                          ),
+                          const SizedBox(height: 38),
+                          // 05 Enforce starts at 3100ms
+                          _PipelineItem(
+                            step: leftSteps[2],
+                            delayMs: 3100,
+                            alignRight: true,
+                            isActive: widget.isActive,
+                            design: CyberFrameDesign.tacticalBrackets,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            // 5. Right content column (Steps 02, 04) - Staggered vertically between left items
+            if (_shadeCtrl.value > 0.05)
+              Positioned(
+                right: 0,
+                top: 0,
+                bottom: 0,
+                width: shadeW,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    24,
+                    80,
+                    size.width > 1100 ? 44 : 24,
+                    60,
+                  ),
+                  child: Center(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Vertical offset so 02 sits between 01 and 03
+                          const SizedBox(height: 56),
+                          // 02 Detect starts at 1600ms
+                          _PipelineItem(
+                            step: rightSteps[0],
+                            delayMs: 1600,
+                            alignRight: false,
+                            isActive: widget.isActive,
+                            design: CyberFrameDesign.hazardStripes,
+                          ),
+                          const SizedBox(height: 48),
+                          // 04 Generate starts at 2600ms
+                          _PipelineItem(
+                            step: rightSteps[1],
+                            delayMs: 2600,
+                            alignRight: false,
+                            isActive: widget.isActive,
+                            design: CyberFrameDesign.ladderFins,
+                          ),
+                          const SizedBox(height: 56),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }
@@ -210,26 +274,27 @@ class _Step {
   const _Step(this.num, this.title, this.desc);
 }
 
-// ─── Single pipeline item (matches .pipeline-item) ───────────
-class PipelineItem extends StatefulWidget {
+// ─── Single pipeline item with CyberHudFrame and yellow hover ─────
+class _PipelineItem extends StatefulWidget {
   final _Step step;
   final int delayMs;
   final bool alignRight;
   final bool isActive;
+  final CyberFrameDesign design;
 
-  const PipelineItem({
-    super.key,
+  const _PipelineItem({
     required this.step,
     required this.delayMs,
     required this.alignRight,
     required this.isActive,
+    this.design = CyberFrameDesign.hazardStripes,
   });
 
   @override
-  State<PipelineItem> createState() => _PipelineItemState();
+  State<_PipelineItem> createState() => _PipelineItemState();
 }
 
-class _PipelineItemState extends State<PipelineItem>
+class _PipelineItemState extends State<_PipelineItem>
     with SingleTickerProviderStateMixin {
   late final AnimationController _c;
   bool hover = false;
@@ -237,10 +302,9 @@ class _PipelineItemState extends State<PipelineItem>
   @override
   void initState() {
     super.initState();
-    // CSS: transition opacity 1s ease, transform 1s cubic-bezier(.16,1,.3,1)
     _c = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 750),
     );
     if (widget.isActive) {
       _triggerDelay();
@@ -248,7 +312,7 @@ class _PipelineItemState extends State<PipelineItem>
   }
 
   @override
-  void didUpdateWidget(covariant PipelineItem oldWidget) {
+  void didUpdateWidget(covariant _PipelineItem oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isActive && !oldWidget.isActive) {
       _c.reset();
@@ -260,7 +324,9 @@ class _PipelineItemState extends State<PipelineItem>
 
   void _triggerDelay() {
     Future.delayed(Duration(milliseconds: widget.delayMs), () {
-      if (mounted && widget.isActive) _c.forward();
+      if (mounted && widget.isActive) {
+        _c.forward();
+      }
     });
   }
 
@@ -277,62 +343,136 @@ class _PipelineItemState extends State<PipelineItem>
       builder: (_, __) {
         final t = Curves.easeOutCubic.transform(_c.value);
         return Opacity(
-          opacity: t * (hover ? 1.0 : 0.9),
+          opacity: t,
           child: Transform.translate(
-            offset: Offset(0, (1 - t) * 24),
+            offset: Offset(0, (1 - t) * 20),
             child: MouseRegion(
               cursor: SystemMouseCursors.click,
               onEnter: (_) => setState(() => hover = true),
               onExit: (_) => setState(() => hover = false),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 260),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      widget.step.num,
-                      style: TextStyle(
-                        fontFamily: 'Orbitron',
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.6,
-                        color: hover
-                            ? const Color(0xFFBBF438)
-                            : const Color(0xFFC5C764),
+                constraints: const BoxConstraints(maxWidth: 360),
+                child: CyberHudFrame(
+                  design: widget.design,
+                  baseBorderColor: const Color(0xFF80A416).withValues(alpha: 0.38),
+                  hoverBorderColor: const Color(0xFFC5C764), // Yellow hover color!
+                  surfaceColor: const Color(0xFF0F0F0F).withValues(alpha: 0.88), // Black tactical background
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: widget.alignRight
+                        ? CrossAxisAlignment.end
+                        : CrossAxisAlignment.start,
+                    children: [
+                      // Step Number badge & Title
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          if (widget.alignRight) ...[
+                            AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 220),
+                              style: GoogleFonts.orbitron(
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.8,
+                                color: hover
+                                    ? const Color(0xFFC5C764) // Yellow on hover!
+                                    : const Color(0xFFEDF5EB), // Crisp heading white by default
+                                shadows: hover
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(0xFFC5C764).withValues(alpha: 0.8),
+                                          blurRadius: 16,
+                                        ),
+                                      ]
+                                    : [],
+                              ),
+                              child: Text(widget.step.title),
+                            ),
+                            const SizedBox(width: 10),
+                            _buildNumTag(),
+                          ] else ...[
+                            _buildNumTag(),
+                            const SizedBox(width: 10),
+                            AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 220),
+                              style: GoogleFonts.orbitron(
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.8,
+                                color: hover
+                                    ? const Color(0xFFC5C764) // Yellow on hover!
+                                    : const Color(0xFFEDF5EB), // Crisp heading white by default
+                                shadows: hover
+                                    ? [
+                                        BoxShadow(
+                                          color: const Color(0xFFC5C764).withValues(alpha: 0.8),
+                                          blurRadius: 16,
+                                        ),
+                                      ]
+                                    : [],
+                              ),
+                              child: Text(widget.step.title),
+                            ),
+                          ],
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      widget.step.title,
-                      style: TextStyle(
-                        fontFamily: 'Orbitron',
-                        fontSize: 17.6,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.6,
-                        color: hover
-                            ? const Color(0xFFC5C764)
-                            : const Color(0xFFEDF5EB),
+                      const SizedBox(height: 10),
+
+                      // Paragraph Description (Clean silver-white by default, illuminates to crisp white)
+                      AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 220),
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 14.5,
+                          height: 1.55,
+                          fontWeight: FontWeight.w400,
+                          color: hover
+                              ? const Color(0xFFF8F8F8) // Pure crisp white on hover
+                              : const Color(0xFFCBD5E1), // Clean high-contrast silver-white by default
+                        ),
+                        child: Text(
+                          widget.step.desc,
+                          textAlign: TextAlign.justify,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      widget.step.desc,
-                      textAlign: TextAlign.justify,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        height: 1.75,
-                        color: hover
-                            ? const Color(0xFFEDF5EB)
-                            : const Color(0xFF829A80),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildNumTag() {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: hover
+            ? const Color(0xFFC5C764).withValues(alpha: 0.25)
+            : const Color(0xFF80A416).withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: hover
+              ? const Color(0xFFC5C764)
+              : const Color(0xFF80A416).withValues(alpha: 0.55),
+          width: 1,
+        ),
+      ),
+      child: Text(
+        widget.step.num,
+        style: GoogleFonts.shareTechMono(
+          fontSize: 12.0,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.8,
+          color: hover
+              ? const Color(0xFFC5C764) // Yellow on hover!
+              : const Color(0xFF80A416), // Olive green by default
+        ),
+      ),
     );
   }
 }

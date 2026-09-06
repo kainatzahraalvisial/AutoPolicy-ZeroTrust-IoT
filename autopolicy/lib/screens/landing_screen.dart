@@ -8,6 +8,7 @@ import '../widgets/cyber_hud_card.dart';
 import '../widgets/end_cta_widget.dart';
 import '../widgets/chamfered_cyber_button.dart';
 import 'login_screen.dart';
+import 'signup_screen.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -16,11 +17,33 @@ class LandingScreen extends StatefulWidget {
   State<LandingScreen> createState() => _LandingScreenState();
 }
 
-class _LandingScreenState extends State<LandingScreen> {
+class _LandingScreenState extends State<LandingScreen>
+    with SingleTickerProviderStateMixin {
   int _currentPage = 0;
   bool _isTransitioning = false;
   bool _wheelLock = false;
   Offset _globalMousePos = const Offset(-9999, -9999);
+  late final PageController _pageController;
+  late final AnimationController _heroAnimCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _heroAnimCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+    // Trigger hero text entrance reveal animation
+    _heroAnimCtrl.forward();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _heroAnimCtrl.dispose();
+    super.dispose();
+  }
 
   void _goToPage(int index) {
     if (index < 0 || index > 3 || index == _currentPage || _isTransitioning) return;
@@ -30,7 +53,16 @@ class _LandingScreenState extends State<LandingScreen> {
       _currentPage = index;
     });
 
-    Future.delayed(const Duration(milliseconds: 600), () {
+    if (index == 0) {
+      _heroAnimCtrl.forward(from: 0.0);
+    }
+
+    // Smooth vertical scroll animation between pages
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 650),
+      curve: Curves.easeInOutCubic,
+    ).then((_) {
       if (mounted) {
         setState(() {
           _isTransitioning = false;
@@ -59,6 +91,18 @@ class _LandingScreenState extends State<LandingScreen> {
     Navigator.of(context).push(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => const LoginPage(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 600),
+      ),
+    );
+  }
+
+  void _navigateToSignup() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => const SignupPage(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -118,7 +162,7 @@ class _LandingScreenState extends State<LandingScreen> {
             if (isDesktop) ...[
               Positioned(
                 left: 24,
-                top: 24,
+                top: 88,
                 bottom: 24,
                 width: 54,
                 child: AnimatedOpacity(
@@ -204,98 +248,127 @@ class _LandingScreenState extends State<LandingScreen> {
               ),
             ],
 
-            // 3. Top Navigation Bar
-            Positioned(
-              top: 0,
-              left: (isDesktop && !isFullDarkPage) ? 120 : 0,
-              right: 0,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 400),
-                padding: EdgeInsets.fromLTRB(
-                  (isDesktop && !isFullDarkPage) ? 20 : 36,
-                  26,
-                  isDesktop ? 60 : 24,
-                  24,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Logo
-                    Row(
-                      children: [
-                        Container(
-                          width: 7,
-                          height: 7,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: const Color(0xFFBBF438),
-                            boxShadow: [
-                              BoxShadow(
-                                color: const Color(0xFFBBF438).withOpacity(0.9),
-                                blurRadius: 12,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'AutoPolicy',
-                          style: GoogleFonts.orbitron(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 3.8,
-                            color: const Color(0xFFEDF5EB),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // Nav Links
-                    if (isDesktop)
-                      Row(
-                        children: [
-                          _HoverNavLink(
-                            title: 'EXPLORE',
-                            isActive: _currentPage == 0,
-                            onTap: () => _goToPage(0),
-                          ),
-                          const SizedBox(width: 40),
-                          _HoverNavLink(
-                            title: 'PIPELINE',
-                            isActive: _currentPage == 1,
-                            onTap: () => _goToPage(1),
-                          ),
-                          const SizedBox(width: 40),
-                          _HoverNavLink(
-                            title: 'SYSTEM',
-                            isActive: _currentPage == 2,
-                            onTap: () => _goToPage(2),
-                          ),
-                        ],
-                      ),
-
-                    // Login Action Button
-                    _NavLoginButton(onTap: _navigateToLogin),
-                  ],
-                ),
-              ),
-            ),
-
-            // 4. Fixed Scenes (Hero, Pipeline Stage, System Specs, End CTA)
-            Positioned(
-              top: 0,
-              bottom: 0,
-              left: (isDesktop && !isFullDarkPage) ? 120 : 0,
-              right: 0,
-              child: IndexedStack(
-                index: _currentPage,
+            // 3. Scrollable PageView Scenes (Hero, Pipeline Stage, System Specs, End CTA)
+            Positioned.fill(
+              child: PageView(
+                controller: _pageController,
+                scrollDirection: Axis.vertical,
+                physics: const NeverScrollableScrollPhysics(),
+                onPageChanged: (idx) {
+                  if (_currentPage != idx) {
+                    setState(() => _currentPage = idx);
+                    if (idx == 0) _heroAnimCtrl.forward(from: 0.0);
+                  }
+                },
                 children: [
                   _buildHeroPage(context, isDesktop),
                   PipelinePage(isActive: _currentPage == 1),
                   _buildSystemSpecsPage(context, isDesktop),
                   EndCtaWidget(isActive: _currentPage == 3),
                 ],
+              ),
+            ),
+
+            // 4. Top Navigation Bar (Always rendered on top across ALL pages)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                  child: Container(
+                    padding: EdgeInsets.fromLTRB(
+                      isDesktop ? 36 : 20,
+                      18,
+                      isDesktop ? 36 : 20,
+                      18,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.65),
+                      border: Border(
+                        bottom: BorderSide(
+                          color: const Color(0xFF80A416).withOpacity(0.18),
+                          width: 1.0,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Logo
+                        GestureDetector(
+                          onTap: () => _goToPage(0),
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: const Color(0xFFBBF438),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: const Color(0xFFBBF438).withOpacity(0.9),
+                                        blurRadius: 12,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'AutoPolicy',
+                                  style: GoogleFonts.orbitron(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 3.8,
+                                    color: const Color(0xFFEDF5EB),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Nav Links (All pages: EXPLORE, PIPELINE, SYSTEM, DEPLOY)
+                        if (isDesktop || size.width > 700)
+                          Row(
+                            children: [
+                              _HoverNavLink(
+                                title: 'EXPLORE',
+                                isActive: _currentPage == 0,
+                                onTap: () => _goToPage(0),
+                              ),
+                              SizedBox(width: isDesktop ? 36 : 18),
+                              _HoverNavLink(
+                                title: 'PIPELINE',
+                                isActive: _currentPage == 1,
+                                onTap: () => _goToPage(1),
+                              ),
+                              SizedBox(width: isDesktop ? 36 : 18),
+                              _HoverNavLink(
+                                title: 'SYSTEM',
+                                isActive: _currentPage == 2,
+                                onTap: () => _goToPage(2),
+                              ),
+                              SizedBox(width: isDesktop ? 36 : 18),
+                              _HoverNavLink(
+                                title: 'DEPLOY',
+                                isActive: _currentPage == 3,
+                                onTap: () => _goToPage(3),
+                              ),
+                            ],
+                          ),
+
+                        // Login Action Button
+                        _NavLoginButton(onTap: _navigateToLogin),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -305,101 +378,153 @@ class _LandingScreenState extends State<LandingScreen> {
   );
 }
 
-  // Section 0: Hero
+  // Section 0: Hero (with staggered reveal animations for all text elements)
   Widget _buildHeroPage(BuildContext context, bool isDesktop) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 48 : 24),
-      child: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 680),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Hero Tag
-              Row(
+    return AnimatedBuilder(
+      animation: _heroAnimCtrl,
+      builder: (context, _) {
+        final t = _heroAnimCtrl.value;
+
+        // Staggered interval transforms:
+        final tTag = const Interval(0.0, 0.40, curve: Curves.easeOutCubic).transform(t);
+        final tTitle1 = const Interval(0.15, 0.60, curve: Curves.easeOutCubic).transform(t);
+        final tTitle2 = const Interval(0.28, 0.75, curve: Curves.easeOutCubic).transform(t);
+        final tSub = const Interval(0.42, 0.88, curve: Curves.easeOutCubic).transform(t);
+        final tBtns = const Interval(0.58, 1.0, curve: Curves.easeOutCubic).transform(t);
+
+        return Container(
+          padding: EdgeInsets.fromLTRB(isDesktop ? 120 : 24, 64, isDesktop ? 60 : 24, 24),
+          child: Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 680),
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 34,
-                    height: 2,
-                    color: const Color(0xFF80A416),
+                  // 1. Hero Tag: Slides down & reveals
+                  Opacity(
+                    opacity: tTag,
+                    child: Transform.translate(
+                      offset: Offset(0, (1 - tTag) * -18),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 34,
+                            height: 2,
+                            color: const Color(0xFF80A416),
+                          ),
+                          const SizedBox(width: 14),
+                          Text(
+                            'ANOMALY DETECTION · ZERO TRUST · POLICY AUTOMATION',
+                            style: GoogleFonts.shareTechMono(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 2.8,
+                              color: const Color(0xFFC5C764),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 14),
-                  Text(
-                    'ANOMALY DETECTION · ZERO TRUST · POLICY AUTOMATION',
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 3.5,
-                      color: const Color(0xFFC5C764),
+                  const SizedBox(height: 24),
+
+                  // 2. H1 Title Line 1: Slides up & reveals
+                  Opacity(
+                    opacity: tTitle1,
+                    child: Transform.translate(
+                      offset: Offset(0, (1 - tTitle1) * 36),
+                      child: Text(
+                        'Every device.',
+                        style: GoogleFonts.orbitron(
+                          fontSize: isDesktop ? 72 : 44,
+                          fontWeight: FontWeight.w900,
+                          height: 1.05,
+                          letterSpacing: -1.0,
+                          color: const Color(0xFFEDF5EB),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+
+                  // 3. H1 Title Line 2: Slides up & reveals with glowing lime-yellow
+                  Opacity(
+                    opacity: tTitle2,
+                    child: Transform.translate(
+                      offset: Offset(0, (1 - tTitle2) * 36),
+                      child: Text(
+                        'Zero trust.',
+                        style: GoogleFonts.orbitron(
+                          fontSize: isDesktop ? 72 : 44,
+                          fontWeight: FontWeight.w900,
+                          fontStyle: FontStyle.italic,
+                          height: 1.05,
+                          letterSpacing: -1.0,
+                          color: const Color(0xFFC5C764),
+                          shadows: [
+                            BoxShadow(
+                              color: const Color(0xFFC5C764).withOpacity(0.4),
+                              blurRadius: 20,
+                            ),
+                          ],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // 4. Subtitle: Slides up & reveals
+                  Opacity(
+                    opacity: tSub,
+                    child: Transform.translate(
+                      offset: Offset(0, (1 - tSub) * 26),
+                      child: Text(
+                        'AutoPolicy detects anomalies in IoT networks and automatically generates enforceable zero-trust security policies — in real time.',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: isDesktop ? 18.0 : 15.5,
+                          fontWeight: FontWeight.w400,
+                          height: 1.65,
+                          color: const Color(0xFFD5E5D3),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 42),
+
+                  // 5. Buttons: Slide up & reveal
+                  Opacity(
+                    opacity: tBtns,
+                    child: Transform.translate(
+                      offset: Offset(0, (1 - tBtns) * 20),
+                      child: Wrap(
+                        spacing: 24,
+                        runSpacing: 16,
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          ChamferedCyberButton(
+                            text: 'EXPLORE NOW',
+                            onTap: _navigateToSignup,
+                          ),
+                          _LearnMoreHoverButton(onTap: () => _goToPage(1)),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
-
-              // H1 Title
-              Text(
-                'Every device.',
-                style: GoogleFonts.orbitron(
-                  fontSize: isDesktop ? 72 : 44,
-                  fontWeight: FontWeight.w900,
-                  height: 1.05,
-                  letterSpacing: -1.0,
-                  color: const Color(0xFFEDF5EB),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              Text(
-                'Zero trust.',
-                style: GoogleFonts.orbitron(
-                  fontSize: isDesktop ? 72 : 44,
-                  fontWeight: FontWeight.w900,
-                  fontStyle: FontStyle.italic,
-                  height: 1.05,
-                  letterSpacing: -1.0,
-                  color: const Color(0xFFC5C764),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-
-              // Subtitle
-              Text(
-                'AutoPolicy detects anomalies in IoT networks and automatically generates enforceable zero-trust security policies — in real time.',
-                style: GoogleFonts.inter(
-                  fontSize: isDesktop ? 15.5 : 14,
-                  fontWeight: FontWeight.w300,
-                  height: 1.85,
-                  color: const Color(0xFF829A80),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 42),
-
-              // Buttons
-              Wrap(
-                spacing: 24,
-                runSpacing: 16,
-                alignment: WrapAlignment.center,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  ChamferedCyberButton(
-                    text: 'EXPLORE NOW',
-                    onTap: _navigateToLogin,
-                  ),
-                  _LearnMoreHoverButton(onTap: () => _goToPage(1)),
-                ],
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  // Section 2: System Specs (HUD Frame Cards)
+  // Section 2: System Specs (HUD Frame Cards with text animation & increased sizes)
   Widget _buildSystemSpecsPage(BuildContext context, bool isDesktop) {
     final bool isActive = _currentPage == 2;
 
@@ -422,22 +547,22 @@ class _LandingScreenState extends State<LandingScreen> {
                 vertical: 60,
               ),
               child: Container(
-                constraints: const BoxConstraints(maxWidth: 1040),
+                constraints: const BoxConstraints(maxWidth: 1060),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Tag
                     AnimatedOpacity(
-                      duration: const Duration(milliseconds: 850),
-                      curve: const Cubic(0.16, 1.0, 0.3, 1.0),
+                      duration: const Duration(milliseconds: 700),
+                      curve: Curves.easeOutCubic,
                       opacity: isActive ? 1.0 : 0.0,
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 850),
-                        curve: const Cubic(0.16, 1.0, 0.3, 1.0),
+                        duration: const Duration(milliseconds: 700),
+                        curve: Curves.easeOutCubic,
                         transform: isActive
                             ? Matrix4.identity()
-                            : (Matrix4.identity()..translate(0.0, -36.0, 0.0)),
+                            : (Matrix4.identity()..translate(0.0, -28.0, 0.0)),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -449,10 +574,10 @@ class _LandingScreenState extends State<LandingScreen> {
                             const SizedBox(width: 14),
                             Text(
                               'BY THE NUMBERS',
-                              style: GoogleFonts.inter(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 3.5,
+                              style: GoogleFonts.shareTechMono(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 3.0,
                                 color: const Color(0xFFC5C764),
                               ),
                             ),
@@ -460,41 +585,65 @@ class _LandingScreenState extends State<LandingScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
-                    // H2 Title
-                    AnimatedOpacity(
-                      duration: const Duration(milliseconds: 900),
-                      curve: const Cubic(0.16, 1.0, 0.3, 1.0),
-                      opacity: isActive ? 1.0 : 0.0,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 900),
-                        curve: const Cubic(0.16, 1.0, 0.3, 1.0),
-                        transform: isActive
-                            ? Matrix4.identity()
-                            : (Matrix4.identity()..translate(0.0, -48.0, 0.0)),
-                        child: RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            style: GoogleFonts.orbitron(
-                              fontSize: isDesktop ? 40 : 28,
-                              fontWeight: FontWeight.w800,
-                              height: 1.15,
-                              color: const Color(0xFFEDF5EB),
-                            ),
-                            children: [
-                              const TextSpan(text: 'Built to scale. '),
-                              TextSpan(
-                                text: 'Built to enforce.',
-                                style: GoogleFonts.orbitron(
-                                  fontStyle: FontStyle.italic,
-                                  color: const Color(0xFFC5C764),
-                                ),
+                    // H2 Title with Split-Text Sliding Animation: Left and Right reveal
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        // Left part of heading: slides in from left
+                        AnimatedOpacity(
+                          duration: const Duration(milliseconds: 800),
+                          curve: Curves.easeOutCubic,
+                          opacity: isActive ? 1.0 : 0.0,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 800),
+                            curve: Curves.easeOutCubic,
+                            transform: isActive
+                                ? Matrix4.identity()
+                                : (Matrix4.identity()..translate(-42.0, 0.0, 0.0)),
+                            child: Text(
+                              'Built to scale. ',
+                              style: GoogleFonts.orbitron(
+                                fontSize: isDesktop ? 46 : 30, // Increased prominent size
+                                fontWeight: FontWeight.w800,
+                                height: 1.15,
+                                color: const Color(0xFFEDF5EB),
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                      ),
+                        // Right part of heading: slides in with delay from right
+                        AnimatedOpacity(
+                          duration: const Duration(milliseconds: 950),
+                          curve: Curves.easeOutCubic,
+                          opacity: isActive ? 1.0 : 0.0,
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 950),
+                            curve: Curves.easeOutCubic,
+                            transform: isActive
+                                ? Matrix4.identity()
+                                : (Matrix4.identity()..translate(42.0, 0.0, 0.0)),
+                            child: Text(
+                              'Built to enforce.',
+                              style: GoogleFonts.orbitron(
+                                fontSize: isDesktop ? 46 : 30,
+                                fontWeight: FontWeight.w800,
+                                fontStyle: FontStyle.italic,
+                                height: 1.15,
+                                color: const Color(0xFFC5C764),
+                                shadows: [
+                                  BoxShadow(
+                                    color: const Color(0xFFC5C764).withOpacity(0.5),
+                                    blurRadius: 18,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 36),
 
@@ -681,18 +830,18 @@ class _NavLoginButtonState extends State<_NavLoginButton> {
           transform: Matrix4.translationValues(0, _isHovered ? -2 : 0, 0),
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
           decoration: BoxDecoration(
-            color: _isHovered ? const Color(0xFFBBF438) : const Color(0xFF80A416),
+            color: _isHovered ? const Color(0xFFC5C764) : const Color(0xFFBBF438),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: (_isHovered ? const Color(0xFFBBF438) : const Color(0xFF80A416)).withOpacity(_isHovered ? 0.75 : 0.45),
+                color: (_isHovered ? const Color(0xFFC5C764) : const Color(0xFFBBF438)).withOpacity(_isHovered ? 0.80 : 0.50),
                 blurRadius: _isHovered ? 24 : 18,
                 spreadRadius: _isHovered ? 2 : 1,
               ),
             ],
           ),
           child: Text(
-            'LOG IN',
+            'SIGN IN',
             style: GoogleFonts.orbitron(
               fontSize: 10.2,
               fontWeight: FontWeight.w800,

@@ -165,13 +165,19 @@ class CyberHudCard extends StatefulWidget {
   State<CyberHudCard> createState() => _CyberHudCardState();
 }
 
-class _CyberHudCardState extends State<CyberHudCard> {
+class _CyberHudCardState extends State<CyberHudCard>
+    with SingleTickerProviderStateMixin {
   bool _isHovered = false;
   bool _shouldShow = false;
+  late final AnimationController _textCtrl;
 
   @override
   void initState() {
     super.initState();
+    _textCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
     if (widget.isActive) {
       _triggerDelay();
     }
@@ -184,37 +190,47 @@ class _CyberHudCardState extends State<CyberHudCard> {
       _triggerDelay();
     } else if (!widget.isActive) {
       setState(() => _shouldShow = false);
+      _textCtrl.reset();
     }
   }
 
   void _triggerDelay() {
+    _textCtrl.reset();
     Future.delayed(Duration(milliseconds: widget.delayMs), () {
       if (mounted && widget.isActive) {
         setState(() => _shouldShow = true);
+        _textCtrl.forward();
       }
     });
   }
 
   @override
+  void dispose() {
+    _textCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     const frameColor = Color(0xFFC5C764);
-    final numColor = _isHovered ? const Color(0xFFBBF438) : const Color(0xFF80A416);
-    final titleColor = _isHovered ? const Color(0xFFBBF438) : const Color(0xFFAD9F3C);
-    final descColor = _isHovered ? const Color(0xFFEDF5EB) : const Color(0xFF829A80);
+    // Use palette yellow #C5C764 on hover
+    final numColor = _isHovered ? const Color(0xFFC5C764) : const Color(0xFF80A416);
+    final titleColor = _isHovered ? const Color(0xFFC5C764) : const Color(0xFFAD9F3C);
+    final descColor = _isHovered ? const Color(0xFFEDF5EB) : const Color(0xFFCBD5E1);
 
     return AnimatedOpacity(
-      duration: const Duration(milliseconds: 950),
+      duration: const Duration(milliseconds: 750),
       curve: const Cubic(0.16, 1.0, 0.3, 1.0),
       opacity: _shouldShow ? 1.0 : 0.0,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeOutCubic,
-        height: 220, // Equal height for all cards
+        height: 270, // Increased height for enhanced visibility & prominent typography
         transform: _shouldShow
             ? (_isHovered
                 ? (Matrix4.identity()..translate(0.0, -8.0, 0.0)..scale(1.02))
                 : Matrix4.identity())
-            : (Matrix4.identity()..translate(0.0, -40.0, 0.0)),
+            : (Matrix4.identity()..translate(0.0, -36.0, 0.0)),
         child: MouseRegion(
           cursor: SystemMouseCursors.click,
           onEnter: (_) => setState(() => _isHovered = true),
@@ -225,51 +241,80 @@ class _CyberHudCardState extends State<CyberHudCard> {
               isHovered: _isHovered,
             ),
             child: Container(
-              padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
+              padding: const EdgeInsets.fromLTRB(28, 30, 28, 26),
+              child: AnimatedBuilder(
+                animation: _textCtrl,
+                builder: (context, _) {
+                  final t = Curves.easeOutCubic.transform(_textCtrl.value);
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        widget.num,
-                        style: GoogleFonts.orbitron(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: _isHovered ? 1.8 : 0.5,
-                          color: numColor,
-                          shadows: [
-                            Shadow(
-                              color: numColor.withOpacity(0.45),
-                              blurRadius: _isHovered ? 24 : 12,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 1. Text Animation: Number slides & scales into place
+                          Transform.translate(
+                            offset: Offset(0, (1 - t) * 18),
+                            child: Opacity(
+                              opacity: t,
+                              child: Text(
+                                widget.num,
+                                style: GoogleFonts.orbitron(
+                                  fontSize: 44, // Prominently visible size
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: _isHovered ? 2.0 : 0.6,
+                                  color: numColor,
+                                  shadows: [
+                                    Shadow(
+                                      color: numColor.withOpacity(0.55),
+                                      blurRadius: _isHovered ? 24 : 14,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 8),
+
+                          // 2. Text Animation: Title slides into place
+                          Transform.translate(
+                            offset: Offset(0, (1 - t) * 14),
+                            child: Opacity(
+                              opacity: (t * 1.2).clamp(0.0, 1.0),
+                              child: Text(
+                                widget.title,
+                                style: GoogleFonts.orbitron(
+                                  fontSize: 13.5, // Crisp, legible size
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: _isHovered ? 2.2 : 1.5,
+                                  color: titleColor,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 10),
-                      Text(
-                        widget.title,
-                        style: GoogleFonts.orbitron(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: _isHovered ? 2.0 : 1.4,
-                          color: titleColor,
+
+                      // 3. Text Animation: Description slides up with smooth opacity
+                      Transform.translate(
+                        offset: Offset(0, (1 - t) * 12),
+                        child: Opacity(
+                          opacity: (t * 1.4 - 0.2).clamp(0.0, 1.0),
+                          child: Text(
+                            widget.desc,
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 15.0, // Highly readable font size
+                              fontWeight: FontWeight.w400,
+                              height: 1.55,
+                              color: descColor,
+                            ),
+                          ),
                         ),
                       ),
                     ],
-                  ),
-                  Text(
-                    widget.desc,
-                    style: GoogleFonts.inter(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w300,
-                      height: 1.65,
-                      color: descColor,
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
           ),

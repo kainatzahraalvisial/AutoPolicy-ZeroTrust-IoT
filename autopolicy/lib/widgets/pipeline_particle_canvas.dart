@@ -20,20 +20,22 @@ class PipelineParticles extends StatefulWidget {
   final int particleCount;
   final double linkDistance;
   final double grabDistance;
-  final double boundsX;
-  final double boundsY;
+  final double? currentBoundsX;
+  final double? currentBoundsY;
   final double boundsZ;
   final bool contained;
+  final bool isActive;
 
   const PipelineParticles({
     super.key,
-    this.particleCount = 120,
-    this.linkDistance = 62,
+    this.particleCount = 175,
+    this.linkDistance = 72,
     this.grabDistance = 0,
-    this.boundsX = 110,
-    this.boundsY = 132,
-    this.boundsZ = 20,
+    this.currentBoundsX,
+    this.currentBoundsY,
+    this.boundsZ = 28,
     this.contained = true,
+    this.isActive = true,
   });
 
   @override
@@ -45,6 +47,7 @@ class _PipelineParticlesState extends State<PipelineParticles>
   late final Ticker _ticker;
   final List<_PipelineParticle> _particles = [];
   final Random _rand = Random();
+  Size _lastSize = Size.zero;
 
   static const Color colorLine = Color(0xFF80A416);
   static const Color colorNode = Color(0xFFC5C764);
@@ -53,7 +56,6 @@ class _PipelineParticlesState extends State<PipelineParticles>
   @override
   void initState() {
     super.initState();
-    _initParticles();
     _ticker = createTicker((_) {
       _updateParticles();
       if (mounted) {
@@ -63,29 +65,59 @@ class _PipelineParticlesState extends State<PipelineParticles>
     _ticker.start();
   }
 
-  void _initParticles() {
+  @override
+  void didUpdateWidget(covariant PipelineParticles oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // When becoming active again, reseed across full screen
+    if (widget.isActive && !oldWidget.isActive && _lastSize != Size.zero) {
+      _initParticles(_lastSize);
+    }
+  }
+
+  void _initParticles(Size size) {
     _particles.clear();
+    _lastSize = size;
+    // Spread across entire screen initially
+    final double bx = size.width * 0.52;
+    final double by = size.height * 0.52;
+
     for (int i = 0; i < widget.particleCount; i++) {
       _particles.add(_PipelineParticle(
-        x: (_rand.nextDouble() - 0.5) * widget.boundsX * 2,
-        y: (_rand.nextDouble() - 0.5) * widget.boundsY * 2,
+        x: (_rand.nextDouble() - 0.5) * bx * 2,
+        y: (_rand.nextDouble() - 0.5) * by * 2,
         z: (_rand.nextDouble() - 0.5) * widget.boundsZ * 2,
-        vx: (_rand.nextDouble() - 0.5) * 0.4,
-        vy: (_rand.nextDouble() - 0.5) * 0.4,
-        vz: (_rand.nextDouble() - 0.5) * 0.2,
+        vx: (_rand.nextDouble() - 0.5) * 2.2,
+        vy: (_rand.nextDouble() - 0.5) * 2.2,
+        vz: (_rand.nextDouble() - 0.5) * 0.9,
       ));
     }
   }
 
   void _updateParticles() {
+    if (_lastSize == Size.zero) return;
+
+    // Use currentBoundsX if passed during panel slide-in, otherwise full screen
+    final double activeBoundsX = widget.currentBoundsX ?? (_lastSize.width * 0.52);
+    final double activeBoundsY = widget.currentBoundsY ?? (_lastSize.height * 0.52);
+
     for (final p in _particles) {
       p.x += p.vx;
       p.y += p.vy;
       p.z += p.vz;
 
-      if (p.x.abs() > widget.boundsX) p.vx *= -1;
-      if (p.y.abs() > widget.boundsY) p.vy *= -1;
-      if (p.z.abs() > widget.boundsZ) p.vz *= -1;
+      // Soft bounce & clamp within activeBoundsX so particles cluster smoothly
+      if (p.x.abs() > activeBoundsX) {
+        p.vx = -p.vx.abs() * (p.x > 0 ? 1.0 : -1.0);
+        p.x = p.x.clamp(-activeBoundsX, activeBoundsX);
+      }
+      if (p.y.abs() > activeBoundsY) {
+        p.vy = -p.vy.abs() * (p.y > 0 ? 1.0 : -1.0);
+        p.y = p.y.clamp(-activeBoundsY, activeBoundsY);
+      }
+      if (p.z.abs() > widget.boundsZ) {
+        p.vz *= -1;
+        p.z = p.z.clamp(-widget.boundsZ, widget.boundsZ);
+      }
     }
   }
 
@@ -100,6 +132,14 @@ class _PipelineParticlesState extends State<PipelineParticles>
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, constraints.maxHeight);
+        if (_lastSize != size) {
+          if (_particles.isEmpty || _lastSize == Size.zero) {
+            _initParticles(size);
+          } else {
+            _lastSize = size;
+          }
+        }
+
         return Container(
           color: Colors.black,
           width: size.width,
@@ -176,21 +216,16 @@ class _PipelineParticlePainter extends CustomPainter {
       }
     }
 
-    // Nodes (glowing yellow-green points matching HTML spec)
+    // Simple clean nodes without glowing halo
+    final nodePaint = Paint()
+      ..color = colorNode.withOpacity(0.85)
+      ..style = PaintingStyle.fill;
+
     for (int i = 0; i < c; i++) {
       final pt = proj[i];
       final scale = scales[i];
-      final double radius = 3.5 * scale;
-
-      final haloPaint = Paint()
-        ..color = colorBright.withOpacity(0.55)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5);
-      canvas.drawCircle(pt, radius * 1.4, haloPaint);
-
-      final corePaint = Paint()
-        ..color = colorNode.withOpacity(0.95)
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(pt, max(0.8, radius * 0.5), corePaint);
+      final double radius = 2.4 * scale;
+      canvas.drawCircle(pt, max(1.2, radius), nodePaint);
     }
   }
 

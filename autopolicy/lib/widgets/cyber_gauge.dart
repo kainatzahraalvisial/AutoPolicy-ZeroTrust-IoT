@@ -34,14 +34,14 @@ class CyberGauge extends StatelessWidget {
                   Text(
                     '${value.toStringAsFixed(0)}%',
                     style: CyberTextStyles.displayTitle(
-                      fontSize: size * 0.16,
+                      fontSize: size * 0.22,
                       color: color,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     label.toUpperCase(),
-                    style: CyberTextStyles.techMuted.copyWith(fontSize: size * 0.07),
+                    style: CyberTextStyles.techMuted.copyWith(fontSize: size * 0.085, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),

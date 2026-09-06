@@ -20,27 +20,21 @@ class _SignupPageState extends ConsumerState<SignupPage> {
   final _formKey = GlobalKey<FormState>();
   final _fname = TextEditingController();
   final _lname = TextEditingController();
+  final _org = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
   final _password2 = TextEditingController();
   
-  String? _selectedRole;
   bool _obscure = true;
   bool _terms = false;
   bool _isLoading = false;
   String _errorMessage = '';
 
-  final List<String> _roles = [
-    'Admin Clearance',
-    'Security Engineer',
-    'Network Operator',
-    'Auditor / Compliance',
-  ];
-
   @override
   void dispose() {
     _fname.dispose();
     _lname.dispose();
+    _org.dispose();
     _email.dispose();
     _password.dispose();
     _password2.dispose();
@@ -65,7 +59,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
       await ref.read(authProvider.notifier).signUp(
         _email.text.trim(),
         _password.text,
-        _selectedRole ?? 'Admin Clearance',
+        _org.text.trim().isNotEmpty ? _org.text.trim() : 'Organization Member',
       );
       if (mounted) {
         Navigator.pushReplacement(
@@ -129,38 +123,39 @@ class _SignupPageState extends ConsumerState<SignupPage> {
               ),
             ),
           ),
-          // Center Form Box
+          // Center Form Box (Non-scrollable, perfectly fitted)
           Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Form(
                 key: _formKey,
                 child: VrFrame(
-                  maxWidth: 420,
+                  maxWidth: 470,
+                  padding: const EdgeInsets.fromLTRB(22, 18, 22, 14),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Header
                       Text('CLEARANCE REQUEST',
                         style: TextStyle(
-                          fontSize: 8, letterSpacing: 3.2, color: AP.lime,
+                          fontSize: 7.5, letterSpacing: 2.8, color: AP.lime,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 3),
                       Text('Create Account',
                         style: GoogleFonts.orbitron(
-                          fontWeight: FontWeight.w900, fontSize: 22,
+                          fontWeight: FontWeight.w900, fontSize: 19,
                           letterSpacing: 0.5, color: AP.white,
                         ),
                       ),
-                      const SizedBox(height: 3),
-                      Text('Register for the zero-trust console',
-                        style: TextStyle(fontSize: 11, color: AP.muted),
+                      const SizedBox(height: 2),
+                      Text('Register for zero-trust console clearance',
+                        style: GoogleFonts.spaceGrotesk(fontSize: 12.5, color: const Color(0xFFD5E5D3)),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
 
-                      // Name row
+                      // Row 1: First Name & Last Name
                       Row(
                         children: [
                           Expanded(
@@ -171,7 +166,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                                 FieldShell(
                                   child: TextFormField(
                                     controller: _fname,
-                                    style: const TextStyle(color: AP.white, fontSize: 13),
+                                    style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 13),
                                     decoration: _inputDeco('Ava'),
                                     validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                                   ),
@@ -179,7 +174,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,7 +183,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                                 FieldShell(
                                   child: TextFormField(
                                     controller: _lname,
-                                    style: const TextStyle(color: AP.white, fontSize: 13),
+                                    style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 13),
                                     decoration: _inputDeco('Chen'),
                                     validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                                   ),
@@ -198,101 +193,122 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 11),
+                      const SizedBox(height: 8),
 
-                      // Email / Identity
-                      _label('Email / Identity'),
-                      FieldShell(
-                        child: TextFormField(
-                          controller: _email,
-                          style: const TextStyle(color: AP.white, fontSize: 13),
-                          decoration: _inputDeco('operator@network.io'),
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Email is required';
-                            }
-                            if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
-                              return 'Valid email required';
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 11),
-
-                      // Role Dropdown
-                      _label('Role'),
-                      FieldShell(
-                        child: DropdownButtonFormField<String>(
-                          value: _selectedRole,
-                          dropdownColor: const Color(0xFF08120C),
-                          icon: const Icon(Icons.arrow_drop_down, color: AP.lime),
-                          style: const TextStyle(color: AP.white, fontSize: 13),
-                          decoration: _inputDeco('Select clearance tier'),
-                          items: _roles.map((role) {
-                            return DropdownMenuItem<String>(
-                              value: role,
-                              child: Text(role),
-                            );
-                          }).toList(),
-                          onChanged: (val) {
-                            setState(() => _selectedRole = val);
-                          },
-                          validator: (v) => v == null ? 'Clearance tier required' : null,
-                        ),
-                      ),
-                      const SizedBox(height: 11),
-
-                      // Access Key
-                      _label('Access Key'),
-                      FieldShell(
-                        child: TextFormField(
-                          controller: _password,
-                          obscureText: _obscure,
-                          style: const TextStyle(color: AP.white, fontSize: 13),
-                          decoration: _inputDeco('Min. 12 characters').copyWith(
-                            suffixIcon: TextButton(
-                              onPressed: () => setState(() => _obscure = !_obscure),
-                              child: Text(_obscure ? 'SHOW' : 'HIDE',
-                                style: GoogleFonts.orbitron(
-                                  fontSize: 9, letterSpacing: 1.2, color: AP.muted,
+                      // Row 2: Organization Name & Work Email
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _label('Organization'),
+                                FieldShell(
+                                  child: TextFormField(
+                                    controller: _org,
+                                    style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 13),
+                                    decoration: _inputDeco('CyberSOC Labs'),
+                                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
-                          validator: (v) {
-                            if (v == null || v.isEmpty) return 'Access key required';
-                            if (v.length < 12) return 'Must be at least 12 characters';
-                            return null;
-                          },
-                        ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _label('Work Email'),
+                                FieldShell(
+                                  child: TextFormField(
+                                    controller: _email,
+                                    style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 13),
+                                    decoration: _inputDeco('operator@network.io'),
+                                    keyboardType: TextInputType.emailAddress,
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) return 'Required';
+                                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value.trim())) {
+                                        return 'Invalid email';
+                                      }
+                                      return null;
+                                      },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 11),
+                      const SizedBox(height: 8),
 
-                      // Confirm Key
-                      _label('Confirm Key'),
-                      FieldShell(
-                        child: TextFormField(
-                          controller: _password2,
-                          obscureText: true,
-                          style: const TextStyle(color: AP.white, fontSize: 13),
-                          decoration: _inputDeco('Repeat access key'),
-                          validator: (v) {
-                            if (v == null || v.isEmpty) return 'Confirmation required';
-                            if (v != _password.text) return 'Keys do not match';
-                            return null;
-                          },
-                        ),
+                      // Row 3: Access Key & Confirm Key
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _label('Access Key'),
+                                FieldShell(
+                                  child: TextFormField(
+                                    controller: _password,
+                                    obscureText: _obscure,
+                                    style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 13),
+                                    decoration: _inputDeco('Min. 12 chars').copyWith(
+                                      suffixIcon: IconButton(
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                        icon: Icon(
+                                          _obscure ? Icons.visibility_off : Icons.visibility,
+                                          size: 14,
+                                          color: AP.muted,
+                                        ),
+                                        onPressed: () => setState(() => _obscure = !_obscure),
+                                      ),
+                                    ),
+                                    validator: (v) {
+                                      if (v == null || v.isEmpty) return 'Required';
+                                      if (v.length < 12) return 'Min 12 chars';
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _label('Confirm Key'),
+                                FieldShell(
+                                  child: TextFormField(
+                                    controller: _password2,
+                                    obscureText: true,
+                                    style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 13),
+                                    decoration: _inputDeco('Repeat key'),
+                                    validator: (v) {
+                                      if (v == null || v.isEmpty) return 'Required';
+                                      if (v != _password.text) return 'Mismatch';
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
 
                       // Terms Checkbox
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           SizedBox(
-                            width: 16, height: 16,
+                            width: 15, height: 15,
                             child: Checkbox(
                               value: _terms,
                               onChanged: (v) => setState(() {
@@ -307,12 +323,10 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                           Expanded(
                             child: Text.rich(
                               TextSpan(
-                                style: TextStyle(fontSize: 10.5, color: AP.muted, height: 1.4),
+                                style: GoogleFonts.spaceGrotesk(fontSize: 11.5, color: AP.muted, height: 1.3),
                                 children: const [
                                   TextSpan(text: 'I agree to the '),
-                                  TextSpan(text: 'Terms', style: TextStyle(color: AP.lime)),
-                                  TextSpan(text: ' and '),
-                                  TextSpan(text: 'Privacy Policy', style: TextStyle(color: AP.lime)),
+                                  TextSpan(text: 'Terms & Security Policy', style: TextStyle(color: AP.lime)),
                                   TextSpan(text: '. Sessions may be audited.'),
                                 ],
                               ),
@@ -320,15 +334,15 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 9),
 
                       if (_errorMessage.isNotEmpty) ...[
                         Text(
                           _errorMessage,
-                          style: const TextStyle(fontSize: 11, color: Colors.redAccent),
+                          style: const TextStyle(fontSize: 10.5, color: Colors.redAccent),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                       ],
 
                       // Submit Button
@@ -336,9 +350,9 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                         label: _isLoading ? 'Processing...' : 'Request Access',
                         onTap: _isLoading ? null : _handleSignup,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 6),
                       _orDivider(),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 6),
                       CyberButton(
                         label: 'Sign up with Google',
                         primary: false,
@@ -348,14 +362,14 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                             MaterialPageRoute(builder: (_) => const MainLayout()),
                           );
                         },
-                        leading: const Icon(Icons.g_mobiledata, size: 20, color: AP.lime),
+                        leading: const Icon(Icons.g_mobiledata, size: 18, color: AP.lime),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 7),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text('Already cleared? ',
-                            style: TextStyle(fontSize: 11, color: AP.muted)),
+                            style: TextStyle(fontSize: 10, color: AP.muted)),
                           GestureDetector(
                             onTap: () => Navigator.pushReplacement(
                               context,
@@ -365,35 +379,35 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                               cursor: SystemMouseCursors.click,
                               child: Text('SIGN IN →',
                                 style: GoogleFonts.orbitron(
-                                  fontSize: 9, letterSpacing: 1.4, color: AP.lime,
+                                  fontSize: 8.5, letterSpacing: 1.3, color: AP.lime,
                                 ),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 7),
                       Divider(color: AP.olive.withOpacity(0.18), height: 1),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 5),
                       Row(
                         children: [
                           Container(
-                            width: 5, height: 5,
+                            width: 4, height: 4,
                             decoration: const BoxDecoration(
                               color: AP.bright, shape: BoxShape.circle,
-                              boxShadow: [BoxShadow(color: AP.bright, blurRadius: 6)],
+                              boxShadow: [BoxShadow(color: AP.bright, blurRadius: 4)],
                             ),
                           ),
                           const SizedBox(width: 6),
                           Text('CHANNEL SECURE',
                             style: GoogleFonts.orbitron(
-                              fontSize: 7, letterSpacing: 1.5, color: AP.bright,
+                              fontSize: 6.5, letterSpacing: 1.2, color: AP.bright,
                             ),
                           ),
                           const Spacer(),
                           Text('TLS 1.3 · BUILD 1.0',
                             style: GoogleFonts.orbitron(
-                              fontSize: 7, letterSpacing: 1.3, color: AP.muted,
+                              fontSize: 6.5, letterSpacing: 1.1, color: AP.muted,
                             ),
                           ),
                         ],
@@ -410,13 +424,13 @@ class _SignupPageState extends ConsumerState<SignupPage> {
   }
 
   Widget _label(String t) => Padding(
-    padding: const EdgeInsets.only(bottom: 5),
+    padding: const EdgeInsets.only(bottom: 3),
     child: Align(
       alignment: Alignment.centerLeft,
       child: Text(t.toUpperCase(),
         style: GoogleFonts.orbitron(
-          fontSize: 8, fontWeight: FontWeight.w700,
-          letterSpacing: 2.0, color: AP.lime,
+          fontSize: 7.5, fontWeight: FontWeight.w700,
+          letterSpacing: 1.8, color: AP.lime,
         ),
       ),
     ),
@@ -424,9 +438,9 @@ class _SignupPageState extends ConsumerState<SignupPage> {
 
   InputDecoration _inputDeco(String hint) => InputDecoration(
     hintText: hint,
-    hintStyle: TextStyle(color: AP.muted.withOpacity(0.65), fontSize: 13),
+    hintStyle: TextStyle(color: AP.muted.withOpacity(0.65), fontSize: 11.5),
     border: InputBorder.none,
-    contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
     isDense: true,
   );
 

@@ -14,7 +14,7 @@ class CyberTheme {
         surface: CyberColors.cardBg,
         error: CyberColors.alertRed,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: CyberColors.cardBg,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -32,6 +32,7 @@ class CyberTheme {
         headlineSmall: CyberTextStyles.heading2,
         titleMedium: CyberTextStyles.heading3,
         bodyLarge: CyberTextStyles.techBody,
+        bodyMedium: CyberTextStyles.paragraph(fontSize: 15.0),
         bodySmall: CyberTextStyles.techMuted,
       ),
       inputDecorationTheme: InputDecorationTheme(
