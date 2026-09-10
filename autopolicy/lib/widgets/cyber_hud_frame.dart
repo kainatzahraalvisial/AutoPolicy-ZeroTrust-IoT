@@ -9,6 +9,9 @@ enum CyberFrameDesign {
   stealthHex,      // Asymmetric dual chamfers + technical corner crosshairs
   reticleCut,      // Inverse chamfer (top-right & bottom-left) + HUD reticle targeting marks
   cornerPlate,     // Double chamfered right side + heavy armored corner plates & segmented baseline
+  circuitHud,      // Exact Image 2 HUD frame: Circuit traces, upper angled traces, side pads & dot matrix
+  yellowTabNotch,  // Exact Image 3 HUD frame: Top-right glowing tab, bottom-left notch block, bottom-right triangle
+  tacticalArmorNotch, // Exact Figure Card Frame from media_1788769893400.png: Armor tab notch, top-right slashes, bottom-left chevrons
 }
 
 class CyberHudFrame extends StatefulWidget {
@@ -29,7 +32,7 @@ class CyberHudFrame extends StatefulWidget {
     required this.child,
     this.design = CyberFrameDesign.hazardStripes,
     this.baseBorderColor = const Color(0xFF80A416),
-    this.hoverBorderColor = const Color(0xFFC5C764), // Palette yellow on hover!
+    this.hoverBorderColor = const Color(0xFF80A416), // Palette Vibrant Olive Green hover!
     this.surfaceColor = const Color(0xFF0F0F0F),     // Deep tactical black from palette
     this.padding = const EdgeInsets.all(18),
     this.onTap,
@@ -70,20 +73,20 @@ class _CyberHudFrameState extends State<CyberHudFrame> {
             boxShadow: _isHovered
                 ? [
                     BoxShadow(
-                      color: widget.hoverBorderColor.withValues(alpha: 0.22),
+                      color: widget.hoverBorderColor.withOpacity( 0.22),
                       blurRadius: 22,
                       spreadRadius: 1,
                       offset: const Offset(0, 6),
                     ),
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.85),
+                      color: Colors.black.withOpacity( 0.85),
                       blurRadius: 18,
                       offset: const Offset(0, 10),
                     ),
                   ]
                 : [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.50),
+                      color: Colors.black.withOpacity( 0.50),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
@@ -215,6 +218,48 @@ class _CyberHudClipper extends CustomClipper<Path> {
         path.lineTo(0, h);
         path.close();
         break;
+
+      case CyberFrameDesign.circuitHud:
+        // Image 2 frame: top-right cut (20px), bottom-right cut (14px), bottom-left cut (14px), top-left cut (14px)
+        const c1 = 14.0;
+        const c2 = 20.0;
+        path.moveTo(c1, 0);
+        path.lineTo(w - c2, 0);
+        path.lineTo(w, c2);
+        path.lineTo(w, h - c1);
+        path.lineTo(w - c1, h);
+        path.lineTo(c1, h);
+        path.lineTo(0, h - c1);
+        path.lineTo(0, c1);
+        path.close();
+        break;
+
+      case CyberFrameDesign.yellowTabNotch:
+        // Image 3 frame: Top-right tab, bottom-left notch cut, bottom-right chamfer (16px)
+        path.moveTo(0, 0);
+        path.lineTo(w, 0);
+        path.lineTo(w, h - 16);
+        path.lineTo(w - 16, h);
+        path.lineTo(75, h);
+        path.lineTo(60, h - 14);
+        path.lineTo(0, h - 14);
+        path.close();
+        break;
+
+      case CyberFrameDesign.tacticalArmorNotch:
+        // Exact Figure Card Frame from media_1788769893400.png (Right Frame):
+        // Armor tab notch, top-right cut, bottom-right chamfer, bottom-left notch cut
+        path.moveTo(0, 14);
+        path.lineTo(14, 0);
+        path.lineTo(w - 16, 0);
+        path.lineTo(w, 16);
+        path.lineTo(w, h - 16);
+        path.lineTo(w - 16, h);
+        path.lineTo(56, h);
+        path.lineTo(42, h - 12);
+        path.lineTo(0, h - 12);
+        path.close();
+        break;
     }
     return path;
   }
@@ -261,7 +306,7 @@ class _CyberHudFramePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final dimPaint = Paint()
-      ..color = borderColor.withValues(alpha: isHovered ? 0.35 : 0.18)
+      ..color = borderColor.withOpacity( isHovered ? 0.35 : 0.18)
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
 
@@ -269,7 +314,7 @@ class _CyberHudFramePainter extends CustomPainter {
     if (showGrid) {
       const spacing = 28.0;
       final gridPaint = Paint()
-        ..color = borderColor.withValues(alpha: 0.05)
+        ..color = borderColor.withOpacity( 0.05)
         ..strokeWidth = 0.8;
       for (double x = spacing; x < w; x += spacing) {
         canvas.drawLine(Offset(x, 0), Offset(x, h), gridPaint);
@@ -304,6 +349,15 @@ class _CyberHudFramePainter extends CustomPainter {
       case CyberFrameDesign.cornerPlate:
         _paintCornerPlate(canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
         break;
+      case CyberFrameDesign.circuitHud:
+        _paintCircuitHud(canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
+        break;
+      case CyberFrameDesign.yellowTabNotch:
+        _paintYellowTabNotch(canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
+        break;
+      case CyberFrameDesign.tacticalArmorNotch:
+        _paintTacticalArmorNotch(canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
+        break;
     }
   }
 
@@ -324,7 +378,7 @@ class _CyberHudFramePainter extends CustomPainter {
     // Diagonal hazard warning stripes along bottom-right cut
     const stripeCount = 5;
     final stripePaint = Paint()
-      ..color = borderColor.withValues(alpha: isHovered ? 0.95 : 0.60)
+      ..color = borderColor.withOpacity( isHovered ? 0.95 : 0.60)
       ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.square;
 
@@ -366,13 +420,13 @@ class _CyberHudFramePainter extends CustomPainter {
       ..close();
 
     final glowTabPaint = Paint()
-      ..color = borderColor.withValues(alpha: isHovered ? 0.90 : 0.45)
+      ..color = borderColor.withOpacity( isHovered ? 0.90 : 0.45)
       ..style = PaintingStyle.fill;
     canvas.drawPath(tabPath, glowTabPaint);
 
     if (isHovered) {
       final blurPaint = Paint()
-        ..color = borderColor.withValues(alpha: 0.5)
+        ..color = borderColor.withOpacity( 0.5)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
       canvas.drawPath(tabPath, blurPaint);
     }
@@ -405,7 +459,7 @@ class _CyberHudFramePainter extends CustomPainter {
     // Right-side barcode / heat fin lines
     const finCount = 6;
     final finPaint = Paint()
-      ..color = borderColor.withValues(alpha: isHovered ? 0.90 : 0.55)
+      ..color = borderColor.withOpacity( isHovered ? 0.90 : 0.55)
       ..strokeWidth = 2.0;
 
     const startY = 32.0;
@@ -436,7 +490,7 @@ class _CyberHudFramePainter extends CustomPainter {
     // Vertical dot array along left edge
     const dotCount = 7;
     final dotPaint = Paint()
-      ..color = borderColor.withValues(alpha: isHovered ? 0.95 : 0.50)
+      ..color = borderColor.withOpacity( isHovered ? 0.95 : 0.50)
       ..style = PaintingStyle.fill;
 
     final double startY = (h - (dotCount * 7.0)) / 2;
@@ -504,7 +558,7 @@ class _CyberHudFramePainter extends CustomPainter {
 
     // Corner crosshairs on top-right
     final crossPaint = Paint()
-      ..color = borderColor.withValues(alpha: isHovered ? 0.90 : 0.50)
+      ..color = borderColor.withOpacity( isHovered ? 0.90 : 0.50)
       ..strokeWidth = 1.2;
     canvas.drawLine(Offset(w - 18, 8), Offset(w - 8, 8), crossPaint);
     canvas.drawLine(Offset(w - 13, 3), Offset(w - 13, 13), crossPaint);
@@ -513,7 +567,7 @@ class _CyberHudFramePainter extends CustomPainter {
     final subPath = Path()
       ..moveTo(w, h - 22)
       ..lineTo(w - 22, h);
-    canvas.drawPath(subPath, Paint()..color = borderColor.withValues(alpha: 0.5)..strokeWidth = 1.0..style = PaintingStyle.stroke);
+    canvas.drawPath(subPath, Paint()..color = borderColor.withOpacity( 0.5)..strokeWidth = 1.0..style = PaintingStyle.stroke);
   }
 
   // 7. Reticle Cut: Inverse chamfers + HUD reticle targeting marks
@@ -537,16 +591,16 @@ class _CyberHudFramePainter extends CustomPainter {
 
     // Top-left HUD reticle targeting crosshair
     final reticlePaint = Paint()
-      ..color = borderColor.withValues(alpha: isHovered ? 0.95 : 0.55)
+      ..color = borderColor.withOpacity( isHovered ? 0.95 : 0.55)
       ..strokeWidth = 1.2;
     canvas.drawLine(const Offset(8, 14), const Offset(20, 14), reticlePaint);
     canvas.drawLine(const Offset(14, 8), const Offset(14, 20), reticlePaint);
-    canvas.drawCircle(const Offset(14, 14), 3.0, Paint()..color = borderColor.withValues(alpha: isHovered ? 0.95 : 0.55)..style = PaintingStyle.stroke..strokeWidth = 1.0);
+    canvas.drawCircle(const Offset(14, 14), 3.0, Paint()..color = borderColor.withOpacity( isHovered ? 0.95 : 0.55)..style = PaintingStyle.stroke..strokeWidth = 1.0);
 
     // Right edge telemetry tick marks
     for (int i = 0; i < 4; i++) {
       final y = (h / 2) - 12 + (i * 8.0);
-      canvas.drawLine(Offset(w - 6, y), Offset(w - 1, y), Paint()..color = borderColor.withValues(alpha: 0.60)..strokeWidth = 1.5);
+      canvas.drawLine(Offset(w - 6, y), Offset(w - 1, y), Paint()..color = borderColor.withOpacity( 0.60)..strokeWidth = 1.5);
     }
   }
 
@@ -574,12 +628,250 @@ class _CyberHudFramePainter extends CustomPainter {
 
     // Top status micro tabs
     canvas.drawRect(const Rect.fromLTWH(26, 0, 22, 3), Paint()..color = borderColor);
-    canvas.drawRect(const Rect.fromLTWH(52, 0, 10, 3), Paint()..color = borderColor.withValues(alpha: 0.5));
+    canvas.drawRect(const Rect.fromLTWH(52, 0, 10, 3), Paint()..color = borderColor.withOpacity( 0.5));
 
     // Segmented baseline along bottom
-    final basePaint = Paint()..color = borderColor.withValues(alpha: isHovered ? 0.80 : 0.35)..strokeWidth = 1.5;
+    final basePaint = Paint()..color = borderColor.withOpacity( isHovered ? 0.80 : 0.35)..strokeWidth = 1.5;
     for (double bx = 28; bx < w - 30; bx += 14) {
       canvas.drawLine(Offset(bx, h), Offset(bx + 8, h), basePaint);
+    }
+  }
+
+  // 9. Circuit HUD (Exact Image 2 frame): Circuit traces, upper angled traces, side pads & dot matrix
+  void _paintCircuitHud(Canvas canvas, double w, double h, Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
+    const c1 = 14.0;
+    const c2 = 20.0;
+
+    final path = Path()
+      ..moveTo(c1, 0)
+      ..lineTo(w - c2, 0)
+      ..lineTo(w, c2)
+      ..lineTo(w, h - c1)
+      ..lineTo(w - c1, h)
+      ..lineTo(c1, h)
+      ..lineTo(0, h - c1)
+      ..lineTo(0, c1)
+      ..close();
+
+    // Translucent fill & main border line
+    canvas.drawPath(path, fillPaint);
+    canvas.drawPath(path, strokePaint);
+
+    // Glowing border shadow effect
+    final glowPaint = Paint()
+      ..color = borderColor.withOpacity(isHovered ? 0.85 : 0.45)
+      ..strokeWidth = isHovered ? 2.2 : 1.5
+      ..style = PaintingStyle.stroke
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, isHovered ? 6 : 3);
+    canvas.drawPath(path, glowPaint);
+
+    // Top-Right Angled Parallel Circuit Traces (//---o) extending out from top edge (Image 2)
+    final tracePaint = Paint()
+      ..color = borderColor.withOpacity(isHovered ? 0.95 : 0.75)
+      ..strokeWidth = 1.8
+      ..style = PaintingStyle.stroke;
+
+    final dotTerminalPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.fill;
+
+    // Outer angled circuit line 1
+    final tracePath1 = Path()
+      ..moveTo(w * 0.45, 0)
+      ..lineTo(w * 0.50, -10)
+      ..lineTo(w * 0.76, -10);
+    canvas.drawPath(tracePath1, tracePaint);
+    canvas.drawCircle(Offset(w * 0.76 + 3, -10), 2.0, dotTerminalPaint);
+
+    // Inner angled circuit line 2
+    final tracePath2 = Path()
+      ..moveTo(w * 0.52, 0)
+      ..lineTo(w * 0.56, -6)
+      ..lineTo(w * 0.82, -6);
+    canvas.drawPath(tracePath2, tracePaint);
+    canvas.drawCircle(Offset(w * 0.82 + 3, -6), 2.0, dotTerminalPaint);
+
+    // Side embedded pads (blocks along vertical left and right walls - Image 2)
+    final padPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.fill;
+
+    // Left vertical pads
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(-3, h * 0.22, 6, 26), const Radius.circular(1.5)), padPaint);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(-3, h * 0.58, 6, 26), const Radius.circular(1.5)), padPaint);
+
+    // Right vertical pads
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(w - 3, h * 0.28, 6, 26), const Radius.circular(1.5)), padPaint);
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(w - 3, h * 0.64, 6, 26), const Radius.circular(1.5)), padPaint);
+
+    // Outer parallel trace line running on left wall (Image 2)
+    final leftTrace = Path()
+      ..moveTo(-8, 18)
+      ..lineTo(-8, h * 0.35)
+      ..moveTo(-8, h * 0.45)
+      ..lineTo(-8, h - 18);
+    canvas.drawPath(leftTrace, Paint()..color = borderColor.withOpacity(0.5)..strokeWidth = 1.2..style = PaintingStyle.stroke);
+
+    // Outer parallel trace line running on right wall (Image 2)
+    final rightTrace = Path()
+      ..moveTo(w + 8, 24)
+      ..lineTo(w + 8, h * 0.48)
+      ..moveTo(w + 8, h * 0.58)
+      ..lineTo(w + 8, h - 22);
+    canvas.drawPath(rightTrace, Paint()..color = borderColor.withOpacity(0.5)..strokeWidth = 1.2..style = PaintingStyle.stroke);
+
+    // Bottom-right 4 square dot matrix (■ ■ ■ ■ - Image 2)
+    final matrixDotPaint = Paint()..color = borderColor..style = PaintingStyle.fill;
+    for (int i = 0; i < 4; i++) {
+      canvas.drawRect(Rect.fromLTWH(w - 65 + (i * 10), h - 3, 5, 5), matrixDotPaint);
+    }
+  }
+
+  // 10. Yellow Tab & Notch (Exact Image 3 frame): Top-right tab, bottom-left notch block, bottom-right triangle
+  void _paintYellowTabNotch(Canvas canvas, double w, double h, Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
+    const chamfer = 16.0;
+
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(w, 0)
+      ..lineTo(w, h - chamfer)
+      ..lineTo(w - chamfer, h)
+      ..lineTo(75, h)
+      ..lineTo(60, h - 14)
+      ..lineTo(0, h - 14)
+      ..close();
+
+    // Translucent fill & main border line
+    canvas.drawPath(path, fillPaint);
+    canvas.drawPath(path, strokePaint);
+
+    // Glowing border shadow effect
+    final glowPaint = Paint()
+      ..color = borderColor.withOpacity(isHovered ? 0.85 : 0.40)
+      ..strokeWidth = isHovered ? 2.0 : 1.4
+      ..style = PaintingStyle.stroke
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, isHovered ? 6 : 3);
+    canvas.drawPath(path, glowPaint);
+
+    // Top-Right Glowing Protruding Tab Block (Image 3)
+    const tabW = 75.0;
+    const tabH = 6.0;
+    final tabX = w - tabW - 25;
+    final topTabPath = Path()
+      ..moveTo(tabX, 0)
+      ..lineTo(tabX + 8, -tabH)
+      ..lineTo(tabX + tabW, -tabH)
+      ..lineTo(tabX + tabW - 4, 0)
+      ..close();
+
+    canvas.drawPath(topTabPath, Paint()..color = borderColor..style = PaintingStyle.fill);
+
+    // Bottom-Left Solid Filled Accent Notch Block (Image 3)
+    final notchBlockPath = Path()
+      ..moveTo(0, h - 14)
+      ..lineTo(56, h - 14)
+      ..lineTo(44, h)
+      ..lineTo(0, h)
+      ..close();
+    canvas.drawPath(notchBlockPath, Paint()..color = borderColor..style = PaintingStyle.fill);
+
+    // Bottom-Right Corner Filled Triangle (◢ - Image 3)
+    final triPath = Path()
+      ..moveTo(w - chamfer, h)
+      ..lineTo(w, h - chamfer)
+      ..lineTo(w, h)
+      ..close();
+    canvas.drawPath(triPath, Paint()..color = borderColor..style = PaintingStyle.fill);
+  }
+
+  // 11. Tactical Armor Notch (Exact Figure Card Frame from media_1788769893400.png Right Frame):
+  // Armor tab notch, top-right diagonal slash banner (///), left diagonal cuts (//), right hash bars, bottom-left chevrons (<<<)
+  void _paintTacticalArmorNotch(Canvas canvas, double w, double h, Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
+    const chamfer = 16.0;
+
+    // Outer contour path with top center armor notch
+    final tabW = (w * 0.35).clamp(40.0, 90.0);
+    final tabStartX = (w - tabW) / 2;
+
+    final path = Path()
+      ..moveTo(0, 14)
+      ..lineTo(14, 0)
+      ..lineTo(tabStartX, 0)
+      ..lineTo(tabStartX + 6, -6)
+      ..lineTo(tabStartX + tabW - 6, -6)
+      ..lineTo(tabStartX + tabW, 0)
+      ..lineTo(w - chamfer, 0)
+      ..lineTo(w, chamfer)
+      ..lineTo(w, h - chamfer)
+      ..lineTo(w - chamfer, h)
+      ..lineTo(56, h)
+      ..lineTo(42, h - 12)
+      ..lineTo(0, h - 12)
+      ..close();
+
+    // Translucent fill & main border line
+    canvas.drawPath(path, fillPaint);
+    canvas.drawPath(path, strokePaint);
+
+    // Glowing border shadow effect
+    final glowPaint = Paint()
+      ..color = borderColor.withOpacity(isHovered ? 0.85 : 0.40)
+      ..strokeWidth = isHovered ? 2.2 : 1.4
+      ..style = PaintingStyle.stroke
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, isHovered ? 6 : 3);
+    canvas.drawPath(path, glowPaint);
+
+    // 1. Top-Right Corner Diagonal Triple Slash Banner (/// - Image 2 Right Frame)
+    if (w > 100) {
+      final bannerPath = Path()
+        ..moveTo(w - 55, 4)
+        ..lineTo(w - 18, 4)
+        ..lineTo(w - 6, 16)
+        ..lineTo(w - 22, 38)
+        ..lineTo(w - 38, 38)
+        ..close();
+      canvas.drawPath(bannerPath, Paint()..color = borderColor..style = PaintingStyle.fill);
+
+      final slashPaint = Paint()
+        ..color = surfaceColor
+        ..strokeWidth = 3.5
+        ..style = PaintingStyle.stroke;
+      canvas.drawLine(Offset(w - 42, 10), Offset(w - 28, 32), slashPaint);
+      canvas.drawLine(Offset(w - 34, 10), Offset(w - 20, 32), slashPaint);
+    }
+
+    // 2. Upper-Left Edge Black Diagonal Cuts (// - Image 2 Right Frame)
+    final leftCutPaint = Paint()
+      ..color = borderColor.withOpacity(0.85)
+      ..strokeWidth = 3.5;
+    canvas.drawLine(const Offset(-2, 28), const Offset(14, 12), leftCutPaint);
+    canvas.drawLine(const Offset(-2, 40), const Offset(14, 24), leftCutPaint);
+    canvas.drawLine(const Offset(-2, 52), const Offset(14, 36), leftCutPaint);
+
+    // 3. Right Edge Vertical Vent Slots & Hash Bars (Image 2 Right Frame)
+    final ventPaint = Paint()
+      ..color = borderColor.withOpacity(isHovered ? 0.95 : 0.75)
+      ..strokeWidth = 2.0;
+    for (double vy = h * 0.40; vy < h * 0.70; vy += 7) {
+      canvas.drawLine(Offset(w - 3, vy), Offset(w + 4, vy + 4), ventPaint);
+    }
+    canvas.drawRect(Rect.fromLTWH(w - 7, h * 0.55, 4, 22), Paint()..color = borderColor);
+
+    // 4. Bottom-Left Chamfer Triple Leftward Arrow Chevrons (<<< - Image 2 Right Frame)
+    final chevronPaint = Paint()
+      ..color = borderColor
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.square;
+
+    for (int i = 0; i < 3; i++) {
+      final cx = 14.0 + (i * 9.0);
+      final cy = h - 6.0;
+      final chevPath = Path()
+        ..moveTo(cx + 4, cy - 4)
+        ..lineTo(cx, cy)
+        ..lineTo(cx + 4, cy + 4);
+      canvas.drawPath(chevPath, chevronPaint);
     }
   }
 

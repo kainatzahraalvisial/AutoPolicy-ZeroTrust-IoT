@@ -123,8 +123,8 @@ class _PipelinePageState extends State<PipelinePage>
     // Decreased central graph boundary: Panels take 33% width clamped between 300px and 440px
     final shadeW = (size.width * 0.33).clamp(300.0, 440.0);
     final fullBoundsX = size.width * 0.52;
-    // Decreased boundary for central graph cluster: tighter bounds in the center
-    final centerHalfW = ((size.width - (2 * shadeW)) * 0.38).clamp(90.0, 240.0);
+    // Central graph boundary fits exact inner edges of side panels (marked by red lines)
+    final centerHalfW = (size.width * 0.5) - shadeW;
 
     return AnimatedBuilder(
       animation: _shadeCtrl,
@@ -144,22 +144,22 @@ class _PipelinePageState extends State<PipelinePage>
               ),
             ),
 
-            // 2. Left solid black panel (slides in smoothly; reverses on page exit)
+            // 2. Left square block panel (slides in smoothly; reverses on page exit)
             Positioned(
               left: 0,
               top: 0,
               bottom: 0,
               width: currentPanelW,
-              child: const ColoredBox(color: Colors.black),
+              child: const _CyberSquareBlockPanel(isLeft: true),
             ),
 
-            // 3. Right solid black panel (slides in smoothly; reverses on page exit)
+            // 3. Right square block panel (slides in smoothly; reverses on page exit)
             Positioned(
               right: 0,
               top: 0,
               bottom: 0,
               width: currentPanelW,
-              child: const ColoredBox(color: Colors.black),
+              child: const _CyberSquareBlockPanel(isLeft: false),
             ),
 
             // 4. Left content column (Steps 01, 03, 05) - Each with distinct HUD frame design
@@ -354,9 +354,9 @@ class _PipelineItemState extends State<_PipelineItem>
                 constraints: const BoxConstraints(maxWidth: 360),
                 child: CyberHudFrame(
                   design: widget.design,
-                  baseBorderColor: const Color(0xFF80A416).withValues(alpha: 0.38),
+                  baseBorderColor: const Color(0xFF80A416).withOpacity( 0.38),
                   hoverBorderColor: const Color(0xFFC5C764), // Yellow hover color!
-                  surfaceColor: const Color(0xFF0F0F0F).withValues(alpha: 0.88), // Black tactical background
+                  surfaceColor: const Color(0xFF0F0F0F).withOpacity( 0.88), // Black tactical background
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                   child: Column(
                     crossAxisAlignment: widget.alignRight
@@ -381,7 +381,7 @@ class _PipelineItemState extends State<_PipelineItem>
                                 shadows: hover
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFFC5C764).withValues(alpha: 0.8),
+                                          color: const Color(0xFFC5C764).withOpacity( 0.8),
                                           blurRadius: 16,
                                         ),
                                       ]
@@ -406,7 +406,7 @@ class _PipelineItemState extends State<_PipelineItem>
                                 shadows: hover
                                     ? [
                                         BoxShadow(
-                                          color: const Color(0xFFC5C764).withValues(alpha: 0.8),
+                                          color: const Color(0xFFC5C764).withOpacity( 0.8),
                                           blurRadius: 16,
                                         ),
                                       ]
@@ -452,13 +452,13 @@ class _PipelineItemState extends State<_PipelineItem>
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: hover
-            ? const Color(0xFFC5C764).withValues(alpha: 0.25)
-            : const Color(0xFF80A416).withValues(alpha: 0.18),
+            ? const Color(0xFFC5C764).withOpacity( 0.25)
+            : const Color(0xFF80A416).withOpacity( 0.18),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
           color: hover
               ? const Color(0xFFC5C764)
-              : const Color(0xFF80A416).withValues(alpha: 0.55),
+              : const Color(0xFF80A416).withOpacity( 0.55),
           width: 1,
         ),
       ),
@@ -476,3 +476,40 @@ class _PipelineItemState extends State<_PipelineItem>
     );
   }
 }
+
+// ─── Square Block Panel for Page 2 ───────────────────────────
+class _CyberSquareBlockPanel extends StatelessWidget {
+  final bool isLeft;
+  const _CyberSquareBlockPanel({required this.isLeft});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: const Color(0xFF090A0C),
+      child: CustomPaint(
+        painter: _SquareGridPainter(),
+      ),
+    );
+  }
+}
+
+class _SquareGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFF80A416).withOpacity(0.14)
+      ..strokeWidth = 1.0;
+
+    const double spacing = 52.0;
+    for (double x = 0; x < size.width; x += spacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += spacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+

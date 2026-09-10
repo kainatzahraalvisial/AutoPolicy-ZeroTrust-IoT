@@ -2,80 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
-import 'main_layout.dart';
-import 'landing_screen.dart';
-import 'signup_screen.dart';
+import '../widgets/cyber_button.dart';
 
 // Alias for backward compatibility
 typedef LoginScreen = LoginPage;
-
-// ── AP Palette (Dark Cyber Base) ──────────────────────────────
-class AP {
-  static const olive = Color(0xFF80A416);
-  static const lime = Color(0xFFC5C764);
-  static const bright = Color(0xFFBBF438);
-  static const white = Color(0xFFEDF5EB);
-  static const muted = Color(0xFF829A80);
-  static const frame = Color(0xFFC5C764);
-  static const bg = Color(0xFF050A07); // Pure dark cyber black
-}
-
-// ── Shared VR frame clipper ──────────────────────────────────
-class VrFrameClipper extends CustomClipper<Path> {
-  final double cut;
-  VrFrameClipper({this.cut = 18});
-
-  @override
-  Path getClip(Size size) {
-    return Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width, size.height - cut)
-      ..lineTo(size.width - cut, size.height)
-      ..lineTo(cut, size.height)
-      ..lineTo(0, size.height - cut)
-      ..close();
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
-}
-
-class FieldClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    const c = 8.0;
-    return Path()
-      ..moveTo(c, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width, size.height - c)
-      ..lineTo(size.width - c, size.height)
-      ..lineTo(0, size.height)
-      ..lineTo(0, c)
-      ..close();
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
-}
-
-class BtnClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    const c = 10.0;
-    return Path()
-      ..moveTo(c, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width, size.height - c)
-      ..lineTo(size.width - c, size.height)
-      ..lineTo(0, size.height)
-      ..lineTo(0, c)
-      ..close();
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
-}
 
 // ── VR Frame container (side tabs + protruding lines) ─────────
 class VrFrame extends StatelessWidget {
@@ -297,93 +227,6 @@ class FieldShell extends StatelessWidget {
   }
 }
 
-// ── Cyber button ─────────────────────────────────────────────
-class CyberButton extends StatefulWidget {
-  final String label;
-  final VoidCallback? onTap;
-  final bool primary;
-  final Widget? leading;
-
-  const CyberButton({
-    super.key,
-    required this.label,
-    this.onTap,
-    this.primary = true,
-    this.leading,
-  });
-
-  @override
-  State<CyberButton> createState() => _CyberButtonState();
-}
-
-class _CyberButtonState extends State<CyberButton> {
-  bool hover = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => hover = true),
-      onExit: (_) => setState(() => hover = false),
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          transform: Matrix4.translationValues(0, hover ? -1 : 0, 0),
-          child: ClipPath(
-            clipper: BtnClipper(),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 20),
-              decoration: BoxDecoration(
-                color: widget.primary
-                    ? (hover ? AP.bright : AP.olive)
-                    : (hover
-                        ? AP.olive.withOpacity(0.12)
-                        : const Color(0xE608120C)),
-                border: widget.primary
-                    ? null
-                    : Border.all(
-                        color: hover ? AP.lime : AP.olive.withOpacity(0.35),
-                      ),
-                boxShadow: widget.primary
-                    ? [
-                        BoxShadow(
-                          color: (hover ? AP.bright : AP.olive)
-                              .withOpacity(hover ? 0.65 : 0.4),
-                          blurRadius: hover ? 28 : 18,
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (widget.leading != null) ...[
-                    widget.leading!,
-                    const SizedBox(width: 9),
-                  ],
-                  Text(
-                    widget.label.toUpperCase(),
-                    style: GoogleFonts.orbitron(
-                      fontSize: widget.primary ? 11 : 9.5,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.6,
-                      color: widget.primary
-                          ? Colors.black
-                          : (hover ? AP.bright : AP.lime),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 // ═════════════════════════════════════════════════════════════
 // LOGIN PAGE
 // ═════════════════════════════════════════════════════════════
@@ -424,10 +267,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
         'Admin',
       );
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainLayout()),
-        );
+        Navigator.pushReplacementNamed(context, '/dashboard');
       }
     } catch (e) {
       if (mounted) {
@@ -478,10 +318,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     ),
                     const Spacer(),
                     _BackToExploreButton(
-                      onTap: () => Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LandingScreen()),
-                      ),
+                      onTap: () => Navigator.pushReplacementNamed(context, '/landing'),
                     ),
                   ],
                 ),
@@ -617,10 +454,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         label: 'Sign in with Google',
                         primary: false,
                         onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (_) => const MainLayout()),
-                          );
+                          Navigator.pushReplacementNamed(context, '/dashboard');
                         },
                         leading: const Icon(Icons.g_mobiledata, size: 20, color: AP.lime),
                       ),
@@ -631,10 +465,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           Text('No clearance yet? ',
                             style: GoogleFonts.spaceGrotesk(fontSize: 13.0, color: AP.muted)),
                           GestureDetector(
-                            onTap: () => Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (_) => const SignupPage()),
-                            ),
+                            onTap: () => Navigator.pushReplacementNamed(context, '/signup'),
                             child: MouseRegion(
                               cursor: SystemMouseCursors.click,
                               child: Text('REQUEST ACCESS →',

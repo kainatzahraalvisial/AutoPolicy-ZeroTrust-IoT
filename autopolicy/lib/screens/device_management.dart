@@ -6,6 +6,7 @@ import '../theme/colors.dart';
 import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
 import '../widgets/glass_container.dart';
+import '../widgets/cyber_stat_card.dart';
 
 class DeviceManagement extends ConsumerStatefulWidget {
   const DeviceManagement({super.key});
@@ -36,6 +37,8 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
       return matchesSearch && matchesStatus;
     }).toList();
 
+    final double screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Padding(
@@ -52,9 +55,9 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
                 Text('ZERO-TRUST DEVICE DIRECTORY & STATUS GATEWAY', style: CyberTextStyles.techMuted),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
-            // Search & Filtering Bar Row
+            // 1. Search & Filtering Bar Row (APPEARS FIRST AS REQUESTED)
             Row(
               children: [
                 // Search Input Box
@@ -81,9 +84,56 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
                 ],
               ],
             ),
+            const SizedBox(height: 14),
+
+            // 2. Top Stat Cards Row
+            Row(
+              children: [
+                Expanded(
+                  child: CyberStatCard(
+                    title: 'TOTAL FLEET NODES',
+                    value: '${devices.length}',
+                    sub: 'Active IoT Gateways',
+                    borderColor: const Color(0xFFFFE997), // 1. Yellow (#FFE997)
+                    tag: 'H17',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: CyberStatCard(
+                    title: 'ISOLATED NODES',
+                    value: '${devices.where((d) => d.status == DeviceStatus.isolated).length}',
+                    sub: 'Zero-Trust Quarantine',
+                    borderColor: const Color(0xFFA88AED), // 2. Indigo Purple (#A88AED)
+                    isAlert: devices.any((d) => d.status == DeviceStatus.isolated),
+                    tag: 'H18',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: CyberStatCard(
+                    title: 'HIGH-RISK SENSORS',
+                    value: '${devices.where((d) => d.status == DeviceStatus.warning).length}',
+                    sub: 'Under Inspection',
+                    borderColor: const Color(0xFFC4E320), // 3. Bright Light Green (#C4E320)
+                    tag: 'H19',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: CyberStatCard(
+                    title: 'HEALTHY GATEWAYS',
+                    value: '${devices.where((d) => d.status == DeviceStatus.safe).length}',
+                    sub: 'Clean Traffic Stream',
+                    borderColor: const Color(0xFF80A416), // 4. Olive Green (#80A416)
+                    tag: 'H20',
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
 
-            // Devices grid view layout
+            // 3. Compact Devices Grid View Layout (4-5 cards per line on Web/Desktop)
             Expanded(
               child: filteredDevices.isEmpty
                   ? GlassContainer(
@@ -97,10 +147,16 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
                     )
                   : GridView.builder(
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: isMobile ? 1 : (Responsive.isTablet(context) ? 2 : 3),
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 1.35,
+                        crossAxisCount: isMobile
+                            ? 1
+                            : (screenWidth > 1400
+                                ? 5
+                                : (screenWidth > 1050
+                                    ? 4
+                                    : (screenWidth > 700 ? 2 : 1))),
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: 1.45,
                       ),
                       itemCount: filteredDevices.length,
                       itemBuilder: (context, idx) {

@@ -14,7 +14,7 @@ class CyberTheme {
         surface: CyberColors.cardBg,
         error: CyberColors.alertRed,
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: CyberColors.cardBg,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -53,10 +53,14 @@ class CyberTheme {
         labelStyle: CyberTextStyles.technical(color: CyberColors.textMuted),
         hintStyle: CyberTextStyles.technical(color: CyberColors.textMuted.withOpacity(0.5)),
       ),
-      dividerTheme: const DividerThemeData(
-        color: CyberColors.gridLine,
-        space: 1,
-        thickness: 1,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+        },
       ),
     );
   }

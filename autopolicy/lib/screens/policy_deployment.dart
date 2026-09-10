@@ -6,6 +6,7 @@ import '../theme/colors.dart';
 import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
 import '../widgets/glass_container.dart';
+import '../widgets/cyber_stat_card.dart';
 
 class PolicyDeployment extends ConsumerWidget {
   const PolicyDeployment({super.key});
@@ -32,6 +33,52 @@ class PolicyDeployment extends ConsumerWidget {
                 Text('OPA POLICY PIPELINE STATUS', style: CyberTextStyles.heading2),
                 const SizedBox(height: 4),
                 Text('REAL-TIME EDGE AGENT DEPLOYMENT STACK LOGS', style: CyberTextStyles.techMuted),
+              ],
+            ),
+            const SizedBox(height: 14),
+
+            // Top Stat Cards Row
+            Row(
+              children: [
+                Expanded(
+                  child: CyberStatCard(
+                    title: 'DEPLOYED BUNDLES',
+                    value: '${deployedPolicies.length}',
+                    sub: 'Active Rego Rules',
+                    borderColor: const Color(0xFFFFE997), // 1. Yellow (#FFE997)
+                    tag: 'H17',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: CyberStatCard(
+                    title: 'ENVOY SIDECARS',
+                    value: '12',
+                    sub: 'Edge Enforcement Gateways',
+                    borderColor: const Color(0xFFA88AED), // 2. Indigo Purple (#A88AED)
+                    tag: 'H18',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: CyberStatCard(
+                    title: 'PIPELINE HEALTH',
+                    value: '100%',
+                    sub: 'Sync Channel Active',
+                    borderColor: const Color(0xFFC4E320), // 3. Bright Light Green (#C4E320)
+                    tag: 'H19',
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: CyberStatCard(
+                    title: 'EVAL LATENCY',
+                    value: '0.8ms',
+                    sub: 'Sub-Millisecond Speed',
+                    borderColor: const Color(0xFF80A416), // 4. Olive Green (#80A416)
+                    tag: 'H20',
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),

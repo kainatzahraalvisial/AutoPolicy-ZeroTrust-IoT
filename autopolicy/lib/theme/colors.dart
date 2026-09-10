@@ -21,10 +21,26 @@ class CyberColors {
   static const Color neonGreen = Color(0xFFBBF438);
   static const Color neonCyan = Color(0xFFC5C764);
   
+  // Mokoto Red Palette (media_1788771394953.png)
+  static const Color crimsonRed = Color(0xFFDF2531);        // #DF2531 - Crimson Threat Red
+  static const Color crimsonRed45 = Color(0x73DF2531);      // 45% transparency
+  static const Color crimsonRed65 = Color(0xA6DF2531);      // 65% transparency
+
+  // Cyber Purple Accent (media_1788771547362.png)
+  static const Color cyberPurple = Color(0xFF8B5CF6);       // #8B5CF6 - Vibrant Electric Purple
+  static const Color cyberPurpleDeep = Color(0xFF6D28D9);   // #6D28D9 - Deep Purple Accent
+
+  // Oscillate Green Palette (media_1788771383408.png)
+  static const Color obsidianBlack = Color(0xFF0F0F0F);     // #0F0F0F - Dark Obsidian
+  static const Color panelDark = Color(0xFF202020);         // #202020 - Dark Tactical Panel
+  static const Color brightLime = Color(0xFF5DD62C);        // #5DD62C - Bright Cyber Lime
+  static const Color forestOlive = Color(0xFF337418);       // #337418 - Deep Forest Olive
+  static const Color textOffWhite = Color(0xFFF8F8F8);      // #F8F8F8 - Off-White Text
+
   // Alerts and Telemetry status
-  static const Color alertRed = Color(0xFFFF4757);
+  static const Color alertRed = Color(0xFFDF2531);          // Mokoto Crimson Red
   static const Color warningOrange = Color(0xFFAD9F3C);
-  static const Color statusSafe = Color(0xFFBBF438);
+  static const Color statusSafe = Color(0xFF5DD62C);
   
   // Border and accent styling lines
   static const Color borderNeonGreen = Color(0x66BBF438);

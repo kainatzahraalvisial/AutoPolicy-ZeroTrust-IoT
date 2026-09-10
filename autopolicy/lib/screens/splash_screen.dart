@@ -1,9 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../theme/colors.dart';
-import '../theme/text_styles.dart';
-import 'login_screen.dart';
-import 'landing_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -83,15 +80,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   void _navigateToLogin() {
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const LandingScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 900),
-      ),
-    );
+    Navigator.of(context).pushReplacementNamed('/landing');
   }
 
   @override

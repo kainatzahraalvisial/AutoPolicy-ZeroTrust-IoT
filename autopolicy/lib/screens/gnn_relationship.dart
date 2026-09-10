@@ -10,6 +10,7 @@ import '../widgets/glass_container.dart';
 import '../widgets/neon_button.dart';
 import '../models/policy.dart';
 import '../providers/theme_provider.dart';
+import '../widgets/cyber_stat_card.dart';
 
 // Premium responsive color palette
 class CyberColorsExtended {
@@ -222,29 +223,75 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship> with SingleTi
                         ),
                       ),
 
-                      // Headers
+                      // Headers & Quick Stat Cards Overlay
                       Positioned(
                         top: 16,
                         left: 16,
-                        child: Column(
+                        right: 16,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'GNN DEVICE RELATIONSHIP MAP', 
-                              style: CyberTextStyles.technical(
-                                color: isDarkMode ? Colors.white : Colors.black, 
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              )
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'GNN DEVICE RELATIONSHIP MAP', 
+                                  style: CyberTextStyles.technical(
+                                    color: isDarkMode ? Colors.white : Colors.black, 
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  )
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'DRAG CORES TO RE-ARRANGE | HOVER TO AUDIT NODE METRICS', 
+                                  style: CyberTextStyles.techMuted.copyWith(
+                                    fontSize: 9,
+                                    color: isDarkMode ? CyberColors.textMuted : Colors.black54
+                                  )
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'DRAG CORES TO RE-ARRANGE | HOVER TO AUDIT NODE METRICS', 
-                              style: CyberTextStyles.techMuted.copyWith(
-                                fontSize: 9,
-                                color: isDarkMode ? CyberColors.textMuted : Colors.black54
-                              )
-                            ),
+
+                            // Stat Overlay
+                            if (!isMobile)
+                              SizedBox(
+                                width: 550,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: CyberStatCard(
+                                        title: 'GRAPH NODES',
+                                        value: '${securityState.devices.length}',
+                                        sub: 'Active IoT Cores',
+                                        borderColor: const Color(0xFFFFE997), // 1. Yellow (#FFE997)
+                                        tag: 'H17',
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: CyberStatCard(
+                                        title: 'TOPOLOGY EDGES',
+                                        value: '${securityState.devices.length * 2}',
+                                        sub: 'Active Mesh Links',
+                                        borderColor: const Color(0xFFA88AED), // 2. Indigo Purple (#A88AED)
+                                        tag: 'H18',
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: CyberStatCard(
+                                        title: 'CLUSTER DENSITY',
+                                        value: '0.94',
+                                        sub: 'GNN Graph Score',
+                                        borderColor: const Color(0xFFC4E320), // 3. Bright Light Green (#C4E320)
+                                        tag: 'H19',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                           ],
                         ),
                       ),

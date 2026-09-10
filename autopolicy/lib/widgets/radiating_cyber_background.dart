@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../theme/colors.dart';
 
 class RadiatingCyberBackground extends StatefulWidget {
   final Widget child;

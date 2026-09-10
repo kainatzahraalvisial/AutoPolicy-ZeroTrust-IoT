@@ -5,10 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/three_particle_canvas.dart';
 import '../widgets/pipeline_stage_widget.dart';
 import '../widgets/cyber_hud_card.dart';
+import '../widgets/cyber_stat_card.dart';
 import '../widgets/end_cta_widget.dart';
 import '../widgets/chamfered_cyber_button.dart';
-import 'login_screen.dart';
-import 'signup_screen.dart';
 
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -88,27 +87,11 @@ class _LandingScreenState extends State<LandingScreen>
   }
 
   void _navigateToLogin() {
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const LoginPage(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 600),
-      ),
-    );
+    Navigator.of(context).pushNamed('/login');
   }
 
   void _navigateToSignup() {
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const SignupPage(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 600),
-      ),
-    );
+    Navigator.of(context).pushNamed('/signup');
   }
 
   @override
@@ -118,8 +101,10 @@ class _LandingScreenState extends State<LandingScreen>
     final bool isFullDarkPage = _currentPage >= 1;
 
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: MouseRegion(
+      backgroundColor: const Color(0xFF0F0F0F),
+      body: Container(
+        color: const Color(0xFF0F0F0F),
+        child: MouseRegion(
         onHover: (event) {
           setState(() {
             _globalMousePos = event.localPosition;
@@ -149,6 +134,32 @@ class _LandingScreenState extends State<LandingScreen>
           },
           child: Stack(
           children: [
+            // 0. Page 1 Hero Atmosphere Gradient at Complete Back (behind WebGL particles & UI elements)
+            Positioned.fill(
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 400),
+                opacity: _currentPage == 0 ? 1.0 : 0.0,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomLeft,
+                      end: Alignment.topRight,
+                      colors: [
+                        Color(0xFF67EE00), // Vibrant cyber lime green on bottom-left margin
+                        Color(0xFF80A416), // Rich olive green #80A416
+                        Color(0xFF284414), // Deep forest green transition
+                        Color(0xFF0A0512), // Deep midnight black center
+                        Color(0xFF2E0C4A), // Rich electric purple
+                        Color(0xFF6D28D9), // Vibrant cyber purple on top-right
+                        Color(0xFF8B5CF6), // Bright electric purple corner
+                      ],
+                      stops: [0.0, 0.15, 0.32, 0.50, 0.72, 0.88, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
             // 1. Full-Screen Interactive WebGL/3D Particle Background (Fades out on full dark pages)
             Positioned.fill(
               child: AnimatedOpacity(
@@ -375,7 +386,8 @@ class _LandingScreenState extends State<LandingScreen>
         ),
       ),
     ),
-  );
+  ),
+);
 }
 
   // Section 0: Hero (with staggered reveal animations for all text elements)
@@ -647,41 +659,43 @@ class _LandingScreenState extends State<LandingScreen>
                     ),
                     const SizedBox(height: 36),
 
-                    // 3 Cyber HUD Cards Grid
+                    // Original Chamfered Cyber HUD Cards Grid
                     LayoutBuilder(
                       builder: (context, constraints) {
-                        if (constraints.maxWidth > 780) {
+                        if (constraints.maxWidth > 700) {
                           return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Expanded(
                                 child: CyberHudCard(
                                   num: '1K+',
                                   title: 'DEVICES SIMULATED',
-                                  desc:
-                                      'Continuous real-time anomaly discovery across large heterogeneous clusters.',
+                                  desc: 'Continuous real-time anomaly discovery across large heterogeneous clusters.',
+                                  borderColor: const Color(0xFF5DD62C),
+                                  tag: 'SYS-01',
                                   delayMs: 200,
                                   isActive: isActive,
                                 ),
                               ),
-                              const SizedBox(width: 28),
+                              const SizedBox(width: 16),
                               Expanded(
                                 child: CyberHudCard(
                                   num: '33',
                                   title: 'ATTACK CATEGORIES',
-                                  desc:
-                                      'Pre-trained models covering Mirai botnets, DDoS, lateral scanning, and port sweeps.',
+                                  desc: 'Pre-trained models covering Mirai botnets, DDoS, lateral scanning, and port sweeps.',
+                                  borderColor: const Color(0xFFA88AED),
+                                  tag: 'SYS-02',
                                   delayMs: 400,
                                   isActive: isActive,
                                 ),
                               ),
-                              const SizedBox(width: 28),
+                              const SizedBox(width: 16),
                               Expanded(
                                 child: CyberHudCard(
                                   num: 'RT',
                                   title: 'ENFORCEMENT ENGINE',
-                                  desc:
-                                      'Instant policy propagation without microcode flashing or device firmware reboots.',
+                                  desc: 'Instant policy propagation without microcode flashing or device firmware reboots.',
+                                  borderColor: const Color(0xFFC5C764),
+                                  tag: 'SYS-03',
                                   delayMs: 600,
                                   isActive: isActive,
                                 ),
@@ -694,26 +708,29 @@ class _LandingScreenState extends State<LandingScreen>
                               CyberHudCard(
                                 num: '1K+',
                                 title: 'DEVICES SIMULATED',
-                                desc:
-                                    'Continuous real-time anomaly discovery across large heterogeneous clusters.',
+                                desc: 'Continuous real-time anomaly discovery across large heterogeneous clusters.',
+                                borderColor: const Color(0xFF5DD62C),
+                                tag: 'SYS-01',
                                 delayMs: 200,
                                 isActive: isActive,
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 16),
                               CyberHudCard(
                                 num: '33',
                                 title: 'ATTACK CATEGORIES',
-                                desc:
-                                    'Pre-trained models covering Mirai botnets, DDoS, lateral scanning, and port sweeps.',
+                                desc: 'Pre-trained models covering Mirai botnets, DDoS, lateral scanning, and port sweeps.',
+                                borderColor: const Color(0xFFA88AED),
+                                tag: 'SYS-02',
                                 delayMs: 400,
                                 isActive: isActive,
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 16),
                               CyberHudCard(
                                 num: 'RT',
                                 title: 'ENFORCEMENT ENGINE',
-                                desc:
-                                    'Instant policy propagation without microcode flashing or device firmware reboots.',
+                                desc: 'Instant policy propagation without microcode flashing or device firmware reboots.',
+                                borderColor: const Color(0xFFC5C764),
+                                tag: 'SYS-03',
                                 delayMs: 600,
                                 isActive: isActive,
                               ),
@@ -728,6 +745,59 @@ class _LandingScreenState extends State<LandingScreen>
             ),
           ),
         ],
+      ),
+    );
+  }
+  Widget _buildCard(String num, String title, String desc) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(4),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0xC70C0618),
+            border: Border.all(
+              color: const Color(0xFF80A416).withOpacity(0.22),
+              width: 1,
+            ),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                num,
+                style: GoogleFonts.orbitron(
+                  fontSize: 17.5,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFFC5C764),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: GoogleFonts.orbitron(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.0,
+                  color: const Color(0xFFC5C764),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                desc,
+                style: GoogleFonts.inter(
+                  fontSize: 11.8,
+                  fontWeight: FontWeight.w300,
+                  height: 1.65,
+                  color: const Color(0xFF829A80),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -830,12 +900,12 @@ class _NavLoginButtonState extends State<_NavLoginButton> {
           transform: Matrix4.translationValues(0, _isHovered ? -2 : 0, 0),
           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
           decoration: BoxDecoration(
-            color: _isHovered ? const Color(0xFFC5C764) : const Color(0xFFBBF438),
+            color: _isHovered ? const Color(0xFFBBF438) : const Color(0xFF80A416),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: (_isHovered ? const Color(0xFFC5C764) : const Color(0xFFBBF438)).withOpacity(_isHovered ? 0.80 : 0.50),
-                blurRadius: _isHovered ? 24 : 18,
+                color: (_isHovered ? const Color(0xFFBBF438) : const Color(0xFF80A416)).withOpacity(_isHovered ? 0.75 : 0.35),
+                blurRadius: _isHovered ? 20 : 12,
                 spreadRadius: _isHovered ? 2 : 1,
               ),
             ],

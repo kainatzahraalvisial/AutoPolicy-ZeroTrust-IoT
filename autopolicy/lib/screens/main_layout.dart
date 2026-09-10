@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../providers/security_provider.dart';
 import '../providers/theme_provider.dart';
+import '../providers/navigation_provider.dart';
 import '../theme/colors.dart';
 import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
@@ -22,7 +23,8 @@ import 'device_management.dart';
 import 'reports_analytics.dart';
 import 'simulation_testing.dart';
 import 'settings_management.dart';
-import 'login_screen.dart';
+import 'rbac_access_screen.dart';
+import 'notifications_screen.dart';
 
 class MainLayout extends ConsumerStatefulWidget {
   const MainLayout({super.key});
@@ -32,11 +34,20 @@ class MainLayout extends ConsumerStatefulWidget {
 }
 
 class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStateMixin {
-  int _activeTab = 0;
   bool _isSidebarCollapsed = false;
-  bool _isNotificationPanelOpen = false;
   late final Timer _clockTimer;
   String _currentTimeString = '';
+
+  // Expandable Tree Sidebar Categories State (matching Image 2 media_1789025744076.png)
+  final Map<String, bool> _expandedCategories = {
+    'Dashboard': true,
+    'Zero-Trust & Policies': true,
+    'Threat Intelligence': true,
+    'Fleet Assets': true,
+    'Compliance & Governance': true,
+    'Notifications': true,
+    'System Settings': true,
+  };
 
   // Circular Reveal Theme Transition State
   late final AnimationController _revealController;
@@ -54,7 +65,6 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
   void initState() {
     super.initState();
     
-    // Set initial clock time without calling setState to prevent LateInitializationError
     final now = DateTime.now();
     final String hour = now.hour.toString().padLeft(2, '0');
     final String min = now.minute.toString().padLeft(2, '0');
@@ -65,7 +75,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
 
     _revealController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 650), // Elegant cinematic speed
+      duration: const Duration(milliseconds: 650),
     );
 
     _revealController.addListener(() {
@@ -83,7 +93,6 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
             _isRevealing = false;
             _oldThemeUI = null;
             _newThemeUI = null;
-            // Set the final state of the theme provider globally
             ref.read(themeModeProvider.notifier).state = !_oldThemeMode;
           });
         }
@@ -91,7 +100,6 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
     });
   }
 
-  // Calculate the maximum screen radius needed to cover all 4 screen corners from reveal origin
   double _getMaxRadius(Offset center, Size size) {
     final double w = size.width;
     final double h = size.height;
@@ -107,8 +115,6 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
   }
 
   void _triggerCircularReveal(bool isDarkMode, Offset globalCenter) {
-    // Use ThemeUIWrapper to defer _buildContentUI evaluation to Flutter's build phase.
-    // This prevents executing ref.watch inside _triggerCircularReveal (which throws Riverpod exceptions outside of build).
     _oldThemeUI = ProviderScope(
       overrides: [
         themeModeProvider.overrideWith((ref) => isDarkMode),
@@ -157,7 +163,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
 
   // Resolves screens based on active tab index
   Widget _getActiveScreen() {
-    switch (_activeTab) {
+    final activeTab = ref.watch(navigationTabProvider);
+    switch (activeTab) {
       case 0:
         return const DashboardOverview();
       case 1:
@@ -178,39 +185,246 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
         return const ReportsAnalytics();
       case 9:
         return const SettingsManagement();
+      case 10:
+        return const RbacAccessScreen();
+      case 11:
+        return const NotificationsScreen();
       default:
         return const DashboardOverview();
     }
   }
 
-  // Returns menu configuration items based on authenticated role RBAC controls
-  List<Map<String, dynamic>> _getMenuItems(String role) {
-    final List<Map<String, dynamic>> baseMenu = [
-      {'index': 0, 'label': 'Overview', 'icon': Icons.dashboard_outlined},
-      {'index': 1, 'label': 'Live Traffic', 'icon': Icons.radar_outlined},
-      {'index': 2, 'label': 'Anomalies Feed', 'icon': Icons.crisis_alert},
-      {'index': 3, 'label': 'GNN Graph View', 'icon': Icons.hub_outlined},
-      {'index': 4, 'label': 'Auto Policy', 'icon': Icons.settings_suggest_outlined},
-      {'index': 5, 'label': 'OPA Deployments', 'icon': Icons.rocket_launch_outlined},
-      {'index': 6, 'label': 'Devices List', 'icon': Icons.router_outlined},
+  // Returns tree navigation data structure with direct single-click items and expandable categories
+  List<Map<String, dynamic>> _getTreeNavigation(int unreadNotificationsCount, String role) {
+    return [
+      {
+        'category': 'Dashboard',
+        'icon': Icons.dashboard_outlined,
+        'index': 0,
+      },
+      {
+        'category': 'Real-Time Traffic & IDS',
+        'icon': Icons.radar_outlined,
+        'index': 1,
+      },
+      {
+        'category': 'Threat Intelligence & GNN',
+        'icon': Icons.hub_outlined,
+        'index': 3,
+      },
+      {
+        'category': 'Zero-Trust Policy Engine',
+        'icon': Icons.shield_outlined,
+        'subItems': [
+          {'index': 4, 'label': 'AI Policy Generator'},
+          {'index': 5, 'label': 'Policy Deployments'},
+        ],
+      },
+      {
+        'category': 'Role-Based Access (RBAC)',
+        'icon': Icons.admin_panel_settings_outlined,
+        'index': 10,
+      },
+      {
+        'category': 'Device Directory',
+        'icon': Icons.router_outlined,
+        'index': 6,
+      },
+      if (role == 'Manager' || role == 'Admin')
+        {
+          'category': 'Compliance & Governance',
+          'icon': Icons.analytics_outlined,
+          'index': 8,
+        },
+      {
+        'category': 'Notifications',
+        'icon': Icons.notifications_outlined,
+        'index': 11,
+        'badge': unreadNotificationsCount > 0 ? '$unreadNotificationsCount' : null,
+      },
+      {
+        'category': 'System Settings',
+        'icon': Icons.settings_outlined,
+        'index': 9,
+      },
     ];
+  }
 
-    // Security Engineer specific menu
-    if (role == 'Security Engineer' || role == 'Admin') {
-      baseMenu.add({'index': 7, 'label': 'Attack Simulator', 'icon': Icons.science_outlined});
-    }
+  Widget _buildTreeSidebar(BuildContext context, bool isDarkMode, String activeRole, int unreadCount) {
+    final activeTab = ref.watch(navigationTabProvider);
+    final treeNav = _getTreeNavigation(unreadCount, activeRole);
 
-    // High level compliance management for Manager or Admin
-    if (role == 'Manager' || role == 'Admin') {
-      baseMenu.add({'index': 8, 'label': 'SOC Compliance', 'icon': Icons.analytics_outlined});
-    }
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: treeNav.length,
+      itemBuilder: (context, catIdx) {
+        final cat = treeNav[catIdx];
+        final String catTitle = cat['category'] as String;
+        final IconData catIcon = cat['icon'] as IconData;
+        final String? catBadge = cat['badge'] as String?;
+        final bool isDirectPage = cat.containsKey('index');
+        final int? directIndex = isDirectPage ? (cat['index'] as int) : null;
+        final List<Map<String, dynamic>> subItems = cat.containsKey('subItems')
+            ? List<Map<String, dynamic>>.from(cat['subItems'] as List)
+            : [];
 
-    // System configurations only for Admins
-    if (role == 'Admin') {
-      baseMenu.add({'index': 9, 'label': 'User Access Control', 'icon': Icons.admin_panel_settings_outlined});
-    }
+        final bool isSelectedDirect = isDirectPage && activeTab == directIndex;
+        final bool hasSelectedChild = !isDirectPage && subItems.any((sub) => (sub['index'] as int) == activeTab);
+        final bool isExpanded = _expandedCategories[catTitle] ?? true;
 
-    return baseMenu;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Category Header / Direct Item Row
+            InkWell(
+              onTap: () {
+                if (isDirectPage && directIndex != null) {
+                  ref.read(navigationNotifierProvider.notifier).selectTab(directIndex);
+                } else {
+                  setState(() {
+                    _expandedCategories[catTitle] = !isExpanded;
+                  });
+                }
+              },
+              hoverColor: Colors.white.withOpacity(0.05),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelectedDirect
+                      ? (isDarkMode ? const Color(0xFFC4E320).withOpacity(0.20) : const Color(0xFF1E3A8A).withOpacity(0.12))
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  border: isSelectedDirect
+                      ? Border.all(color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A), width: 1)
+                      : null,
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      catIcon,
+                      size: 20,
+                      color: (isSelectedDirect || hasSelectedChild)
+                          ? (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A))
+                          : (isDarkMode ? Colors.white70 : Colors.black87),
+                    ),
+                    if (!_isSidebarCollapsed) ...[
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          catTitle,
+                          style: CyberTextStyles.technical(
+                            fontSize: 14.0,
+                            fontWeight: (isSelectedDirect || hasSelectedChild) ? FontWeight.bold : FontWeight.w600,
+                            color: (isSelectedDirect || hasSelectedChild)
+                                ? (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A))
+                                : (isDarkMode ? Colors.white : Colors.black87),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (catBadge != null) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFB91C1D),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            catBadge,
+                            style: const TextStyle(fontSize: 9.5, color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
+                      if (!isDirectPage)
+                        Icon(
+                          isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                          size: 18,
+                          color: isDarkMode ? Colors.white54 : Colors.black45,
+                        ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
+            // Nested Sub-Items List (for expandable categories like Policy Engine)
+            if (!isDirectPage && isExpanded && !_isSidebarCollapsed)
+              Padding(
+                padding: const EdgeInsets.only(left: 14.0),
+                child: Column(
+                  children: subItems.map((sub) {
+                    final int subIndex = sub['index'] as int;
+                    final String subLabel = sub['label'] as String;
+                    final String? subBadge = sub['badge'] as String?;
+                    final bool isSelected = activeTab == subIndex;
+
+                    return GestureDetector(
+                      onTap: () {
+                        ref.read(navigationNotifierProvider.notifier).selectTab(subIndex);
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 6, top: 2, bottom: 2, right: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? (isDarkMode ? const Color(0xFFC4E320).withOpacity(0.20) : const Color(0xFF1E3A8A).withOpacity(0.12))
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(20),
+                          border: isSelected
+                              ? Border.all(color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A), width: 1)
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isSelected
+                                    ? (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A))
+                                    : (isDarkMode ? Colors.white30 : Colors.black26),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                subLabel,
+                                style: CyberTextStyles.technical(
+                                  fontSize: 13.0,
+                                  color: isSelected
+                                      ? (isDarkMode ? Colors.white : Colors.black87)
+                                      : (isDarkMode ? Colors.white60 : Colors.black54),
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (subBadge != null)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFB91C1D),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  subBadge,
+                                  style: const TextStyle(fontSize: 9.5, color: Colors.white, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -223,21 +437,28 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
     final authSession = ref.watch(authProvider);
     final securityState = ref.watch(securityProvider);
 
-    // Synchronize all static text styles globally with the current theme mode
     CyberTextStyles.updateTheme(isDarkMode);
 
     final String activeRole = authSession?.role ?? 'Admin';
     final String username = authSession?.username ?? 'GUEST';
-
-    final menuItems = _getMenuItems(activeRole);
     final bool isMobile = Responsive.isMobile(context);
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double sidebarWidth = _isSidebarCollapsed ? 70.0 : 240.0;
+    final double sidebarWidth = _isSidebarCollapsed ? 70.0 : 260.0;
 
     final hasCriticalThreats = securityState.anomalies.any((anm) => !anm.isMitigated);
+    final int unreadCount = securityState.notifications.length;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        final navNotifier = ref.read(navigationNotifierProvider.notifier);
+        if (navNotifier.canGoBack()) {
+          navNotifier.pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           // Base background color or Midnight Indigo / Lavender-Blue gradient
@@ -299,29 +520,30 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                             ),
                           Icon(
                             Icons.shield,
-                            color: isDarkMode ? CyberColors.neonGreen : const Color(0xFF1E3A8A),
-                            size: 24,
+                            color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF1E3A8A), // Palette Olive Cyber Green shield
+                            size: 26,
                           ),
                           if (screenWidth > 450) ...[
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Text(
                               'AUTOPOLICY',
                               style: CyberTextStyles.displayTitle(
-                                fontSize: 16.0,
-                                color: isDarkMode ? CyberColors.neonGreen : const Color(0xFF1E3A8A), // Premium brand color
-                              ),
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.w900,
+                                color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A), // Metallic white brand title
+                              ).copyWith(letterSpacing: 2.0),
                             ),
                           ],
                         ],
                       ),
- 
+
                       // Telemetry Health Status
                       if (!isMobile && screenWidth > 880)
                         Builder(
                           builder: (context) {
                             final Color hudStatusColor = hasCriticalThreats 
                                 ? CyberColors.alertRed 
-                                : CyberColors.neonGreen;
+                                : const Color(0xFF80A416);
                             return Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
@@ -362,7 +584,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                             );
                           }
                         ),
- 
+
                       // Clock & Active User Scopes
                       Row(
                         children: [
@@ -433,12 +655,11 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                                   size: 20,
                                 ),
                                 onPressed: () {
-                                  setState(() {
-                                    _isNotificationPanelOpen = !_isNotificationPanelOpen;
-                                  });
+                                  // Navigate directly to dedicated Notifications full-page view
+                                  ref.read(navigationTabProvider.notifier).state = 11;
                                 },
                               ),
-                              if (securityState.notifications.isNotEmpty)
+                              if (unreadCount > 0)
                                 Positioned(
                                   top: 6,
                                   right: 6,
@@ -449,7 +670,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                                       color: CyberColors.alertRed,
                                     ),
                                     child: Text(
-                                      '${securityState.notifications.length}',
+                                      '$unreadCount',
                                       style: const TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold),
                                     ),
                                   ),
@@ -457,39 +678,46 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                             ],
                           ),
                           SizedBox(width: screenWidth > 600 ? 8 : 4),
-                          // User Badge
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: screenWidth > 500 ? 10 : 6, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: isDarkMode ? CyberColors.panelBg : Colors.white.withOpacity(0.35),
-                              borderRadius: BorderRadius.circular(4),
-                              border: isDarkMode ? null : Border.all(color: const Color(0xFFD6D6F2).withOpacity(0.50)),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.account_circle, color: isDarkMode ? CyberColors.textMuted : const Color(0xFF1E3A8A), size: 16),
-                                if (screenWidth > 500) ...[
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    screenWidth > 720 ? '$username | ${activeRole.toUpperCase()}' : username,
-                                    style: CyberTextStyles.technical(
-                                      fontSize: 10, 
-                                      color: isDarkMode ? Colors.white : Colors.black87,
+                          
+                          // Interactive User Badge (Clicking opens Profile & Settings Modal)
+                          GestureDetector(
+                            onTap: () => _showUserProfileModal(context, username, activeRole, isDarkMode),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(horizontal: screenWidth > 500 ? 12 : 8, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white.withOpacity(0.35),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.6) : const Color(0xFF1E3A8A).withOpacity(0.50),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.account_circle, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF1E3A8A), size: 18),
+                                  if (screenWidth > 500) ...[
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      screenWidth > 720 ? '$username | ${activeRole.toUpperCase()}' : username,
+                                      style: CyberTextStyles.technical(
+                                        fontSize: 11, 
+                                        fontWeight: FontWeight.bold,
+                                        color: isDarkMode ? Colors.white : Colors.black87,
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(width: 4),
+                                    Icon(Icons.arrow_drop_down, color: isDarkMode ? CyberColors.textMuted : Colors.black54, size: 16),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
                           ),
                           SizedBox(width: screenWidth > 600 ? 8 : 4),
-                          // Sign Out Button
+                          // Quick Sign Out Button
                           IconButton(
                             icon: const Icon(Icons.logout, color: CyberColors.alertRed, size: 18),
                             onPressed: () {
                               ref.read(authProvider.notifier).signOut();
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(builder: (context) => LoginScreen()),
-                              );
+                              Navigator.of(context).pushReplacementNamed('/login');
                             },
                           ),
                         ],
@@ -502,7 +730,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                 Expanded(
                   child: Row(
                     children: [
-                      // Collapsible sidebar for Web/Desktop views
+                      // Collapsible tree sidebar for Web/Desktop views (Matching Image 2 media_1789025744076.png)
                       if (!isMobile)
                         Container(
                           width: sidebarWidth,
@@ -522,64 +750,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const SizedBox(height: 16),
                               Expanded(
-                                child: ListView.builder(
-                                  itemCount: menuItems.length,
-                                  itemBuilder: (context, idx) {
-                                    final item = menuItems[idx];
-                                    final int screenIdx = item['index'] as int;
-                                    final bool isSelected = _activeTab == screenIdx;
-                                    final itemColor = isSelected
-                                        ? (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF1E3A8A))
-                                        : (isDarkMode ? const Color(0xFF888888) : Colors.black54);
-
-                                    return GestureDetector(
-                                      behavior: HitTestBehavior.opaque,
-                                      onTap: () => setState(() => _activeTab = screenIdx),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: isSelected 
-                                              ? (isDarkMode ? const Color(0xFF337418).withOpacity(0.32) : CyberColors.panelBg.withOpacity(0.4)) 
-                                              : Colors.transparent,
-                                          borderRadius: BorderRadius.circular(4),
-                                          border: Border.all(
-                                            color: isSelected 
-                                                ? (isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.65) : CyberColors.neonGreen.withOpacity(0.3)) 
-                                                : Colors.transparent,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              item['icon'] as IconData,
-                                              size: 18,
-                                              color: itemColor,
-                                            ),
-                                            if (!_isSidebarCollapsed) ...[
-                                              const SizedBox(width: 12),
-                                              Expanded(
-                                                child: Text(
-                                                  (item['label'] as String).toUpperCase(),
-                                                  style: CyberTextStyles.technical(
-                                                    fontSize: 11.0,
-                                                    color: isSelected
-                                                        ? (isDarkMode ? const Color(0xFF5DD62C) : Colors.black)
-                                                        : (isDarkMode ? const Color(0xFF888888) : Colors.black54),
-                                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                                  ),
-                                                  overflow: TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
+                                child: _buildTreeSidebar(context, isDarkMode, activeRole, unreadCount),
                               ),
                             ],
                           ),
@@ -595,113 +767,11 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
               ],
             ),
           ),
-
-            // 3. FLOATING CYBER HUD NOTIFICATIONS DRAWER OVERLAY
-            if (_isNotificationPanelOpen)
-              Positioned(
-                top: 60,
-                right: 16,
-                bottom: isMobile ? 80 : 20,
-                child: CyberHudFrame(
-                  width: isMobile ? Responsive.screenWidth(context) - 32 : 360,
-                  design: CyberFrameDesign.tacticalBrackets,
-                  baseBorderColor: isDarkMode ? const Color(0xFF337418) : CyberColors.neonCyan,
-                  hoverBorderColor: const Color(0xFFC5C764),
-                  surfaceColor: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
-                  showGrid: true,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'SOC LOG CONSOLE',
-                            style: CyberTextStyles.displayTitle(fontSize: 14.0),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close, color: CyberColors.textMuted, size: 18),
-                            onPressed: () => setState(() => _isNotificationPanelOpen = false),
-                          ),
-                        ],
-                      ),
-                      const Divider(color: CyberColors.borderNeonCyan),
-                      const SizedBox(height: 8),
-                      // List notifications
-                      Expanded(
-                        child: securityState.notifications.isEmpty
-                            ? Center(
-                                child: Text(
-                                  'NO ACTIVE INCIDENTS YET',
-                                  style: CyberTextStyles.techMuted,
-                                ),
-                              )
-                            : ListView.builder(
-                                itemCount: securityState.notifications.length,
-                                itemBuilder: (context, idx) {
-                                  final n = securityState.notifications[idx];
-                                  Color statusColor = CyberColors.neonCyan;
-                                  if (n.type == 'threat') statusColor = CyberColors.alertRed;
-                                  if (n.type == 'warning') statusColor = CyberColors.warningOrange;
-                                  if (n.type == 'deploy') statusColor = CyberColors.neonGreen;
-
-                                  return Container(
-                                    padding: const EdgeInsets.all(8),
-                                    margin: const EdgeInsets.only(bottom: 8),
-                                    decoration: BoxDecoration(
-                                      color: isDarkMode ? const Color(0xFF1A1A1A) : Colors.white10,
-                                      border: Border(left: BorderSide(color: statusColor, width: 3)),
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              n.type.toUpperCase(),
-                                              style: CyberTextStyles.technical(color: statusColor, fontSize: 9.0),
-                                            ),
-                                            Text(
-                                              '${n.timestamp.hour.toString().padLeft(2, '0')}:${n.timestamp.minute.toString().padLeft(2, '0')}:${n.timestamp.second.toString().padLeft(2, '0')}',
-                                              style: CyberTextStyles.techMuted.copyWith(fontSize: 8.0),
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          n.message.toUpperCase(),
-                                          style: CyberTextStyles.interface(fontSize: 11.0, color: isDarkMode ? Colors.white : Colors.black87),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Clear button
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: () {
-                            ref.read(securityProvider.notifier).clearNotifications();
-                          },
-                          child: Text(
-                            'CLEAR CONSOLE',
-                            style: CyberTextStyles.technical(color: CyberColors.alertRed, fontSize: 11.0),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ),
+        ],
       ),
-    ],
-  ),
+    ),
+  ],
+),
       
       // Bottom navigation shell optimized only for Mobile screen sizes
       bottomNavigationBar: isMobile
@@ -717,30 +787,44 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                   ),
                 ),
               ),
-              child: BottomNavigationBar(
-                currentIndex: menuItems.any((item) => item['index'] == _activeTab)
-                    ? menuItems.indexWhere((item) => item['index'] == _activeTab)
-                    : 0,
-                onTap: (navIdx) {
-                  setState(() {
-                    _activeTab = menuItems[navIdx]['index'] as int;
-                  });
+              child: Builder(
+                builder: (context) {
+                  final activeTab = ref.watch(navigationTabProvider);
+                  final mobileMenuItems = [
+                    {'index': 0, 'label': 'Dashboard', 'icon': Icons.dashboard_outlined},
+                    {'index': 1, 'label': 'Traffic', 'icon': Icons.radar_outlined},
+                    {'index': 10, 'label': 'RBAC', 'icon': Icons.shield_outlined},
+                    {'index': 11, 'label': 'Alerts', 'icon': Icons.notifications_outlined},
+                    {'index': 9, 'label': 'Settings', 'icon': Icons.settings_outlined},
+                  ];
+
+                  final int activeIdx = mobileMenuItems.any((item) => item['index'] == activeTab)
+                      ? mobileMenuItems.indexWhere((item) => item['index'] == activeTab)
+                      : 0;
+
+                  return BottomNavigationBar(
+                    currentIndex: activeIdx,
+                    onTap: (navIdx) {
+                      ref.read(navigationTabProvider.notifier).state = mobileMenuItems[navIdx]['index'] as int;
+                    },
+                    backgroundColor: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
+                    selectedItemColor: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A),
+                    unselectedItemColor: isDarkMode ? const Color(0xFF888888) : const Color(0xFF64748B),
+                    selectedLabelStyle: CyberTextStyles.technical(fontSize: 9.0),
+                    unselectedLabelStyle: CyberTextStyles.technical(fontSize: 8.0),
+                    type: BottomNavigationBarType.fixed,
+                    items: mobileMenuItems
+                        .map((item) => BottomNavigationBarItem(
+                              icon: Icon(item['icon'] as IconData, size: 18),
+                              label: item['label'] as String,
+                            ))
+                        .toList(),
+                  );
                 },
-                backgroundColor: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
-                selectedItemColor: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF00875A),
-                unselectedItemColor: isDarkMode ? const Color(0xFF888888) : const Color(0xFF64748B),
-                selectedLabelStyle: CyberTextStyles.technical(fontSize: 9.0),
-                unselectedLabelStyle: CyberTextStyles.technical(fontSize: 8.0),
-                type: BottomNavigationBarType.fixed,
-                items: menuItems
-                    .map((item) => BottomNavigationBarItem(
-                          icon: Icon(item['icon'] as IconData, size: 18),
-                          label: item['label'] as String,
-                        ))
-                    .toList(),
               ),
             )
           : null,
+      ),
     );
   }
 
@@ -794,6 +878,109 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
     return Container(
       key: _contentAreaKey,
       child: _buildContentUI(context, isDarkMode),
+    );
+  }
+
+  void _showUserProfileModal(BuildContext context, String username, String role, bool isDarkMode) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: CyberHudFrame(
+            design: CyberFrameDesign.yellowTabNotch,
+            baseBorderColor: const Color(0xFF80A416),
+            surfaceColor: isDarkMode ? const Color(0xEF0F0F0F) : Colors.white,
+            padding: const EdgeInsets.all(24),
+            child: SizedBox(
+              width: 440,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.account_circle, color: Color(0xFF80A416), size: 28),
+                          const SizedBox(width: 10),
+                          Text('OPERATOR PROFILE & ACCESS', style: CyberTextStyles.heading2.copyWith(fontSize: 16)),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: CyberColors.textMuted, size: 20),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const Divider(color: CyberColors.borderNeonCyan),
+                  const SizedBox(height: 14),
+                  _buildProfileRow('USERNAME', username, CyberColors.neonCyan),
+                  const SizedBox(height: 8),
+                  _buildProfileRow('SECURITY ROLE', role.toUpperCase(), const Color(0xFF80A416)),
+                  const SizedBox(height: 8),
+                  _buildProfileRow('JWT SESSION', 'ACTIVE (TLS 1.3 ENCRYPTED)', CyberColors.neonGreen),
+                  const SizedBox(height: 8),
+                  _buildProfileRow('PERMISSIONS', role == 'Admin' ? 'FULL SYSTEM CONTROL' : 'INCIDENT RESPONSE', const Color(0xFFC5C764)),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF80A416)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          icon: const Icon(Icons.settings, color: Color(0xFF80A416), size: 16),
+                          label: Text(
+                            'SYSTEM SETTINGS',
+                            style: CyberTextStyles.technical(color: const Color(0xFF80A416), fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            ref.read(navigationTabProvider.notifier).state = 9;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: CyberColors.alertRed.withOpacity(0.2),
+                            side: const BorderSide(color: CyberColors.alertRed),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          icon: const Icon(Icons.logout, color: CyberColors.alertRed, size: 16),
+                          label: Text(
+                            'SIGN OUT',
+                            style: CyberTextStyles.technical(color: CyberColors.alertRed, fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            ref.read(authProvider.notifier).signOut();
+                            Navigator.of(context).pushReplacementNamed('/login');
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildProfileRow(String label, String val, Color color) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: CyberTextStyles.techMuted.copyWith(fontSize: 11)),
+        Text(val, style: CyberTextStyles.technical(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
+      ],
     );
   }
 }

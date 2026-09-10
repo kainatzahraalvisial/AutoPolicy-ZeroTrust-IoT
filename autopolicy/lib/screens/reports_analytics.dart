@@ -8,6 +8,7 @@ import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/neon_button.dart';
+import '../widgets/cyber_stat_card.dart';
 import '../models/device.dart';
 
 class ReportsAnalytics extends ConsumerStatefulWidget {
@@ -206,12 +207,136 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> with Single
                   ),
               ],
             ),
+            const SizedBox(height: 14),
+
+            // Top Stat Cards Row
+            Row(
+              children: [
+                Expanded(
+                  child: CyberStatCard(
+                    title: 'SOC2 TYPE II',
+                    value: '94.8%',
+                    sub: 'Access Controls Passed',
+                    borderColor: Color(0xFFFFE997), // 1. Yellow (#FFE997)
+                    tag: 'H17',
+                  ),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: CyberStatCard(
+                    title: 'ISO 27001',
+                    value: '91.2%',
+                    sub: 'Asset Inventory Aligned',
+                    borderColor: Color(0xFFA88AED), // 2. Indigo Purple (#A88AED)
+                    tag: 'H18',
+                  ),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: CyberStatCard(
+                    title: 'HIPAA SAFE HARBOR',
+                    value: '98.4%',
+                    sub: 'TLS 1.3 Encryption Active',
+                    borderColor: Color(0xFFC4E320), // 3. Bright Light Green (#C4E320)
+                    tag: 'H19',
+                  ),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: CyberStatCard(
+                    title: 'GDPR ART. 32',
+                    value: '89.5%',
+                    sub: 'GNN Segregation Enforced',
+                    borderColor: Color(0xFF80A416), // 4. Olive Green (#80A416)
+                    tag: 'H20',
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 16),
 
             // Export Progress Overlay Panel (Simulated System console)
             if (_isExporting || _exportProgress == 1.0) _buildExportConsole(),
 
             const SizedBox(height: 8),
+
+            // 3 COMPLIANCE & GOVERNANCE INTERACTIVE TILES (STANDARDS, LEDGER & HISTORY, THREAT ASSESSMENT)
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () => _tabController.animateTo(0),
+                    child: GlassContainer(
+                      borderColor: _tabController.index == 0 ? const Color(0xFFFFE997) : Colors.white24,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.verified_user_outlined, color: Color(0xFFFFE997), size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('STANDARDS & FRAMEWORKS', style: CyberTextStyles.technical(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                                Text('ISO 27001, SOC2, HIPAA, GDPR', style: CyberTextStyles.techMuted.copyWith(fontSize: 8.5)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: InkWell(
+                    onTap: () => _tabController.animateTo(1),
+                    child: GlassContainer(
+                      borderColor: _tabController.index == 1 ? const Color(0xFFA88AED) : Colors.white24,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.history_edu_outlined, color: Color(0xFFA88AED), size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('IMMUTABLE LEDGER & HISTORY', style: CyberTextStyles.technical(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                                Text('Cryptographic Event Audit Trail', style: CyberTextStyles.techMuted.copyWith(fontSize: 8.5)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: InkWell(
+                    onTap: () => _tabController.animateTo(2),
+                    child: GlassContainer(
+                      borderColor: _tabController.index == 2 ? const Color(0xFFC4E320) : Colors.white24,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.gavel_outlined, color: Color(0xFFC4E320), size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('REGULATORY THREAT ASSESSMENT', style: CyberTextStyles.technical(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                                Text('Critical Gaps & Risk Metrics', style: CyberTextStyles.techMuted.copyWith(fontSize: 8.5)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
 
             // Tab Navigation System
             TabBar(
@@ -223,7 +348,7 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> with Single
               tabs: const [
                 Tab(text: 'STANDARDS INDEX'),
                 Tab(text: 'AUDIT LEDGER'),
-                Tab(text: 'HISTORICAL TRENDS'),
+                Tab(text: 'REGULATORY THREAT ASSESSMENT'),
               ],
             ),
             const SizedBox(height: 16),
@@ -632,40 +757,111 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> with Single
   }
 
   Widget _buildTrendsView(Map<String, double> scores) {
-    return GlassContainer(
-      borderColor: CyberColors.neonCyan,
+    return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '12-MONTH REGULATORY COMPLIANCE FLUCTUATIONS',
-            style: CyberTextStyles.technical(color: Colors.white, fontSize: 12),
+          // ML Model Detection Performance Card (FR-25)
+          GlassContainer(
+            borderColor: CyberColors.neonGreen,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'GNN MODEL DETECTION PERFORMANCE METRICS',
+                      style: CyberTextStyles.technical(color: CyberColors.neonGreen, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: CyberColors.neonGreen.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(3),
+                        border: Border.all(color: CyberColors.neonGreen, width: 0.8),
+                      ),
+                      child: Text(
+                        'MODEL::STABLE (v2.4)',
+                        style: CyberTextStyles.technical(fontSize: 9.5, color: CyberColors.neonGreen, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                const Divider(color: CyberColors.borderNeonCyan),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildMlMetricItem('ACCURACY', '98.4%', CyberColors.neonGreen),
+                    _buildMlMetricItem('PRECISION', '97.8%', CyberColors.neonCyan),
+                    _buildMlMetricItem('RECALL', '99.1%', CyberColors.neonGreen),
+                    _buildMlMetricItem('F1-SCORE', '98.4%', CyberColors.neonCyan),
+                    _buildMlMetricItem('ROC-AUC', '0.995', CyberColors.neonGreen),
+                  ],
+                ),
+              ],
+            ),
           ),
-          const Divider(color: CyberColors.borderNeonCyan),
           const SizedBox(height: 16),
-          // Custom Canvas graph for trends
-          Expanded(
-            child: SizedBox(
-              width: double.infinity,
-              child: CustomPaint(
-                painter: _TrendGraphPainter(),
+
+          // 12-Month Regulatory Compliance Graph
+          SizedBox(
+            height: 320,
+            child: GlassContainer(
+              borderColor: CyberColors.neonCyan,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '12-MONTH REGULATORY COMPLIANCE FLUCTUATIONS',
+                    style: CyberTextStyles.technical(color: Colors.white, fontSize: 12),
+                  ),
+                  const Divider(color: CyberColors.borderNeonCyan),
+                  const SizedBox(height: 12),
+                  // Custom Canvas graph for trends
+                  Expanded(
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: CustomPaint(
+                        painter: _TrendGraphPainter(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Graph Legend
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildLegendLabel('SOC2', CyberColors.neonGreen),
+                      const SizedBox(width: 16),
+                      _buildLegendLabel('ISO27001', CyberColors.neonCyan),
+                      const SizedBox(width: 16),
+                      _buildLegendLabel('VULNERABILITIES', CyberColors.alertRed),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          // Graph Legend
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegendLabel('SOC2', CyberColors.neonGreen),
-              const SizedBox(width: 16),
-              _buildLegendLabel('ISO27001', CyberColors.neonCyan),
-              const SizedBox(width: 16),
-              _buildLegendLabel('VULNERABILITIES', CyberColors.alertRed),
-            ],
-          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMlMetricItem(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: CyberTextStyles.displayTitle(fontSize: 22, color: color, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: CyberTextStyles.technical(fontSize: 10, color: CyberColors.textMuted),
+        ),
+      ],
     );
   }
 

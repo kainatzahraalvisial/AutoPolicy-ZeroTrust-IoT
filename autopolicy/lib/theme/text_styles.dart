@@ -3,13 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'colors.dart';
 
 class CyberTextStyles {
-  // Futuristic display titles (uses Outfit for next-level modern elegance)
+  // Barlow font for display titles, subheadings, paragraphs, sidebar, and cards
   static TextStyle displayTitle({
-    double fontSize = 24.0,
-    Color color = const Color(0xFF7B96EC), // Premium periwinkle blue by default
+    double fontSize = 26.0,
+    Color color = const Color(0xFF7B96EC),
     FontWeight fontWeight = FontWeight.bold,
   }) {
-    return GoogleFonts.outfit(
+    return GoogleFonts.barlow(
       fontSize: fontSize,
       color: color,
       fontWeight: fontWeight,
@@ -17,27 +17,27 @@ class CyberTextStyles {
     );
   }
 
-  // Technical mono details (uses Share Tech Mono)
+  // Technical details (uses Barlow with medium/semi-bold weight for high legibility)
   static TextStyle technical({
-    double fontSize = 14.0,
-    Color color = const Color(0xFF8E9BB4), // Premium muted slate-grey by default
-    FontWeight fontWeight = FontWeight.normal,
+    double fontSize = 15.0,
+    Color color = const Color(0xFF8E9BB4),
+    FontWeight fontWeight = FontWeight.w600,
   }) {
-    return GoogleFonts.shareTechMono(
+    return GoogleFonts.barlow(
       fontSize: fontSize,
       color: color,
       fontWeight: fontWeight,
-      letterSpacing: 0.5,
+      letterSpacing: 0.3,
     );
   }
 
-  // UI interface font (uses Space Grotesk for crisp modern cyber legibility)
+  // UI interface font (uses Barlow for crisp modern cyber legibility)
   static TextStyle interface({
-    double fontSize = 15.0,
+    double fontSize = 16.0,
     Color color = const Color(0xFFE2E8F0),
-    FontWeight fontWeight = FontWeight.normal,
+    FontWeight fontWeight = FontWeight.w500,
   }) {
-    return GoogleFonts.spaceGrotesk(
+    return GoogleFonts.barlow(
       fontSize: fontSize,
       color: color,
       fontWeight: fontWeight,
@@ -45,14 +45,14 @@ class CyberTextStyles {
     );
   }
 
-  // Body & Paragraph font (uses Space Grotesk for optimal readability & contrast)
+  // Body & Paragraph font (uses Barlow for optimal readability & contrast)
   static TextStyle paragraph({
-    double fontSize = 15.5,
+    double fontSize = 16.0,
     Color color = const Color(0xFFD5E5D3),
     FontWeight fontWeight = FontWeight.normal,
-    double height = 1.6,
+    double height = 1.5,
   }) {
-    return GoogleFonts.spaceGrotesk(
+    return GoogleFonts.barlow(
       fontSize: fontSize,
       color: color,
       fontWeight: fontWeight,
@@ -62,47 +62,47 @@ class CyberTextStyles {
   }
 
   // Coordinated typography styles
-  static TextStyle heading1 = displayTitle(fontSize: 32, color: const Color(0xFF7B96EC)); // Vibrant periwinkle
-  static TextStyle heading2 = displayTitle(fontSize: 22, color: const Color(0xFFF8FAFC)); // Sleek ice white
-  static TextStyle heading3 = displayTitle(fontSize: 16, color: const Color(0xFFE2E8F0)); // Soft white
+  static TextStyle heading1 = displayTitle(fontSize: 34, color: const Color(0xFF7B96EC));
+  static TextStyle heading2 = displayTitle(fontSize: 24, color: const Color(0xFFF8FAFC));
+  static TextStyle heading3 = displayTitle(fontSize: 18, color: const Color(0xFFE2E8F0));
   
-  static TextStyle techBody = paragraph(fontSize: 15.0, color: const Color(0xFFE2E8F0));
-  static TextStyle techMuted = paragraph(fontSize: 13.5, color: const Color(0xFF9EBA9C)); // Legible soft olive slate
-  static TextStyle techAlert = technical(fontSize: 14.5, color: CyberColors.alertRed);
+  static TextStyle techBody = paragraph(fontSize: 16.0, color: const Color(0xFFE2E8F0));
+  static TextStyle techMuted = paragraph(fontSize: 14.5, color: const Color(0xFF9EBA9C));
+  static TextStyle techAlert = technical(fontSize: 15.0, color: CyberColors.alertRed, fontWeight: FontWeight.bold);
   
-  static TextStyle label = interface(fontSize: 13.0, color: const Color(0xFF9EBA9C), fontWeight: FontWeight.w600);
-  static TextStyle value = interface(fontSize: 15.0, color: Colors.white, fontWeight: FontWeight.bold);
+  static TextStyle label = interface(fontSize: 14.0, color: const Color(0xFF9EBA9C), fontWeight: FontWeight.w600);
+  static TextStyle value = interface(fontSize: 16.5, color: Colors.white, fontWeight: FontWeight.bold);
 
   static void updateTheme(bool isDarkMode) {
     heading1 = displayTitle(
-      fontSize: 32, 
-      color: isDarkMode ? const Color(0xFF7B96EC) : const Color(0xFF1E3A8A), // Deep Blue in Light Mode
+      fontSize: 34, 
+      color: isDarkMode ? const Color(0xFF7B96EC) : const Color(0xFF1E3A8A),
     );
     heading2 = displayTitle(
-      fontSize: 22, 
-      color: isDarkMode ? const Color(0xFFF8FAFC) : Colors.black, // Pure black
+      fontSize: 24, 
+      color: isDarkMode ? const Color(0xFFF8FAFC) : Colors.black,
     );
     heading3 = displayTitle(
-      fontSize: 16, 
-      color: isDarkMode ? const Color(0xFFE2E8F0) : Colors.black87, // Dark black-grey
+      fontSize: 18, 
+      color: isDarkMode ? const Color(0xFFE2E8F0) : Colors.black87,
     );
     
     techBody = paragraph(
-      fontSize: 15.0, 
+      fontSize: 16.0, 
       color: isDarkMode ? const Color(0xFFCBD5E1) : Colors.black87,
     );
     techMuted = paragraph(
-      fontSize: 13.5, 
-      color: isDarkMode ? const Color(0xFF9EBA9C) : Colors.black54, // Highly visible black-grey
+      fontSize: 14.5, 
+      color: isDarkMode ? const Color(0xFF9EBA9C) : Colors.black54,
     );
     
     label = interface(
-      fontSize: 13.0, 
+      fontSize: 14.0, 
       color: isDarkMode ? const Color(0xFF9EBA9C) : Colors.black87, 
       fontWeight: FontWeight.w600,
     );
     value = interface(
-      fontSize: 15.0, 
+      fontSize: 16.5, 
       color: isDarkMode ? Colors.white : Colors.black, 
       fontWeight: FontWeight.bold,
     );

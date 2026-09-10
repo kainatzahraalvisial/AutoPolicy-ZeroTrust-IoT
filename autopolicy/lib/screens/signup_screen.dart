@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
-import 'main_layout.dart';
-import 'landing_screen.dart';
-import 'login_screen.dart';
+import '../widgets/cyber_button.dart';
 
 // ═════════════════════════════════════════════════════════════
 // SIGNUP PAGE
@@ -62,10 +60,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
         _org.text.trim().isNotEmpty ? _org.text.trim() : 'Organization Member',
       );
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainLayout()),
-        );
+        Navigator.pushReplacementNamed(context, '/dashboard');
       }
     } catch (e) {
       if (mounted) {
@@ -113,10 +108,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     ),
                     const Spacer(),
                     _BackToExploreButton(
-                      onTap: () => Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LandingScreen()),
-                      ),
+                      onTap: () => Navigator.pushReplacementNamed(context, '/landing'),
                     ),
                   ],
                 ),
@@ -357,10 +349,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                         label: 'Sign up with Google',
                         primary: false,
                         onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (_) => const MainLayout()),
-                          );
+                          Navigator.pushReplacementNamed(context, '/dashboard');
                         },
                         leading: const Icon(Icons.g_mobiledata, size: 18, color: AP.lime),
                       ),
@@ -371,10 +360,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                           Text('Already cleared? ',
                             style: TextStyle(fontSize: 10, color: AP.muted)),
                           GestureDetector(
-                            onTap: () => Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (_) => const LoginPage()),
-                            ),
+                            onTap: () => Navigator.pushReplacementNamed(context, '/login'),
                             child: MouseRegion(
                               cursor: SystemMouseCursors.click,
                               child: Text('SIGN IN →',

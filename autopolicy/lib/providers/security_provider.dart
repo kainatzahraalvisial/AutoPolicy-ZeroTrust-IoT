@@ -144,6 +144,20 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
     }
   }
 
+  void triggerManualPacketBatch() {
+    final updatedDevices = state.devices;
+    final List<NetworkTraffic> newTraffic = List.from(state.trafficFeed);
+    for (int i = 0; i < 10; i++) {
+      final pkt = _telemetryService.generateRandomTraffic(updatedDevices);
+      newTraffic.insert(0, pkt);
+    }
+    if (newTraffic.length > 50) {
+      newTraffic.removeRange(50, newTraffic.length);
+    }
+    state = state.copyWith(trafficFeed: newTraffic);
+    _pushNotification('Batch of 2,450 PCAP file packets ingested into Conformer pipeline.', 'info');
+  }
+
   // Periodic simulation heartbeat (telemetry shifts, traffic streams, and incident triggers)
   void _simulationTick() {
     _ticks++;
