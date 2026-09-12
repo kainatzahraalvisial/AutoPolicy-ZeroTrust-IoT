@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/three_particle_canvas.dart';
 import '../widgets/pipeline_stage_widget.dart';
 import '../widgets/cyber_hud_card.dart';
-import '../widgets/cyber_stat_card.dart';
 import '../widgets/end_cta_widget.dart';
 import '../widgets/chamfered_cyber_button.dart';
 
@@ -88,10 +87,6 @@ class _LandingScreenState extends State<LandingScreen>
 
   void _navigateToLogin() {
     Navigator.of(context).pushNamed('/login');
-  }
-
-  void _navigateToSignup() {
-    Navigator.of(context).pushNamed('/signup');
   }
 
   @override
@@ -520,7 +515,7 @@ class _LandingScreenState extends State<LandingScreen>
                         children: [
                           ChamferedCyberButton(
                             text: 'EXPLORE NOW',
-                            onTap: _navigateToSignup,
+                            onTap: () => _goToPage(1),
                           ),
                           _LearnMoreHoverButton(onTap: () => _goToPage(1)),
                         ],
@@ -745,59 +740,6 @@ class _LandingScreenState extends State<LandingScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-  Widget _buildCard(String num, String title, String desc) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(4),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: const Color(0xC70C0618),
-            border: Border.all(
-              color: const Color(0xFF80A416).withOpacity(0.22),
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                num,
-                style: GoogleFonts.orbitron(
-                  fontSize: 17.5,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFFC5C764),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: GoogleFonts.orbitron(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.0,
-                  color: const Color(0xFFC5C764),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                desc,
-                style: GoogleFonts.inter(
-                  fontSize: 11.8,
-                  fontWeight: FontWeight.w300,
-                  height: 1.65,
-                  color: const Color(0xFF829A80),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

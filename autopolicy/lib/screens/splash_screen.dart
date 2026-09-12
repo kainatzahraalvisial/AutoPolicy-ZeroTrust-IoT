@@ -16,8 +16,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late final Animation<double> _mazeBuildAnimation;
   late final Animation<double> _mazeScatterAnimation;
   late final Animation<double> _mazeOpacityAnimation;
-  late final Animation<double> _logoScaleAnimation;
-  late final Animation<double> _logoOpacityAnimation;
 
   @override
   void initState() {
@@ -46,20 +44,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         parent: _controller,
         curve: const Interval(0.60, 1.0, curve: Curves.easeOut),
       ),
-    );
-
-    // 4. Logo scale goes from 0.2 to 1.0 with a nice elastic zoom bounce (Timeline: 0.50 -> 0.78 = 1.96s)
-    _logoScaleAnimation = Tween<double>(begin: 0.2, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.50, 0.78, curve: Curves.easeOutBack),
-      ),
-    );
-
-    // 5. Logo opacity goes from 0.0 to 1.0 (Timeline: 0.50 -> 0.70 = 1.40s)
-    _logoOpacityAnimation = CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.50, 0.70, curve: Curves.easeIn),
     );
 
     // Rebuild the UI on every tick of the animation controller

@@ -22,12 +22,13 @@ class CyberTextStyles {
     double fontSize = 15.0,
     Color color = const Color(0xFF8E9BB4),
     FontWeight fontWeight = FontWeight.w600,
+    double? letterSpacing,
   }) {
     return GoogleFonts.barlow(
       fontSize: fontSize,
       color: color,
       fontWeight: fontWeight,
-      letterSpacing: 0.3,
+      letterSpacing: letterSpacing ?? 0.3,
     );
   }
 
@@ -45,14 +46,14 @@ class CyberTextStyles {
     );
   }
 
-  // Body & Paragraph font (uses Barlow for optimal readability & contrast)
+  // Body & Paragraph font (uses Inter for optimal readability & contrast)
   static TextStyle paragraph({
     double fontSize = 16.0,
     Color color = const Color(0xFFD5E5D3),
     FontWeight fontWeight = FontWeight.normal,
     double height = 1.5,
   }) {
-    return GoogleFonts.barlow(
+    return GoogleFonts.inter(
       fontSize: fontSize,
       color: color,
       fontWeight: fontWeight,

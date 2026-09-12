@@ -1,14 +1,9 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
-import '../theme/colors.dart';
-import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
-import '../widgets/neon_button.dart';
 import '../widgets/cyber_hud_card.dart';
-
 import '../providers/navigation_provider.dart';
 
 /// Full-Page Administrator System Settings & Configuration Workspace
@@ -23,28 +18,81 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
   // Active Sub-Page View (0 = ListTiles Directory View)
   int _activeSettingsTab = 0;
 
+  int? _hoveredTileId;
+
+  // 1. Zeek Settings State
+  String _zeekInterface = 'eth0 (All IoT Ingress)';
+  final TextEditingController _bpfFilterCtrl = TextEditingController(text: 'tcp or udp or icmp and not port 22');
+  String _zeekBufferSize = '512 MB';
+  bool _zeekPromiscuous = true;
+
+  // 2. Detection Thresholds State
+  double _gnnSensitivityThreshold = 0.85;
+  bool _autoQuarantineEnabled = true;
+
+  // 3. Model & Retraining State
+  bool _autoRetrainOnFlows = true;
+  int _retrainFlowBatchSize = 1000;
+  bool _isRetrainingModel = false;
+  String _retrainStatus = '';
+
+  // 4. OPA Connection State
+  final TextEditingController _opaEndpointCtrl = TextEditingController(text: 'http://localhost:8181/v1/data/autopolicy');
+  final TextEditingController _bundlePathCtrl = TextEditingController(text: '/etc/opa/bundles/iot_microsegments.tar.gz');
+  bool _strictOpaEnforcement = true;
+  bool _isTestingOpa = false;
+  String _opaTestStatus = '';
+
+  // 5. Webhooks & Notifications State
   final TextEditingController _webhookController = TextEditingController(
     text: 'https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX',
   );
-
+  final TextEditingController _smtpHostCtrl = TextEditingController(text: 'smtp.enclave-internal.net:587');
   bool _isTestingWebhook = false;
   String _webhookStatus = '';
-  String _generatedApiKey = '';
-  bool _showApiKey = false;
 
-  // Zero-Trust & OPA Security Settings State
-  bool _strictOpaEnforcement = true;
-  bool _autoQuarantineEnabled = true;
-  double _gnnSensitivityThreshold = 0.85;
+  // 6. Theme & Appearance
   String _telemetryRefreshInterval = '2 Seconds';
 
-  void _generateNewApiKey() {
-    final Random random = Random();
-    final bytes = List.generate(24, (_) => random.nextInt(256));
-    final String key = 'ap_sec_token_' + bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join('').substring(0, 32);
+  @override
+  void dispose() {
+    _bpfFilterCtrl.dispose();
+    _opaEndpointCtrl.dispose();
+    _bundlePathCtrl.dispose();
+    _webhookController.dispose();
+    _smtpHostCtrl.dispose();
+    super.dispose();
+  }
+
+  void _triggerModelRetrain() {
+    if (_isRetrainingModel) return;
     setState(() {
-      _generatedApiKey = key;
-      _showApiKey = true;
+      _isRetrainingModel = true;
+      _retrainStatus = 'COMPILING GNN TOPOLOGY GRAPH & WEIGHTS...';
+    });
+
+    Future.delayed(const Duration(milliseconds: 1800), () {
+      if (!mounted) return;
+      setState(() {
+        _isRetrainingModel = false;
+        _retrainStatus = 'GNN RETRAINING COMPLETE: 1.07M PARAMS OPTIMIZED (98.9% ACCURACY)';
+      });
+    });
+  }
+
+  void _testOpaConnection() {
+    if (_isTestingOpa) return;
+    setState(() {
+      _isTestingOpa = true;
+      _opaTestStatus = 'CONNECTING TO OPA REGO SIDECAR...';
+    });
+
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      if (!mounted) return;
+      setState(() {
+        _isTestingOpa = false;
+        _opaTestStatus = 'OPA SIDECAR HEALTHY (298 ACTIVE RULES · LATENCY 0.8ms)';
+      });
     });
   }
 
@@ -71,7 +119,7 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
 
     final String adminName = authSession?.username ?? 'ADMINISTRATOR';
     final String adminRole = authSession?.role ?? 'Admin';
-    final String adminEmail = '${adminName.toLowerCase()}@autopolicy.zero-trust';
+    final String adminEmail = '${adminName.toLowerCase().replaceAll(' ', '')}@autopolicy.zero-trust';
 
     return PopScope(
       canPop: false,
@@ -84,54 +132,54 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
         }
       },
       child: Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Page Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('ADMINISTRATOR SYSTEM SETTINGS', style: CyberTextStyles.heading2),
-                    const SizedBox(height: 4),
-                    Text('ADMIN PROFILE, APPEARANCE, ZERO-TRUST ENGINE CONFIGURATION & INTEGRATIONS', style: CyberTextStyles.techMuted),
-                  ],
-                ),
-                if (_activeSettingsTab != 0)
-                  ElevatedButton.icon(
-                    onPressed: () => setState(() => _activeSettingsTab = 0),
-                    icon: const Icon(Icons.arrow_back, size: 16, color: Colors.white),
-                    label: Text('ALL SETTINGS TILES', style: CyberTextStyles.technical(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E3A8A)),
+        backgroundColor: Colors.transparent,
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Page Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('SYSTEM SETTINGS & CONFIGURATION', style: CyberTextStyles.heading2),
+                      const SizedBox(height: 4),
+                      Text('ZEEK IDS, DETECTION THRESHOLDS, GNN MODEL, OPA SIDECAR & NOTIFICATIONS', style: CyberTextStyles.techMuted),
+                    ],
                   ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                  if (_activeSettingsTab != 0)
+                    ElevatedButton.icon(
+                      onPressed: () => setState(() => _activeSettingsTab = 0),
+                      icon: const Icon(Icons.arrow_back, size: 16, color: Colors.white),
+                      label: Text('ALL CONFIGURATION TILES', style: CyberTextStyles.technical(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E3A8A)),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
 
-            // Top Profile & Sign Out Summary Header Card
-            _buildTopAdminCard(context, adminName, adminRole, adminEmail),
-            const SizedBox(height: 16),
+              // Top Admin Banner
+              _buildTopAdminCard(context, adminName, adminRole, adminEmail),
+              const SizedBox(height: 16),
 
-            // Render Main Settings Directory or Individual Sub-Pages
-            if (_activeSettingsTab == 0)
-              _buildSettingsTilesDirectory(isDarkMode)
-            else
-              _buildIndividualSettingsSubPage(context, isDarkMode, adminName, adminRole, adminEmail),
-          ],
+              // Render Main Directory or Individual Sub-Pages
+              if (_activeSettingsTab == 0)
+                _buildSettingsTilesDirectory(isDarkMode)
+              else
+                _buildIndividualSettingsSubPage(context, isDarkMode, adminName, adminRole, adminEmail),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildTopAdminCard(BuildContext context, String adminName, String adminRole, String adminEmail) {
     return CyberHudCard(
-      tag: 'H17',
+      tag: 'SYS-CFG',
       borderColor: const Color(0xFFFFE997),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -141,89 +189,92 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
               const CircleAvatar(
                 backgroundColor: Color(0xFFFFE997),
                 radius: 20,
-                child: Icon(Icons.admin_panel_settings, color: Colors.black, size: 24),
+                child: Icon(Icons.settings, color: Colors.black, size: 22),
               ),
               const SizedBox(width: 14),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'ACTIVE SESSION: ${adminName.toUpperCase()} | $adminRole',
-                    style: CyberTextStyles.technical(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                    'ZERO-TRUST SYSTEM CONFIGURATION HUB',
+                    style: CyberTextStyles.technical(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
-                    'EMAIL: $adminEmail | IP: 10.128.4.102 (ENCRYPTED TLS 1.3)',
-                    style: CyberTextStyles.techMuted.copyWith(fontSize: 9.5),
+                    'ENCLAVE: INDUSTRIAL IOT MESH · ACTIVE OPERATOR: ${adminName.toUpperCase()} ($adminRole)',
+                    style: CyberTextStyles.technical(fontSize: 13.0, fontWeight: FontWeight.bold, color: Colors.white70),
                   ),
                 ],
               ),
             ],
           ),
-          ElevatedButton.icon(
-            onPressed: () {
-              ref.read(authProvider.notifier).signOut();
-              Navigator.of(context).pushReplacementNamed('/login');
-            },
-            icon: const Icon(Icons.logout, size: 16, color: Colors.white),
-            label: Text('SIGN OUT', style: CyberTextStyles.technical(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB91C1D)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF5DD62C).withOpacity(0.15),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: const Color(0xFF5DD62C).withOpacity(0.5)),
+            ),
+            child: Text(
+              'ALL SERVICES SYNCHRONIZED',
+              style: CyberTextStyles.technical(color: const Color(0xFF5DD62C), fontSize: 11.0, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
     );
   }
 
-  // 1. Main Directory View rendering ListTiles for each settings category
+  // 1. Directory View rendering 6 ListTiles per Admin Specification
   Widget _buildSettingsTilesDirectory(bool isDarkMode) {
     final settingsCategories = [
       {
         'id': 1,
-        'title': 'APPEARANCE & CYBER THEME PREFERENCES',
-        'subtitle': 'Toggle Dark/Light theme mode, accent colors, and telemetry refresh frequency',
-        'icon': Icons.palette_outlined,
+        'title': '1. ZEEK SENSOR CONFIGURATION',
+        'subtitle': 'Network capture interfaces, BPF packet filters, capture intervals, and ring buffers',
+        'icon': Icons.radar_outlined,
         'color': const Color(0xFFFFE997),
-        'tag': 'OPT-1',
+        'tag': 'CFG-1',
       },
       {
         'id': 2,
-        'title': 'ADMINISTRATOR IDENTITY & SESSION CONTROLS',
-        'subtitle': 'Manage admin credentials, RBAC levels, session tokens, and security profile',
-        'icon': Icons.security_outlined,
+        'title': '2. DETECTION THRESHOLDS & GNN SENSITIVITY',
+        'subtitle': 'GNN confidence score triggers, severity classification mapping, and auto-quarantine toggles',
+        'icon': Icons.tune_outlined,
         'color': const Color(0xFFA88AED),
-        'tag': 'OPT-2',
+        'tag': 'CFG-2',
       },
       {
         'id': 3,
-        'title': 'ZERO-TRUST & OPA POLICY ENGINE CONFIGURATION',
-        'subtitle': 'Strict Rego policy enforcement mode, GNN threat sensitivity, and auto-quarantine rules',
-        'icon': Icons.tune_outlined,
+        'title': '3. MODEL & RETRAINING SETTINGS',
+        'subtitle': 'PyTorch transformer weights, automated retraining flow limits, and manual training triggers',
+        'icon': Icons.psychology_outlined,
         'color': const Color(0xFFC4E320),
-        'tag': 'OPT-3',
+        'tag': 'CFG-3',
       },
       {
         'id': 4,
-        'title': 'WEBHOOKS & ALERTS INTEGRATIONS',
-        'subtitle': 'Slack / PagerDuty webhook endpoints, SIEM event dispatch, and custom alert handlers',
-        'icon': Icons.webhook_outlined,
+        'title': '4. OPA CONNECTION & SIDECAR SETTINGS',
+        'subtitle': 'Open Policy Agent REST endpoint, compiled Rego bundle paths, and sidecar health check',
+        'icon': Icons.shield_outlined,
         'color': const Color(0xFF80A416),
-        'tag': 'OPT-4',
+        'tag': 'CFG-4',
       },
       {
         'id': 5,
-        'title': 'API KEYS & CRYPTOGRAPHIC SECURITY CREDENTIALS',
-        'subtitle': 'Generate system API bearer tokens, TLS certificates, and rotate secrets',
-        'icon': Icons.key_outlined,
+        'title': '5. NOTIFICATION & WEBHOOK SETTINGS',
+        'subtitle': 'Slack / Teams webhooks, SIEM event dispatch, SMTP alert host, and emergency SMS',
+        'icon': Icons.notifications_active_outlined,
         'color': const Color(0xFFB91C1D),
-        'tag': 'OPT-5',
+        'tag': 'CFG-5',
       },
       {
         'id': 6,
-        'title': 'SYSTEM DIAGNOSTICS & CRYPTOGRAPHIC AUDIT STREAM',
-        'subtitle': 'Inspect OPA policy execution logs, Envoy sidecar telemetry, and event history',
-        'icon': Icons.terminal_outlined,
+        'title': '6. APPEARANCE & CYBER THEME PREFERENCES',
+        'subtitle': 'Toggle Dark/Light mode, high-contrast cyber palette, and telemetry refresh frequency',
+        'icon': Icons.palette_outlined,
         'color': const Color(0xFFC5C764),
-        'tag': 'OPT-6',
+        'tag': 'CFG-6',
       },
     ];
 
@@ -235,50 +286,72 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
         final IconData icon = cat['icon'] as IconData;
         final Color color = cat['color'] as Color;
         final String tag = cat['tag'] as String;
+        final bool isHovered = _hoveredTileId == id;
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
-          child: InkWell(
-            onTap: () {
-              setState(() {
-                _activeSettingsTab = id;
-              });
-            },
-            borderRadius: BorderRadius.circular(10),
-            child: CyberHudCard(
-              tag: tag,
-              borderColor: color,
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.15),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: color.withOpacity(0.5)),
-                    ),
-                    child: Icon(icon, color: color, size: 24),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: CyberTextStyles.technical(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            onEnter: (_) => setState(() => _hoveredTileId = id),
+            onExit: (_) => setState(() => _hoveredTileId = null),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: isHovered
+                    ? [
+                        BoxShadow(
+                          color: color.withOpacity(0.45),
+                          blurRadius: 20,
+                          spreadRadius: 2,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          subtitle,
-                          style: CyberTextStyles.techMuted.copyWith(fontSize: 10),
+                      ]
+                    : [],
+              ),
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    _activeSettingsTab = id;
+                  });
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: CyberHudCard(
+                  tag: tag,
+                  borderColor: isHovered ? color : color.withOpacity(0.7),
+                  borderWidth: isHovered ? 2.0 : 1.2,
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(isHovered ? 0.28 : 0.15),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: color.withOpacity(isHovered ? 0.9 : 0.5)),
                         ),
-                      ],
-                    ),
+                        child: Icon(icon, color: color, size: 24),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: CyberTextStyles.technical(color: Colors.white, fontSize: 15.0, fontWeight: FontWeight.w900),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              subtitle,
+                              style: CyberTextStyles.technical(color: Colors.white70, fontSize: 13.0, fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(Icons.arrow_forward_ios, color: color, size: 18),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Icon(Icons.arrow_forward_ios, color: color, size: 18),
-                ],
+                ),
               ),
             ),
           ),
@@ -291,38 +364,310 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
   Widget _buildIndividualSettingsSubPage(BuildContext context, bool isDarkMode, String adminName, String adminRole, String adminEmail) {
     switch (_activeSettingsTab) {
       case 1:
-        return _buildAppearanceSubPage(isDarkMode);
+        return _buildZeekSubPage();
       case 2:
-        return _buildAdminIdentitySubPage(adminName, adminRole, adminEmail);
+        return _buildDetectionThresholdsSubPage();
       case 3:
-        return _buildOpaEngineSubPage();
+        return _buildModelRetrainingSubPage();
       case 4:
-        return _buildWebhooksSubPage();
+        return _buildOpaSubPage();
       case 5:
-        return _buildApiKeysSubPage();
+        return _buildWebhooksSubPage();
       case 6:
-        return _buildDiagnosticsSubPage();
-      default:
         return _buildAppearanceSubPage(isDarkMode);
+      default:
+        return _buildZeekSubPage();
     }
   }
 
-  // Sub-Page 1: Appearance & Theme
-  Widget _buildAppearanceSubPage(bool isDarkMode) {
+  // Sub-Page 1: Zeek Configuration
+  Widget _buildZeekSubPage() {
     return CyberHudCard(
-      tag: 'OPT-1',
+      tag: 'CFG-1',
       borderColor: const Color(0xFFFFE997),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.palette_outlined, color: Color(0xFFFFE997), size: 22),
+              const Icon(Icons.radar_outlined, color: Color(0xFFFFE997), size: 22),
+              const SizedBox(width: 10),
+              Text('ZEEK NETWORK SENSOR CONFIGURATION', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          Divider(color: const Color(0xFFFFE997).withOpacity(0.3)),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('CAPTURE NETWORK INTERFACE', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white)),
+              DropdownButton<String>(
+                value: _zeekInterface,
+                dropdownColor: const Color(0xFF0F0F14),
+                style: CyberTextStyles.technical(color: const Color(0xFFFFE997), fontSize: 11),
+                items: ['eth0 (All IoT Ingress)', 'eth1 (Industrial ICS)', 'wlan0 (Mesh Gateways)'].map((s) {
+                  return DropdownMenuItem(value: s, child: Text(s));
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) setState(() => _zeekInterface = val);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _bpfFilterCtrl,
+            style: CyberTextStyles.techBody,
+            decoration: const InputDecoration(labelText: 'BERKELEY PACKET FILTER (BPF) STRING'),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('RING BUFFER SIZE', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white)),
+              DropdownButton<String>(
+                value: _zeekBufferSize,
+                dropdownColor: const Color(0xFF0F0F14),
+                style: CyberTextStyles.technical(color: const Color(0xFFFFE997), fontSize: 11),
+                items: ['256 MB', '512 MB', '1024 MB', '2048 MB'].map((s) {
+                  return DropdownMenuItem(value: s, child: Text(s));
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) setState(() => _zeekBufferSize = val);
+                },
+              ),
+            ],
+          ),
+          SwitchListTile(
+            activeColor: const Color(0xFFFFE997),
+            title: Text('PROMISCUOUS PACKET CAPTURE', style: CyberTextStyles.technical(fontSize: 12, color: Colors.white)),
+            subtitle: Text('Inspect all lateral traffic across VLAN switches', style: CyberTextStyles.techMuted.copyWith(fontSize: 10)),
+            value: _zeekPromiscuous,
+            onChanged: (val) => setState(() => _zeekPromiscuous = val),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Sub-Page 2: Detection Thresholds
+  Widget _buildDetectionThresholdsSubPage() {
+    return CyberHudCard(
+      tag: 'CFG-2',
+      borderColor: const Color(0xFFA88AED),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.tune_outlined, color: Color(0xFFA88AED), size: 22),
+              const SizedBox(width: 10),
+              Text('DETECTION THRESHOLDS & GNN SENSITIVITY', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          Divider(color: const Color(0xFFA88AED).withOpacity(0.3)),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('GNN THREAT SENSITIVITY CUTOFF', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white)),
+              Text('${(_gnnSensitivityThreshold * 100).toInt()}% CONFIDENCE', style: CyberTextStyles.technical(fontSize: 11, color: const Color(0xFFA88AED), fontWeight: FontWeight.bold)),
+            ],
+          ),
+          Slider(
+            value: _gnnSensitivityThreshold,
+            min: 0.50,
+            max: 0.99,
+            activeColor: const Color(0xFFA88AED),
+            inactiveColor: Colors.white24,
+            onChanged: (val) => setState(() => _gnnSensitivityThreshold = val),
+          ),
+          const SizedBox(height: 10),
+          SwitchListTile(
+            activeColor: const Color(0xFFA88AED),
+            title: Text('AUTO-QUARANTINE HIGH-RISK DEVICES', style: CyberTextStyles.technical(fontSize: 12, color: Colors.white)),
+            subtitle: Text('Instantly isolate target node when anomaly score crosses threshold', style: CyberTextStyles.techMuted.copyWith(fontSize: 10)),
+            value: _autoQuarantineEnabled,
+            onChanged: (val) => setState(() => _autoQuarantineEnabled = val),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Sub-Page 3: Model & Retraining
+  Widget _buildModelRetrainingSubPage() {
+    return CyberHudCard(
+      tag: 'CFG-3',
+      borderColor: const Color(0xFFC4E320),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.psychology_outlined, color: Color(0xFFC4E320), size: 22),
+              const SizedBox(width: 10),
+              Text('PYTORCH GNN MODEL & CONTINUOUS RETRAINING', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          Divider(color: const Color(0xFFC4E320).withOpacity(0.3)),
+          const SizedBox(height: 10),
+          SwitchListTile(
+            activeColor: const Color(0xFFC4E320),
+            title: Text('AUTO-RETRAIN ON FLOW BATCH', style: CyberTextStyles.technical(fontSize: 12, color: Colors.white)),
+            subtitle: Text('Retrain GNN graph weights automatically every $_retrainFlowBatchSize incoming network flows', style: CyberTextStyles.techMuted.copyWith(fontSize: 10)),
+            value: _autoRetrainOnFlows,
+            onChanged: (val) => setState(() => _autoRetrainOnFlows = val),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('MANUAL ON-DEMAND RETRAIN', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white)),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC4E320)),
+                icon: const Icon(Icons.refresh, color: Colors.black, size: 16),
+                label: Text(
+                  _isRetrainingModel ? 'TRAINING...' : 'RETRAIN MODEL NOW',
+                  style: CyberTextStyles.technical(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+                onPressed: _isRetrainingModel ? null : _triggerModelRetrain,
+              ),
+            ],
+          ),
+          if (_retrainStatus.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(_retrainStatus, style: CyberTextStyles.technical(fontSize: 10, color: const Color(0xFFC4E320))),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // Sub-Page 4: OPA Connection
+  Widget _buildOpaSubPage() {
+    return CyberHudCard(
+      tag: 'CFG-4',
+      borderColor: const Color(0xFF80A416),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.shield_outlined, color: Color(0xFF80A416), size: 22),
+              const SizedBox(width: 10),
+              Text('OPEN POLICY AGENT (OPA) & REGO ENFORCEMENT', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          Divider(color: const Color(0xFF80A416).withOpacity(0.3)),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _opaEndpointCtrl,
+            style: CyberTextStyles.techBody,
+            decoration: const InputDecoration(labelText: 'OPA ENGINE REST ENDPOINT'),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _bundlePathCtrl,
+            style: CyberTextStyles.techBody,
+            decoration: const InputDecoration(labelText: 'REGO POLICY BUNDLE PATH'),
+          ),
+          const SizedBox(height: 12),
+          SwitchListTile(
+            activeColor: const Color(0xFF80A416),
+            title: Text('STRICT REGO DENY-BY-DEFAULT', style: CyberTextStyles.technical(fontSize: 12, color: Colors.white)),
+            subtitle: Text('Zero-Trust principle: drop all unspecified microsegments', style: CyberTextStyles.techMuted.copyWith(fontSize: 10)),
+            value: _strictOpaEnforcement,
+            onChanged: (val) => setState(() => _strictOpaEnforcement = val),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF80A416)),
+                icon: const Icon(Icons.health_and_safety, color: Colors.black, size: 16),
+                label: Text(
+                  _isTestingOpa ? 'TESTING...' : 'PING OPA SIDECAR',
+                  style: CyberTextStyles.technical(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+                onPressed: _isTestingOpa ? null : _testOpaConnection,
+              ),
+              if (_opaTestStatus.isNotEmpty)
+                Text(_opaTestStatus, style: CyberTextStyles.technical(fontSize: 10, color: const Color(0xFFC4E320))),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Sub-Page 5: Webhooks & Notifications
+  Widget _buildWebhooksSubPage() {
+    return CyberHudCard(
+      tag: 'CFG-5',
+      borderColor: const Color(0xFFB91C1D),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.notifications_active_outlined, color: Color(0xFFB91C1D), size: 22),
+              const SizedBox(width: 10),
+              Text('NOTIFICATION & DISPATCH WEBHOOK CONFIGURATION', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          Divider(color: const Color(0xFFB91C1D).withOpacity(0.3)),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _webhookController,
+            style: CyberTextStyles.techBody,
+            decoration: const InputDecoration(labelText: 'INCIDENT ALERT WEBHOOK URL (SLACK / TEAMS)'),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _smtpHostCtrl,
+            style: CyberTextStyles.techBody,
+            decoration: const InputDecoration(labelText: 'ENCLAVE SMTP DISPATCH HOST'),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB91C1D)),
+                icon: const Icon(Icons.send, color: Colors.white, size: 16),
+                label: Text(
+                  _isTestingWebhook ? 'TESTING...' : 'TRANSMIT TEST PAYLOAD',
+                  style: CyberTextStyles.technical(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+                onPressed: _isTestingWebhook ? null : _testWebhook,
+              ),
+              if (_webhookStatus.isNotEmpty)
+                Text(_webhookStatus, style: CyberTextStyles.technical(fontSize: 10, color: const Color(0xFFC4E320))),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Sub-Page 6: Appearance & Theme
+  Widget _buildAppearanceSubPage(bool isDarkMode) {
+    return CyberHudCard(
+      tag: 'CFG-6',
+      borderColor: const Color(0xFFC5C764),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.palette_outlined, color: Color(0xFFC5C764), size: 22),
               const SizedBox(width: 10),
               Text('APPEARANCE & CYBER THEME PREFERENCES', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
             ],
           ),
-          Divider(color: const Color(0xFFFFE997).withOpacity(0.3)),
+          Divider(color: const Color(0xFFC5C764).withOpacity(0.3)),
           const SizedBox(height: 10),
           SwitchListTile(
             activeColor: const Color(0xFFC4E320),
@@ -354,230 +699,6 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
               ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  // Sub-Page 2: Admin Identity
-  Widget _buildAdminIdentitySubPage(String adminName, String adminRole, String adminEmail) {
-    return CyberHudCard(
-      tag: 'OPT-2',
-      borderColor: const Color(0xFFA88AED),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.security_outlined, color: Color(0xFFA88AED), size: 22),
-              const SizedBox(width: 10),
-              Text('ADMINISTRATOR IDENTITY & ACCESS PROFILE', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          Divider(color: const Color(0xFFA88AED).withOpacity(0.3)),
-          const SizedBox(height: 10),
-          _buildAdminInfoTile('HANDLE', adminName.toUpperCase()),
-          _buildAdminInfoTile('EMAIL ADDRESS', adminEmail),
-          _buildAdminInfoTile('RBAC PERMISSION LEVEL', '$adminRole Level 5 (FULL SYSTEM AUTHORIZATION)'),
-          _buildAdminInfoTile('SESSION ENCRYPTION', 'TLS 1.3 AES-256-GCM'),
-          _buildAdminInfoTile('MFA AUTHENTICATION', 'HARDWARE YUBIKEY VERIFIED'),
-        ],
-      ),
-    );
-  }
-
-  // Sub-Page 3: OPA Policy Engine
-  Widget _buildOpaEngineSubPage() {
-    return CyberHudCard(
-      tag: 'OPT-3',
-      borderColor: const Color(0xFFC4E320),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.tune_outlined, color: Color(0xFFC4E320), size: 22),
-              const SizedBox(width: 10),
-              Text('ZERO-TRUST & OPA REGO ENGINE CONFIGURATION', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          Divider(color: const Color(0xFFC4E320).withOpacity(0.3)),
-          const SizedBox(height: 10),
-          SwitchListTile(
-            activeColor: const Color(0xFFC4E320),
-            title: Text('STRICT OPA REGO ENFORCEMENT MODE', style: CyberTextStyles.technical(fontSize: 12, color: Colors.white)),
-            subtitle: Text('Block non-compliant IoT flows instantly at Envoy sidecars', style: CyberTextStyles.techMuted.copyWith(fontSize: 10)),
-            value: _strictOpaEnforcement,
-            onChanged: (val) => setState(() => _strictOpaEnforcement = val),
-          ),
-          SwitchListTile(
-            activeColor: const Color(0xFFC4E320),
-            title: Text('AUTO-QUARANTINE HIGH-RISK NODES', style: CyberTextStyles.technical(fontSize: 12, color: Colors.white)),
-            subtitle: Text('Automatically isolate IoT devices when GNN threat score exceeds threshold', style: CyberTextStyles.techMuted.copyWith(fontSize: 10)),
-            value: _autoQuarantineEnabled,
-            onChanged: (val) => setState(() => _autoQuarantineEnabled = val),
-          ),
-          const SizedBox(height: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('GNN THREAT SENSITIVITY THRESHOLD', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white)),
-                  Text('${(_gnnSensitivityThreshold * 100).toInt()}% SCORE', style: CyberTextStyles.technical(fontSize: 11, color: const Color(0xFFC4E320), fontWeight: FontWeight.bold)),
-                ],
-              ),
-              Slider(
-                value: _gnnSensitivityThreshold,
-                min: 0.50,
-                max: 0.99,
-                activeColor: const Color(0xFFC4E320),
-                inactiveColor: Colors.white24,
-                onChanged: (val) => setState(() => _gnnSensitivityThreshold = val),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Sub-Page 4: Webhooks
-  Widget _buildWebhooksSubPage() {
-    return CyberHudCard(
-      tag: 'OPT-4',
-      borderColor: const Color(0xFF80A416),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.webhook_outlined, color: Color(0xFF80A416), size: 22),
-              const SizedBox(width: 10),
-              Text('SLACK / PAGERDUTY INCIDENT ALERTS WEBHOOK', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          Divider(color: const Color(0xFF80A416).withOpacity(0.3)),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _webhookController,
-            style: CyberTextStyles.techBody,
-            decoration: const InputDecoration(labelText: 'INCIDENT ALERT WEBHOOK URL'),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              NeonButton(
-                text: _isTestingWebhook ? 'TRANSMITTING...' : 'TEST WEBHOOK ENDPOINT',
-                onPressed: _testWebhook,
-                icon: Icons.send_outlined,
-                color: const Color(0xFF80A416),
-              ),
-              if (_webhookStatus.isNotEmpty)
-                Text(_webhookStatus, style: CyberTextStyles.technical(fontSize: 10, color: const Color(0xFFC4E320))),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Sub-Page 5: API Keys
-  Widget _buildApiKeysSubPage() {
-    return CyberHudCard(
-      tag: 'OPT-5',
-      borderColor: const Color(0xFFB91C1D),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.key_outlined, color: Color(0xFFB91C1D), size: 22),
-              const SizedBox(width: 10),
-              Text('SYSTEM BEARER TOKEN & SECURITY API KEYS', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          Divider(color: const Color(0xFFB91C1D).withOpacity(0.3)),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('SYSTEM API BEARER TOKEN', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white)),
-              ElevatedButton(
-                onPressed: _generateNewApiKey,
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFB91C1D)),
-                child: Text('GENERATE NEW BEARER TOKEN', style: CyberTextStyles.technical(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-          if (_showApiKey) ...[
-            const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.4),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: const Color(0xFFB91C1D)),
-              ),
-              child: SelectableText(_generatedApiKey, style: const TextStyle(fontFamily: 'monospace', fontSize: 12, color: Color(0xFFFFE997))),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  // Sub-Page 6: Diagnostics & Audit Stream
-  Widget _buildDiagnosticsSubPage() {
-    return CyberHudCard(
-      tag: 'OPT-6',
-      borderColor: const Color(0xFFC5C764),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.terminal_outlined, color: Color(0xFFC5C764), size: 22),
-              const SizedBox(width: 10),
-              Text('SYSTEM DIAGNOSTICS & OPA REGO AUDIT LOG STREAM', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-            ],
-          ),
-          Divider(color: const Color(0xFFC5C764).withOpacity(0.3)),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.6),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: const Color(0xFFC5C764).withOpacity(0.5)),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('[LOG-1029] OPA Rego Policy Engine initialized successfully (v0.62.0)', style: TextStyle(fontFamily: 'monospace', fontSize: 11, color: Color(0xFFC4E320))),
-                SizedBox(height: 4),
-                Text('[LOG-1030] Envoy Proxy Sidecars sync status: 100% HEALTHY', style: TextStyle(fontFamily: 'monospace', fontSize: 11, color: Colors.white70)),
-                SizedBox(height: 4),
-                Text('[LOG-1031] GNN Threat Detector listening on socket 10.128.4.102:8080', style: TextStyle(fontFamily: 'monospace', fontSize: 11, color: Color(0xFFFFE997))),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAdminInfoTile(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: CyberTextStyles.technical(fontSize: 9.5, color: CyberColors.textMuted)),
-          const SizedBox(height: 2),
-          Text(value, style: CyberTextStyles.technical(fontSize: 11.5, color: Colors.white, fontWeight: FontWeight.bold)),
         ],
       ),
     );

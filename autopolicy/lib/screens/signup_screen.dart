@@ -128,22 +128,22 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Header
-                      Text('CLEARANCE REQUEST',
+                      Text('ROOT ENCLAVE INITIALIZATION',
                         style: TextStyle(
                           fontSize: 7.5, letterSpacing: 2.8, color: AP.lime,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 3),
-                      Text('Create Account',
+                      Text('First-Time Admin Setup',
                         style: GoogleFonts.orbitron(
-                          fontWeight: FontWeight.w900, fontSize: 19,
+                          fontWeight: FontWeight.w900, fontSize: 18,
                           letterSpacing: 0.5, color: AP.white,
                         ),
                       ),
                       const SizedBox(height: 2),
-                      Text('Register for zero-trust console clearance',
-                        style: GoogleFonts.spaceGrotesk(fontSize: 12.5, color: const Color(0xFFD5E5D3)),
+                      Text('Initialize primary administrator credentials for this deployment',
+                        style: GoogleFonts.spaceGrotesk(fontSize: 12.0, color: const Color(0xFFD5E5D3)),
                       ),
                       const SizedBox(height: 12),
 
@@ -339,25 +339,14 @@ class _SignupPageState extends ConsumerState<SignupPage> {
 
                       // Submit Button
                       CyberButton(
-                        label: _isLoading ? 'Processing...' : 'Request Access',
+                        label: _isLoading ? 'INITIALIZING ENCLAVE...' : 'INITIALIZE ROOT ENCLAVE',
                         onTap: _isLoading ? null : _handleSignup,
                       ),
-                      const SizedBox(height: 6),
-                      _orDivider(),
-                      const SizedBox(height: 6),
-                      CyberButton(
-                        label: 'Sign up with Google',
-                        primary: false,
-                        onTap: () {
-                          Navigator.pushReplacementNamed(context, '/dashboard');
-                        },
-                        leading: const Icon(Icons.g_mobiledata, size: 18, color: AP.lime),
-                      ),
-                      const SizedBox(height: 7),
+                      const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('Already cleared? ',
+                          Text('Existing operator credentials? ',
                             style: TextStyle(fontSize: 10, color: AP.muted)),
                           GestureDetector(
                             onTap: () => Navigator.pushReplacementNamed(context, '/login'),
@@ -428,21 +417,6 @@ class _SignupPageState extends ConsumerState<SignupPage> {
     border: InputBorder.none,
     contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
     isDense: true,
-  );
-
-  Widget _orDivider() => Row(
-    children: [
-      Expanded(child: Divider(color: AP.olive.withOpacity(0.3))),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Text('OR',
-          style: GoogleFonts.orbitron(
-            fontSize: 7.5, letterSpacing: 2.2, color: AP.muted,
-          ),
-        ),
-      ),
-      Expanded(child: Divider(color: AP.olive.withOpacity(0.3))),
-    ],
   );
 }
 

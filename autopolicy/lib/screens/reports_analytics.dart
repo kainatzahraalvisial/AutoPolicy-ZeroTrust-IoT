@@ -1,16 +1,14 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../providers/security_provider.dart';
 import '../theme/colors.dart';
 import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
-import '../widgets/glass_container.dart';
-import '../widgets/neon_button.dart';
-import '../widgets/cyber_stat_card.dart';
-import '../models/device.dart';
+import '../widgets/cyber_hud_card.dart';
 
+/// Redesigned Logs & Reports: 6-Tile Hub navigating to dedicated full-page audit views
 class ReportsAnalytics extends ConsumerStatefulWidget {
   const ReportsAnalytics({super.key});
 
@@ -18,140 +16,207 @@ class ReportsAnalytics extends ConsumerStatefulWidget {
   ConsumerState<ReportsAnalytics> createState() => _ReportsAnalyticsState();
 }
 
-class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  final TextEditingController _searchController = TextEditingController();
+class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
+  // Navigation: null = Tile Hub (First View), 0..5 = Dedicated Full Pages
+  int? _activeSectionIndex;
+  int? _hoveredHubIdx;
+
+  // Filter states
+  String _dateRange = 'Last 24 Hours';
+  String _userFilter = 'All Operators';
+  String _actionFilter = 'All Actions';
+  final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
-  
-  // Simulated compliance export states
+  int _currentPage = 1;
+  static const int _pageSize = 8;
+
+  // Export State
   bool _isExporting = false;
   double _exportProgress = 0.0;
-  String _exportType = ''; // 'PDF' or 'CSV'
-  String _exportConsoleLog = '';
+  String _exportFormat = '';
+  String _exportFeedback = '';
 
-  // Initial compliance metrics
-  final Map<String, double> _complianceScores = {
-    'SOC2 Type II': 94.8,
-    'ISO 27001': 91.2,
-    'HIPAA Safe Harbor': 98.4,
-    'GDPR Art. 32': 89.5,
-  };
-
-  // Mock static historical ledger entries
-  final List<Map<String, String>> _auditLedger = [
+  // 6 Specified Tile Hub Definitions
+  final List<Map<String, dynamic>> _hubTiles = [
     {
-      'timestamp': '2026-05-22 10:45:12',
-      'standard': 'SOC2 Type II',
-      'module': 'Access Control (CC6.1)',
-      'status': 'PASS',
-      'signature': 'SHA256:7f9c8a1b',
-      'details': 'Verified MFA enforcements across 12 edge OPA sidecars.'
+      'title': 'Security Audit Logs',
+      'desc': 'View all security-related actions, logins and operational events',
+      'icon': Icons.shield_outlined,
+      'color': const Color(0xFF5DD62C),
+      'tag': 'LOG-1',
     },
     {
-      'timestamp': '2026-05-22 09:12:05',
-      'standard': 'GDPR Art. 32',
-      'module': 'Data Isolation (Art. 32.1a)',
-      'status': 'PASS',
-      'signature': 'SHA256:0d2a8b9f',
-      'details': 'GNN node segregation verified. Egress constraints enforced.'
+      'title': 'Policy Change History',
+      'desc': 'Track policy approvals, rejections and deployments across sidecars',
+      'icon': Icons.history_toggle_off,
+      'color': const Color(0xFFC4E320),
+      'tag': 'LOG-2',
     },
     {
-      'timestamp': '2026-05-22 08:00:00',
-      'standard': 'ISO 27001',
-      'module': 'Asset Management (A.8)',
-      'status': 'PASS',
-      'signature': 'SHA256:3c8d1f2e',
-      'details': 'Dynamic network inventory alignment check complete.'
+      'title': 'Alert & Threat Archive',
+      'desc': 'Historical record of all detected anomalies, vectors and mitigations',
+      'icon': Icons.archive_outlined,
+      'color': const Color(0xFFDF2531),
+      'tag': 'LOG-3',
     },
     {
-      'timestamp': '2026-05-21 23:30:15',
-      'standard': 'HIPAA Safe Harbor',
-      'module': 'Transmission Security (164.312)',
-      'status': 'PASS',
-      'signature': 'SHA256:ef23ab56',
-      'details': 'End-to-end telemetry packets encrypted over TLS 1.3.'
+      'title': 'System Health Logs',
+      'desc': 'Zeek sensors, OPA proxies, GNN Model inference and service logs',
+      'icon': Icons.monitor_heart_outlined,
+      'color': const Color(0xFFA88AED),
+      'tag': 'LOG-4',
     },
     {
-      'timestamp': '2026-05-21 17:40:02',
-      'standard': 'SOC2 Type II',
-      'module': 'System Monitoring (CC7.2)',
-      'status': 'WARN',
-      'signature': 'SHA256:5a9e3d8c',
-      'details': 'Unmitigated anomaly active on target device Dev-3.'
+      'title': 'Compliance Reports',
+      'desc': 'SOC2, ISO 27001, HIPAA and regulatory compliance audit reports',
+      'icon': Icons.verified_user_outlined,
+      'color': const Color(0xFFFFE997),
+      'tag': 'LOG-5',
     },
     {
-      'timestamp': '2026-05-21 14:15:33',
-      'standard': 'ISO 27001',
-      'module': 'Access Logs Auditing (A.12.4)',
-      'status': 'PASS',
-      'signature': 'SHA256:9c0b1a2f',
-      'details': 'OPA Rego logs archived and certified by cryptographic hash.'
-    },
-    {
-      'timestamp': '2026-05-21 10:05:00',
-      'standard': 'GDPR Art. 32',
-      'module': 'Risk Assessment (Art. 32.2)',
-      'status': 'PASS',
-      'signature': 'SHA256:1a8f9c2d',
-      'details': 'Incident report generated for DDoS Flood anomaly alert.'
+      'title': 'Export Center',
+      'desc': 'Generate, compile and download cryptographic PDF and CSV reports',
+      'icon': Icons.file_download_outlined,
+      'color': const Color(0xFF80A416),
+      'tag': 'LOG-6',
     },
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-    _searchController.addListener(() {
-      setState(() {
-        _searchQuery = _searchController.text.toLowerCase();
-      });
-    });
-  }
+  // Comprehensive mock log dataset
+  final List<Map<String, String>> _allLogs = [
+    {
+      'time': '2026-09-12 15:20:12',
+      'user': 'kainat.alvi (Admin)',
+      'action': 'POLICY DEPLOY',
+      'resource': 'OPA Sidecar #04 (Modbus Guard)',
+      'ip': '10.128.4.12',
+      'status': 'SUCCESS',
+      'type': 'Policy Change History',
+    },
+    {
+      'time': '2026-09-12 14:58:33',
+      'user': 'system.gnn',
+      'action': 'THREAT ANOMALY FLAGGED',
+      'resource': 'Edge Gateway 01 (Syn Flood)',
+      'ip': '10.128.4.12',
+      'status': 'DETECTED',
+      'type': 'Alert & Threat Archive',
+    },
+    {
+      'time': '2026-09-12 14:45:00',
+      'user': 'zeek.sensor0',
+      'action': 'ZEEK ENGINE BUFFER CHECK',
+      'resource': 'eth0 Ingress (Ring Buffer 512MB)',
+      'ip': '127.0.0.1',
+      'status': 'NOMINAL',
+      'type': 'System Health Logs',
+    },
+    {
+      'time': '2026-09-12 14:10:44',
+      'user': 'kainat.alvi (Admin)',
+      'action': 'OPERATOR LOGIN (MFA)',
+      'resource': 'Management Enclave Console',
+      'ip': '192.168.1.105',
+      'status': 'SUCCESS',
+      'type': 'Security Audit Logs',
+    },
+    {
+      'time': '2026-09-12 13:52:19',
+      'user': 'analyst.chen',
+      'action': 'ANOMALY TRIAGED',
+      'resource': 'Camera Edge Node #88',
+      'ip': '10.128.8.88',
+      'status': 'ISOLATED',
+      'type': 'Alert & Threat Archive',
+    },
+    {
+      'time': '2026-09-12 13:30:00',
+      'user': 'auditor.soc2',
+      'action': 'SOC2 TYPE II AUDIT RUN',
+      'resource': 'Access Control CC6.1 Check',
+      'ip': '10.100.0.4',
+      'status': 'PASS (94.8%)',
+      'type': 'Compliance Reports',
+    },
+    {
+      'time': '2026-09-12 12:45:10',
+      'user': 'kainat.alvi (Admin)',
+      'action': 'POLICY REJECTED',
+      'resource': 'Draft Rego Rule #POL-08',
+      'ip': '192.168.1.105',
+      'status': 'REJECTED',
+      'type': 'Policy Change History',
+    },
+    {
+      'time': '2026-09-12 12:15:00',
+      'user': 'system.opa',
+      'action': 'BUNDLE SYNC REST API',
+      'resource': 'Kubernetes Envoy Sidecars (12 nodes)',
+      'ip': '10.128.0.1',
+      'status': 'HEALTHY',
+      'type': 'System Health Logs',
+    },
+    {
+      'time': '2026-09-12 11:30:22',
+      'user': 'system.gnn',
+      'action': 'LATERAL SURGE DETECTED',
+      'resource': 'Smart Meter Alpha (Port Scan)',
+      'ip': '10.128.4.45',
+      'status': 'DETECTED',
+      'type': 'Alert & Threat Archive',
+    },
+    {
+      'time': '2026-09-12 10:20:00',
+      'user': 'auditor.iso',
+      'action': 'ISO 27001 REVISION',
+      'resource': 'A.13 Network Security Microsegments',
+      'ip': '10.100.0.8',
+      'status': 'PASS (91.2%)',
+      'type': 'Compliance Reports',
+    },
+    {
+      'time': '2026-09-12 09:40:11',
+      'user': 'kainat.alvi (Admin)',
+      'action': 'UPDATE GNN THRESHOLD',
+      'resource': 'Sensitivity Cutoff -> 0.85',
+      'ip': '192.168.1.105',
+      'status': 'CONFIGURED',
+      'type': 'Security Audit Logs',
+    },
+    {
+      'time': '2026-09-12 08:30:00',
+      'user': 'system.zeek',
+      'action': 'PACKET CAPTURE CYCLE',
+      'resource': '2.45M pkts analyzed / 0 drops',
+      'ip': '127.0.0.1',
+      'status': 'NOMINAL',
+      'type': 'System Health Logs',
+    },
+  ];
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  void _triggerExport(String type) {
-    if (_isExporting) return;
+  void _triggerExport(String format) {
     setState(() {
       _isExporting = true;
       _exportProgress = 0.0;
-      _exportType = type;
-      _exportConsoleLog = 'Establishing secure cryptographic connection...\n';
+      _exportFormat = format;
+      _exportFeedback = 'INITIALIZING CRYPTOGRAPHIC COMPILATION...';
     });
 
-    const steps = [
-      'Authenticating SOC Auditor signature...\n',
-      'Accessing encrypted OPA Rego telemetry metrics...\n',
-      'Generating GNN node topology mappings...\n',
-      'Compiling Zero-Trust network health hashes...\n',
-      'Hashing output document with SHA-256...\n',
-      'Export complete! Package ready for secure download.\n'
-    ];
-
-    int stepIdx = 0;
-    Timer.periodic(const Duration(milliseconds: 600), (timer) {
+    Timer.periodic(const Duration(milliseconds: 250), (t) {
       if (!mounted) {
-        timer.cancel();
+        t.cancel();
         return;
       }
-
       setState(() {
-        _exportProgress += 0.16;
-        if (stepIdx < steps.length) {
-          _exportConsoleLog += steps[stepIdx];
-          stepIdx++;
+        _exportProgress += 0.25;
+        if (_exportProgress >= 0.5 && _exportProgress < 0.75) {
+          _exportFeedback = 'COMPUTING SHA-256 INTEGRITY CHECKSUM HASH...';
         }
         if (_exportProgress >= 1.0) {
           _exportProgress = 1.0;
           _isExporting = false;
-          timer.cancel();
-          // Push notification downstream using provider if desired
-          ref.read(securityProvider.notifier).toggleSimulation(ref.read(securityProvider).isSimulating);
+          _exportFeedback = 'SUCCESS: AutoPolicy_${format.toUpperCase()}_Report_Generated.sha256 (Ready for Download)';
+          t.cancel();
         }
       });
     });
@@ -159,905 +224,494 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> with Single
 
   @override
   Widget build(BuildContext context) {
-    final bool isMobile = Responsive.isMobile(context);
-    final securityState = ref.watch(securityProvider);
-
-    // Calculate actual live compliance adjustment based on compromised devices
-    final compromisedCount = securityState.devices.where((d) => d.status != DeviceStatus.safe).length;
-    final double liveDeduction = compromisedCount * 2.3;
-    final Map<String, double> adjustedScores = _complianceScores.map((key, val) {
-      return MapEntry(key, max(50.0, val - liveDeduction));
-    });
-
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Headings and Action Panel
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('AUDIT & COMPLIANCE LEDGER', style: CyberTextStyles.heading2),
-                    const SizedBox(height: 4),
-                    Text('CRYPTOGRAPHIC AUDITING FOR ZERO-TRUST REGULATORY COMPLIANCE', style: CyberTextStyles.techMuted),
-                  ],
-                ),
-                if (!isMobile)
-                  Row(
-                    children: [
-                      NeonButton(
-                        text: 'EXPORT PDF',
-                        onPressed: () => _triggerExport('PDF'),
-                        icon: Icons.picture_as_pdf_outlined,
-                      ),
-                      const SizedBox(width: 8),
-                      NeonButton(
-                        text: 'EXPORT CSV',
-                        onPressed: () => _triggerExport('CSV'),
-                        icon: Icons.table_chart_outlined,
-                        color: CyberColors.neonCyan,
-                      ),
-                    ],
-                  ),
-              ],
-            ),
+            // Page Header (Unified Administrator Style)
+            _buildPageHeader(),
             const SizedBox(height: 14),
 
-            // Top Stat Cards Row
-            Row(
-              children: [
-                Expanded(
-                  child: CyberStatCard(
-                    title: 'SOC2 TYPE II',
-                    value: '94.8%',
-                    sub: 'Access Controls Passed',
-                    borderColor: Color(0xFFFFE997), // 1. Yellow (#FFE997)
-                    tag: 'H17',
-                  ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: CyberStatCard(
-                    title: 'ISO 27001',
-                    value: '91.2%',
-                    sub: 'Asset Inventory Aligned',
-                    borderColor: Color(0xFFA88AED), // 2. Indigo Purple (#A88AED)
-                    tag: 'H18',
-                  ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: CyberStatCard(
-                    title: 'HIPAA SAFE HARBOR',
-                    value: '98.4%',
-                    sub: 'TLS 1.3 Encryption Active',
-                    borderColor: Color(0xFFC4E320), // 3. Bright Light Green (#C4E320)
-                    tag: 'H19',
-                  ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: CyberStatCard(
-                    title: 'GDPR ART. 32',
-                    value: '89.5%',
-                    sub: 'GNN Segregation Enforced',
-                    borderColor: Color(0xFF80A416), // 4. Olive Green (#80A416)
-                    tag: 'H20',
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Export Progress Overlay Panel (Simulated System console)
-            if (_isExporting || _exportProgress == 1.0) _buildExportConsole(),
-
-            const SizedBox(height: 8),
-
-            // 3 COMPLIANCE & GOVERNANCE INTERACTIVE TILES (STANDARDS, LEDGER & HISTORY, THREAT ASSESSMENT)
-            Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: () => _tabController.animateTo(0),
-                    child: GlassContainer(
-                      borderColor: _tabController.index == 0 ? const Color(0xFFFFE997) : Colors.white24,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.verified_user_outlined, color: Color(0xFFFFE997), size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('STANDARDS & FRAMEWORKS', style: CyberTextStyles.technical(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                                Text('ISO 27001, SOC2, HIPAA, GDPR', style: CyberTextStyles.techMuted.copyWith(fontSize: 8.5)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: InkWell(
-                    onTap: () => _tabController.animateTo(1),
-                    child: GlassContainer(
-                      borderColor: _tabController.index == 1 ? const Color(0xFFA88AED) : Colors.white24,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.history_edu_outlined, color: Color(0xFFA88AED), size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('IMMUTABLE LEDGER & HISTORY', style: CyberTextStyles.technical(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                                Text('Cryptographic Event Audit Trail', style: CyberTextStyles.techMuted.copyWith(fontSize: 8.5)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: InkWell(
-                    onTap: () => _tabController.animateTo(2),
-                    child: GlassContainer(
-                      borderColor: _tabController.index == 2 ? const Color(0xFFC4E320) : Colors.white24,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.gavel_outlined, color: Color(0xFFC4E320), size: 20),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('REGULATORY THREAT ASSESSMENT', style: CyberTextStyles.technical(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                                Text('Critical Gaps & Risk Metrics', style: CyberTextStyles.techMuted.copyWith(fontSize: 8.5)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-
-            // Tab Navigation System
-            TabBar(
-              controller: _tabController,
-              indicatorColor: CyberColors.neonGreen,
-              labelColor: CyberColors.neonGreen,
-              unselectedLabelColor: CyberColors.textMuted,
-              labelStyle: CyberTextStyles.technical(fontSize: 12.0, fontWeight: FontWeight.bold),
-              tabs: const [
-                Tab(text: 'STANDARDS INDEX'),
-                Tab(text: 'AUDIT LEDGER'),
-                Tab(text: 'REGULATORY THREAT ASSESSMENT'),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Active Tab Content
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildStandardsView(adjustedScores),
-                  _buildLedgerView(),
-                  _buildTrendsView(adjustedScores),
-                ],
-              ),
-            ),
+            // Main Content: If no tile selected -> 6-Tile Hub. Otherwise -> Dedicated Full Page!
+            if (_activeSectionIndex == null)
+              _buildTileHubView()
+            else
+              _buildDedicatedFullPageView(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildExportConsole() {
-    return GlassContainer(
-      borderColor: _exportProgress < 1.0 ? CyberColors.neonCyan : CyberColors.neonGreen,
-      glow: _exportProgress < 1.0 ? CyberColors.cyanGlow : CyberColors.greenGlow,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _exportProgress < 1.0 
-                    ? 'COMPILING SECURE CRYPTOGRAPHIC $_exportType REPORT...' 
-                    : 'CRYPTOGRAPHIC REPORT GENERATED SUCCESSFUL',
-                style: CyberTextStyles.technical(
-                  color: _exportProgress < 1.0 ? CyberColors.neonCyan : CyberColors.neonGreen,
-                  fontSize: 12.0,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close, color: CyberColors.textMuted, size: 16),
-                onPressed: () {
-                  setState(() {
-                    _exportProgress = 0.0;
-                    _isExporting = false;
-                  });
-                },
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: _exportProgress,
-            backgroundColor: Colors.white10,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              _exportProgress < 1.0 ? CyberColors.neonCyan : CyberColors.neonGreen,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: Colors.white10),
-            ),
-            child: Text(
-              _exportConsoleLog,
-              style: CyberTextStyles.technical(
-                fontSize: 10.0,
-                color: CyberColors.textMuted,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStandardsView(Map<String, double> scores) {
-    final bool isMobile = Responsive.isMobile(context);
-
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Cyber Dial Grid
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: isMobile ? 1 : 2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: isMobile ? 2.2 : 2.5,
-            ),
-            itemCount: scores.length,
-            itemBuilder: (context, idx) {
-              final String standard = scores.keys.elementAt(idx);
-              final double score = scores[standard]!;
-              final Color dialColor = score > 92 
-                  ? CyberColors.neonGreen 
-                  : (score > 85 ? CyberColors.warningOrange : CyberColors.alertRed);
-
-              return GlassContainer(
-                borderColor: dialColor,
-                child: Row(
-                  children: [
-                    // Visual Radial custom painter dial
-                    SizedBox(
-                      width: 80,
-                      height: 80,
-                      child: CustomPaint(
-                        painter: _ComplianceDialPainter(percentage: score, color: dialColor),
-                        child: Center(
-                          child: Text(
-                            '${score.toStringAsFixed(1)}%',
-                            style: CyberTextStyles.technical(
-                              fontSize: 12.0,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    // Standard details
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            standard.toUpperCase(),
-                            style: CyberTextStyles.displayTitle(fontSize: 14.0),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            _getStandardDescription(standard),
-                            style: CyberTextStyles.interface(fontSize: 10.0, color: CyberColors.textMuted),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: dialColor,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                score > 92 ? 'COMPLIANT (SECURE)' : (score > 85 ? 'DEGRADED WARNING' : 'NON-COMPLIANT RISKS'),
-                                style: CyberTextStyles.technical(fontSize: 9.0, color: dialColor),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 20),
-
-          // Security Standards checklist / requirements compliance overview
-          Text('CRITICAL REGULATORY THREAT ASSESSMENT', style: CyberTextStyles.technical(fontSize: 12.0, color: Colors.white)),
-          const Divider(color: CyberColors.borderNeonCyan),
-          const SizedBox(height: 12),
-          _buildChecklistItem(
-            'CC6.3 Network Boundary Controls',
-            'Enforces micro-segmentation rule blockades on OPA sidecars.',
-            true,
-          ),
-          _buildChecklistItem(
-            'Art. 32.1b Encryption of Telemetry Packets',
-            'Telemetry and control flows are cryptographically encrypted.',
-            true,
-          ),
-          _buildChecklistItem(
-            'CC7.2 Real-time Security Incident Alerts',
-            'ML/GNN anomaly flags must route notifications in <2.0 seconds.',
-            false, // Fail if alert is active
-            customMsg: 'WARN: Compromised devices detected. Action recommended.',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChecklistItem(String title, String desc, bool isPass, {String? customMsg}) {
-    final Color stateColor = isPass ? CyberColors.neonGreen : CyberColors.alertRed;
-    final IconData icon = isPass ? Icons.check_circle_outline : Icons.report_problem_outlined;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: GlassContainer(
-        padding: const EdgeInsets.all(12),
-        showHUDCorners: false,
-        borderColor: stateColor,
-        borderRadius: 6.0,
-        child: Row(
+  // ── PAGE HEADER ────────────────────────────────────────────────────────────
+  Widget _buildPageHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: stateColor, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title.toUpperCase(),
-                    style: CyberTextStyles.technical(fontSize: 11.0, color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    desc,
-                    style: CyberTextStyles.interface(fontSize: 10.0, color: CyberColors.textMuted),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
             Text(
-              customMsg ?? (isPass ? 'COMPLIANT' : 'AUDIT FAULT'),
-              style: CyberTextStyles.technical(fontSize: 10.0, color: stateColor, fontWeight: FontWeight.bold),
+              'LOGS & REPORTS',
+              style: CyberTextStyles.displayTitle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF5DD62C),
+              ).copyWith(letterSpacing: 2.0),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              'Audit trails, policy history and compliance reports',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: Colors.white70,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
-      ),
+        if (_activeSectionIndex != null)
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1A1A1A),
+              foregroundColor: const Color(0xFF5DD62C),
+              side: const BorderSide(color: Color(0xFF5DD62C), width: 1.0),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            ),
+            icon: const Icon(Icons.arrow_back, size: 16),
+            label: Text(
+              '← BACK TO LOGS & REPORTS',
+              style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF5DD62C)),
+            ),
+            onPressed: () => setState(() {
+              _activeSectionIndex = null;
+              _currentPage = 1;
+            }),
+          ),
+      ],
     );
   }
 
-  String _getStandardDescription(String std) {
-    switch (std) {
-      case 'SOC2 Type II':
-        return 'Trust Services Criteria detailing Security, Confidentiality, and Operations Integrity.';
-      case 'ISO 27001':
-        return 'International standard specifies requirements for establishing ISMS protocols.';
-      case 'HIPAA Safe Harbor':
-        return 'Healthcare technical guardrails governing patient IoT encryption and boundary controls.';
-      case 'GDPR Art. 32':
-        return 'European Union General Data Protection cybersecurity frameworks for network compartmentalization.';
-      default:
-        return 'Regulatory compliance metrics for Zero-Trust environment architectures.';
-    }
-  }
-
-  Widget _buildLedgerView() {
-    // Filter audit ledger entries based on search
-    final filteredLedger = _auditLedger.where((entry) {
-      return entry['standard']!.toLowerCase().contains(_searchQuery) ||
-             entry['module']!.toLowerCase().contains(_searchQuery) ||
-             entry['details']!.toLowerCase().contains(_searchQuery) ||
-             entry['status']!.toLowerCase().contains(_searchQuery);
-    }).toList();
+  // ── FIRST VIEW: 6-TILE HUB (3×2 GRID) ──────────────────────────────────────
+  Widget _buildTileHubView() {
+    final bool isMobile = Responsive.isMobile(context);
+    final bool isTablet = Responsive.isTablet(context);
 
     return Column(
-      children: [
-        // Search & Filter Panel
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _searchController,
-                style: CyberTextStyles.technical(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'SEARCH LEDGER BY STANDARD, MODULE, STATUS OR SIG...',
-                  hintStyle: CyberTextStyles.techMuted.copyWith(fontSize: 10),
-                  prefixIcon: const Icon(Icons.search, color: CyberColors.neonCyan, size: 16),
-                  filled: true,
-                  fillColor: Colors.black26,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(4),
-                    borderSide: const BorderSide(color: CyberColors.borderNeonCyan),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(4),
-                    borderSide: const BorderSide(color: CyberColors.neonCyan),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-
-        // Ledger Grid/Table List
-        Expanded(
-          child: filteredLedger.isEmpty
-              ? Center(child: Text('NO CORRESPONDING COMPLIANCE REGISTERS FOUND', style: CyberTextStyles.techMuted))
-              : ListView.builder(
-                  itemCount: filteredLedger.length,
-                  itemBuilder: (context, idx) {
-                    final item = filteredLedger[idx];
-                    final isPass = item['status'] == 'PASS';
-                    final Color statusColor = isPass ? CyberColors.neonGreen : CyberColors.warningOrange;
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8.0),
-                      child: GlassContainer(
-                        showHUDCorners: false,
-                        padding: EdgeInsets.zero,
-                        borderRadius: 6.0,
-                        borderColor: CyberColors.neonCyan,
-                        child: Theme(
-                          data: Theme.of(context).copyWith(
-                            dividerColor: Colors.transparent,
-                            colorScheme: Theme.of(context).colorScheme.copyWith(
-                              primary: CyberColors.neonCyan,
-                            ),
-                          ),
-                          child: ExpansionTile(
-                            tilePadding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 4.0),
-                            iconColor: CyberColors.neonCyan,
-                            collapsedIconColor: CyberColors.textMuted,
-                            title: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  item['standard']!.toUpperCase(),
-                                  style: CyberTextStyles.technical(
-                                    color: CyberColors.neonCyan,
-                                    fontSize: 11.0,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: statusColor.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(2),
-                                  ),
-                                  child: Text(
-                                    item['status']!,
-                                    style: CyberTextStyles.technical(color: statusColor, fontSize: 9.0, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 4.0),
-                              child: Text(
-                                item['module']!.toUpperCase(),
-                                style: CyberTextStyles.interface(fontSize: 10.0, color: Colors.white70),
-                              ),
-                            ),
-                            children: [
-                              const Divider(color: Colors.white10),
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(12.0, 4.0, 12.0, 12.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildDetailRow('AUDITING SIG', item['signature']!, isCode: true),
-                                    const SizedBox(height: 6),
-                                    _buildDetailRow('TIMESTAMP', item['timestamp']!),
-                                    const SizedBox(height: 6),
-                                    _buildDetailRow('ACTION DESCRIPTION', item['details']!),
-                                  ],
-                                ),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailRow(String label, String val, {bool isCode = false}) {
-    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 140,
-          child: Text(
-            '$label:',
-            style: CyberTextStyles.techMuted.copyWith(fontSize: 9.0),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _hubTiles.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: isMobile ? 1 : (isTablet ? 2 : 3),
+            crossAxisSpacing: 14,
+            mainAxisSpacing: 14,
+            childAspectRatio: isMobile ? 2.5 : 1.9,
           ),
-        ),
-        Expanded(
-          child: Text(
-            val.toUpperCase(),
-            style: isCode
-                ? CyberTextStyles.technical(fontSize: 9.0, color: CyberColors.neonGreen)
-                : CyberTextStyles.interface(fontSize: 10.0, color: Colors.white),
-          ),
+          itemBuilder: (context, idx) {
+            final tile = _hubTiles[idx];
+            final Color color = tile['color'] as Color;
+
+            final bool isHovered = _hoveredHubIdx == idx;
+
+            return MouseRegion(
+              cursor: SystemMouseCursors.click,
+              onEnter: (_) => setState(() => _hoveredHubIdx = idx),
+              onExit: (_) => setState(() => _hoveredHubIdx = null),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  boxShadow: isHovered
+                      ? [
+                          BoxShadow(
+                            color: color.withOpacity(0.55),
+                            blurRadius: 22,
+                            spreadRadius: 3,
+                          ),
+                        ]
+                      : [],
+                ),
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _activeSectionIndex = idx;
+                      _currentPage = 1;
+                      _searchCtrl.clear();
+                      _searchQuery = '';
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(6),
+                  child: CyberHudCard(
+                    tag: tile['tag'] as String,
+                    borderColor: isHovered ? color : color.withOpacity(0.7),
+                    borderWidth: isHovered ? 2.0 : 1.2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: color.withOpacity(isHovered ? 0.30 : 0.15),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: color.withOpacity(isHovered ? 0.9 : 0.5)),
+                                ),
+                                child: Icon(tile['icon'] as IconData, color: color, size: 22),
+                              ),
+                              Row(
+                                children: [
+                                  Text(
+                                    'OPEN SECTION',
+                                    style: CyberTextStyles.technical(fontSize: 10, color: color, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(Icons.arrow_forward_ios, size: 10, color: color),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                (tile['title'] as String).toUpperCase(),
+                                style: CyberTextStyles.technical(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ).copyWith(letterSpacing: 0.8),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                tile['desc'] as String,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ],
     );
   }
 
-  Widget _buildTrendsView(Map<String, double> scores) {
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ML Model Detection Performance Card (FR-25)
-          GlassContainer(
-            borderColor: CyberColors.neonGreen,
+  // ── DEDICATED FULL-PAGE VIEW FOR EACH TILE ──────────────────────────────────
+  Widget _buildDedicatedFullPageView() {
+    final activeTile = _hubTiles[_activeSectionIndex!];
+    final Color color = activeTile['color'] as Color;
+    final String activeTitle = activeTile['title'] as String;
+
+    // Filter logs for this view
+    final filtered = _allLogs.where((log) {
+      if (_activeSectionIndex! < 5 && log['type'] != activeTitle) {
+        // Show matching category logs, or all logs in general
+        if (_activeSectionIndex == 0 && log['type'] != 'Security Audit Logs') return false;
+        if (_activeSectionIndex == 1 && log['type'] != 'Policy Change History') return false;
+        if (_activeSectionIndex == 2 && log['type'] != 'Alert & Threat Archive') return false;
+        if (_activeSectionIndex == 3 && log['type'] != 'System Health Logs') return false;
+        if (_activeSectionIndex == 4 && log['type'] != 'Compliance Reports') return false;
+      }
+      if (_userFilter != 'All Operators' && !log['user']!.contains(_userFilter.split(' ').first)) return false;
+      if (_actionFilter != 'All Actions' && !log['action']!.contains(_actionFilter.toUpperCase())) return false;
+      if (_searchQuery.isNotEmpty) {
+        final q = _searchQuery.toLowerCase();
+        final match = log['action']!.toLowerCase().contains(q) ||
+            log['resource']!.toLowerCase().contains(q) ||
+            log['user']!.toLowerCase().contains(q) ||
+            log['ip']!.toLowerCase().contains(q);
+        if (!match) return false;
+      }
+      return true;
+    }).toList();
+
+    final int totalPages = (filtered.length / _pageSize).ceil().clamp(1, 999);
+    final int startIdx = (_currentPage - 1) * _pageSize;
+    final int endIdx = (startIdx + _pageSize).clamp(0, filtered.length);
+    final pagedItems = filtered.sublist(startIdx, endIdx);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Dedicated Section Action Ribbon
+        CyberHudCard(
+          tag: activeTile['tag'] as String,
+          borderColor: color,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'GNN MODEL DETECTION PERFORMANCE METRICS',
-                      style: CyberTextStyles.technical(color: CyberColors.neonGreen, fontSize: 12, fontWeight: FontWeight.bold),
+                    Row(
+                      children: [
+                        Icon(activeTile['icon'] as IconData, color: color, size: 22),
+                        const SizedBox(width: 10),
+                        Text(
+                          activeTitle.toUpperCase(),
+                          style: CyberTextStyles.technical(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                      ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: CyberColors.neonGreen.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(3),
-                        border: Border.all(color: CyberColors.neonGreen, width: 0.8),
-                      ),
-                      child: Text(
-                        'MODEL::STABLE (v2.4)',
-                        style: CyberTextStyles.technical(fontSize: 9.5, color: CyberColors.neonGreen, fontWeight: FontWeight.bold),
-                      ),
+                    Row(
+                      children: [
+                        _buildExportBtn('EXPORT PDF', Icons.picture_as_pdf_outlined, () => _triggerExport('PDF')),
+                        const SizedBox(width: 10),
+                        _buildExportBtn('EXPORT CSV', Icons.table_view_outlined, () => _triggerExport('CSV')),
+                      ],
                     ),
                   ],
                 ),
-                const Divider(color: CyberColors.borderNeonCyan),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildMlMetricItem('ACCURACY', '98.4%', CyberColors.neonGreen),
-                    _buildMlMetricItem('PRECISION', '97.8%', CyberColors.neonCyan),
-                    _buildMlMetricItem('RECALL', '99.1%', CyberColors.neonGreen),
-                    _buildMlMetricItem('F1-SCORE', '98.4%', CyberColors.neonCyan),
-                    _buildMlMetricItem('ROC-AUC', '0.995', CyberColors.neonGreen),
-                  ],
-                ),
+                if (_isExporting || _exportFeedback.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  LinearProgressIndicator(
+                    value: _exportProgress,
+                    backgroundColor: const Color(0xFF222222),
+                    valueColor: AlwaysStoppedAnimation<Color>(color),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(_exportFeedback, style: CyberTextStyles.technical(fontSize: 11, color: color, fontWeight: FontWeight.bold)),
+                ],
               ],
             ),
           ),
-          const SizedBox(height: 16),
+        ),
+        const SizedBox(height: 12),
 
-          // 12-Month Regulatory Compliance Graph
-          SizedBox(
-            height: 320,
-            child: GlassContainer(
-              borderColor: CyberColors.neonCyan,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        // Filters Row
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F0F0F),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 10,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              // Date Range Filter
+              _buildDropdownFilter('RANGE', _dateRange, ['Last 24 Hours', 'Last 7 Days', 'Last 30 Days', 'All Time'], (v) {
+                if (v != null) setState(() => _dateRange = v);
+              }),
+              // User Filter
+              _buildDropdownFilter('USER', _userFilter, ['All Operators', 'kainat.alvi', 'system', 'analyst', 'zeek'], (v) {
+                if (v != null) setState(() => _userFilter = v);
+              }),
+              // Action Type Filter
+              _buildDropdownFilter('ACTION', _actionFilter, ['All Actions', 'Policy', 'Threat', 'Engine', 'Login', 'Audit'], (v) {
+                if (v != null) setState(() => _actionFilter = v);
+              }),
+              // Search Input Box
+              SizedBox(
+                width: 240,
+                child: TextField(
+                  controller: _searchCtrl,
+                  style: GoogleFonts.inter(fontSize: 12.5, color: Colors.white),
+                  onChanged: (v) => setState(() {
+                    _searchQuery = v.trim();
+                    _currentPage = 1;
+                  }),
+                  decoration: InputDecoration(
+                    hintText: 'Search logs, IPs, actions...',
+                    hintStyle: const TextStyle(fontSize: 12, color: Colors.white38),
+                    prefixIcon: const Icon(Icons.search, size: 16, color: Color(0xFF5DD62C)),
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    filled: true,
+                    fillColor: const Color(0xFF161616),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(4), borderSide: const BorderSide(color: Colors.white24)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Full-Width Wide Table
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0A0A0A),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: color.withOpacity(0.35)),
+          ),
+          child: Column(
+            children: [
+              // Table Header
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: Color(0xFF222222), width: 1)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(flex: 3, child: Text('TIMESTAMP', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: color))),
+                    Expanded(flex: 3, child: Text('OPERATOR / ACTOR', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: color))),
+                    Expanded(flex: 4, child: Text('ACTION DESCRIPTION', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: color))),
+                    Expanded(flex: 4, child: Text('TARGET RESOURCE', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: color))),
+                    Expanded(flex: 2, child: Text('SOURCE IP', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: color))),
+                    Expanded(flex: 2, child: Text('STATUS', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: color))),
+                  ],
+                ),
+              ),
+
+              // Table Body Rows
+              if (pagedItems.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(28.0),
+                  child: Center(
+                    child: Text('NO LOG RECORDS MATCH CURRENT FILTERS', style: GoogleFonts.inter(fontSize: 13, color: Colors.white38)),
+                  ),
+                )
+              else
+                ...pagedItems.map((log) {
+                  final bool isOk = log['status']!.contains('SUCCESS') || log['status']!.contains('PASS') || log['status']!.contains('NOMINAL') || log['status']!.contains('HEALTHY');
+                  final Color stColor = isOk ? const Color(0xFF5DD62C) : (log['status']!.contains('DETECTED') ? const Color(0xFFDF2531) : const Color(0xFFFFE997));
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: const BoxDecoration(
+                      border: Border(bottom: BorderSide(color: Color(0xFF181818), width: 1)),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(flex: 3, child: Text(log['time']!, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: const Color(0xFFC5C764)))),
+                        Expanded(flex: 3, child: Text(log['user']!, style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.white))),
+                        Expanded(flex: 4, child: Text(log['action']!, style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.white70))),
+                        Expanded(flex: 4, child: Text(log['resource']!, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: Colors.white60))),
+                        Expanded(flex: 2, child: Text(log['ip']!, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: const Color(0xFFA88AED)))),
+                        Expanded(
+                          flex: 2,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: stColor.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(3),
+                                border: Border.all(color: stColor, width: 0.8),
+                              ),
+                              child: Text(
+                                log['status']!,
+                                style: GoogleFonts.spaceGrotesk(fontSize: 10.5, fontWeight: FontWeight.bold, color: stColor),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+
+              const SizedBox(height: 12),
+
+              // Pagination Footer
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '12-MONTH REGULATORY COMPLIANCE FLUCTUATIONS',
-                    style: CyberTextStyles.technical(color: Colors.white, fontSize: 12),
+                    'Showing ${filtered.isEmpty ? 0 : startIdx + 1}–$endIdx of ${filtered.length} entries',
+                    style: GoogleFonts.inter(fontSize: 12, color: Colors.white54),
                   ),
-                  const Divider(color: CyberColors.borderNeonCyan),
-                  const SizedBox(height: 12),
-                  // Custom Canvas graph for trends
-                  Expanded(
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: CustomPaint(
-                        painter: _TrendGraphPainter(),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  // Graph Legend
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildLegendLabel('SOC2', CyberColors.neonGreen),
-                      const SizedBox(width: 16),
-                      _buildLegendLabel('ISO27001', CyberColors.neonCyan),
-                      const SizedBox(width: 16),
-                      _buildLegendLabel('VULNERABILITIES', CyberColors.alertRed),
+                      OutlinedButton(
+                        onPressed: _currentPage > 1 ? () => setState(() => _currentPage--) : null,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.white24),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        ),
+                        child: Text('‹ PREV', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white)),
+                      ),
+                      const SizedBox(width: 8),
+                      Text('PAGE $_currentPage OF $totalPages', style: CyberTextStyles.technical(fontSize: 11, color: color)),
+                      const SizedBox(width: 8),
+                      OutlinedButton(
+                        onPressed: _currentPage < totalPages ? () => setState(() => _currentPage++) : null,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.white24),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        ),
+                        child: Text('NEXT ›', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white)),
+                      ),
                     ],
                   ),
                 ],
               ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdownFilter(String label, String value, List<String> items, ValueChanged<String?> onChanged) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('$label: ', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white54)),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF161616),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              dropdownColor: const Color(0xFF161616),
+              style: GoogleFonts.inter(fontSize: 12, color: Colors.white),
+              items: items.map((i) => DropdownMenuItem(value: i, child: Text(i))).toList(),
+              onChanged: onChanged,
             ),
           ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildExportBtn(String label, IconData icon, VoidCallback onTap) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 14, color: const Color(0xFF5DD62C)),
+      label: Text(label, style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF5DD62C))),
+      style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: Color(0xFF5DD62C), width: 1.0),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),
     );
   }
-
-  Widget _buildMlMetricItem(String label, String value, Color color) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: CyberTextStyles.displayTitle(fontSize: 22, color: color, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: CyberTextStyles.technical(fontSize: 10, color: CyberColors.textMuted),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLegendLabel(String label, Color color) {
-    return Row(
-      children: [
-        Container(
-          width: 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(1),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(
-          label,
-          style: CyberTextStyles.technical(fontSize: 9.0, color: CyberColors.textMuted),
-        ),
-      ],
-    );
-  }
-}
-
-// Custom Painter to render Compliance Dial Dials in 60fps
-class _ComplianceDialPainter extends CustomPainter {
-  final double percentage;
-  final Color color;
-
-  _ComplianceDialPainter({required this.percentage, required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = min(size.width / 2, size.height / 2) - 4;
-
-    // 1. Draw outer glowing circle track
-    final bgPaint = Paint()
-      ..color = Colors.white.withOpacity(0.05)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 5.0;
-
-    canvas.drawCircle(center, radius, bgPaint);
-
-    // 2. Draw active percentage arc
-    final arcPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeWidth = 6.0;
-
-    final double sweepAngle = 2 * pi * (percentage / 100.0);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -pi / 2, // Start from the top
-      sweepAngle,
-      false,
-      arcPaint,
-    );
-
-    // 3. Optional tick details inside standard dial
-    final tickPaint = Paint()
-      ..color = color.withOpacity(0.3)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    canvas.drawCircle(center, radius - 8, tickPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _ComplianceDialPainter oldDelegate) {
-    return oldDelegate.percentage != percentage || oldDelegate.color != color;
-  }
-}
-
-// Custom Painter to draw a 60fps compliance fluctuations grid map
-class _TrendGraphPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final width = size.width;
-    final height = size.height;
-
-    // Draw background fainted matrix grid lines
-    final gridPaint = Paint()
-      ..color = CyberColors.gridLine
-      ..strokeWidth = 1.0;
-
-    const int gridRows = 6;
-    for (int i = 0; i <= gridRows; i++) {
-      final double y = (height / gridRows) * i;
-      canvas.drawLine(Offset(0, y), Offset(width, y), gridPaint);
-    }
-
-    const int gridCols = 12;
-    for (int i = 0; i <= gridCols; i++) {
-      final double x = (width / gridCols) * i;
-      canvas.drawLine(Offset(x, 0), Offset(x, height), gridPaint);
-    }
-
-    // Monthly data coordinates (percentage mappings)
-    // SOC2 data path
-    final soc2Points = [
-      Offset(width * 0.05, height * 0.20),
-      Offset(width * 0.15, height * 0.18),
-      Offset(width * 0.25, height * 0.25),
-      Offset(width * 0.35, height * 0.22),
-      Offset(width * 0.45, height * 0.15),
-      Offset(width * 0.55, height * 0.18),
-      Offset(width * 0.65, height * 0.28), // alert spike
-      Offset(width * 0.75, height * 0.12), // quarantined restore
-      Offset(width * 0.85, height * 0.08),
-      Offset(width * 0.95, height * 0.05),
-    ];
-
-    // ISO 27001 data path
-    final isoPoints = [
-      Offset(width * 0.05, height * 0.30),
-      Offset(width * 0.15, height * 0.28),
-      Offset(width * 0.25, height * 0.29),
-      Offset(width * 0.35, height * 0.35), // minor decline
-      Offset(width * 0.45, height * 0.28),
-      Offset(width * 0.55, height * 0.24),
-      Offset(width * 0.65, height * 0.32),
-      Offset(width * 0.75, height * 0.20),
-      Offset(width * 0.85, height * 0.18),
-      Offset(width * 0.95, height * 0.15),
-    ];
-
-    // Vulnerability indices
-    final threatPoints = [
-      Offset(width * 0.05, height * 0.80),
-      Offset(width * 0.15, height * 0.85),
-      Offset(width * 0.25, height * 0.75),
-      Offset(width * 0.35, height * 0.60), // spike
-      Offset(width * 0.45, height * 0.78),
-      Offset(width * 0.55, height * 0.85),
-      Offset(width * 0.65, height * 0.45), // massive attack spike
-      Offset(width * 0.75, height * 0.92), // mitigation absolute
-      Offset(width * 0.85, height * 0.95),
-      Offset(width * 0.95, height * 0.97),
-    ];
-
-    _drawPathLine(canvas, soc2Points, CyberColors.neonGreen);
-    _drawPathLine(canvas, isoPoints, CyberColors.neonCyan);
-    _drawPathLine(canvas, threatPoints, CyberColors.alertRed);
-
-    // Draw bottom months labels
-    final textPainter = TextPainter(
-      textDirection: TextDirection.ltr,
-    );
-
-    final months = ['JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR'];
-    for (int i = 0; i < months.length; i++) {
-      final double x = width * 0.05 + (width * 0.9 / (months.length - 1)) * i;
-      textPainter.text = TextSpan(
-        text: months[i],
-        style: CyberTextStyles.techMuted.copyWith(fontSize: 8.0),
-      );
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(x - (textPainter.width / 2), height - 12));
-    }
-  }
-
-  void _drawPathLine(Canvas canvas, List<Offset> points, Color color) {
-    final linePaint = Paint()
-      ..color = color
-      ..strokeWidth = 2.0
-      ..style = PaintingStyle.stroke;
-
-    final path = Path()..moveTo(points.first.dx, points.first.dy);
-    for (int i = 1; i < points.length; i++) {
-      path.lineTo(points[i].dx, points[i].dy);
-    }
-    canvas.drawPath(path, linePaint);
-
-    // Draw glowing node circles at coordinates
-    final nodePaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    
-    final nodeBg = Paint()
-      ..color = CyberColors.backgroundDark
-      ..style = PaintingStyle.fill;
-
-    final nodeOutline = Paint()
-      ..color = color
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke;
-
-    for (final pt in points) {
-      canvas.drawCircle(pt, 4.0, nodePaint);
-      canvas.drawCircle(pt, 2.5, nodeBg);
-      canvas.drawCircle(pt, 1.5, nodeOutline);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _TrendGraphPainter oldDelegate) => false;
 }

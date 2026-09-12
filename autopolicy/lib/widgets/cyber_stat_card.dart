@@ -35,26 +35,37 @@ class CyberStatCard extends StatelessWidget {
   Color get _solidBgColor {
     if (backgroundColor != null) return backgroundColor!;
     final int val = borderColor.value;
-    if (val == const Color(0xFFFFE997).value || val == const Color(0xFFC5C764).value || val == const Color(0xFFFDFDC9).value) {
-      return const Color(0xFFFFE997); // 1. Soft Yellow #FFE997
-    } else if (val == const Color(0xFFA88AED).value) {
-      return const Color(0xFFA88AED); // 2. Indigo Purple #A88AED
-    } else if (val == const Color(0xFFC4E320).value || val == const Color(0xFF5DD62C).value) {
-      return const Color(0xFFC4E320); // 3. Bright Light Green #C4E320
+    // 6 Exact Swatch Colors from user image in exact sequence:
+    if (val == const Color(0xFFFFEDA8).value || val == const Color(0xFFFFE997).value || val == const Color(0xFFC5C764).value || val == const Color(0xFFFDFDC9).value) {
+      return const Color(0xFFFFEDA8); // 1. #FFEDA8 (Pale Cream Yellow)
+    } else if (val == const Color(0xFFC4E326).value || val == const Color(0xFFC4E320).value || val == const Color(0xFF5DD62C).value) {
+      return const Color(0xFFC4E326); // 2. #C4E326 (Bright Neon Lime-Green)
+    } else if (val == const Color(0xFFB1A9DA).value || val == const Color(0xFFA88AED).value) {
+      return const Color(0xFFB1A9DA); // 3. #B1A9DA (Pastel Lavender)
     } else if (val == const Color(0xFF80A416).value || val == const Color(0xFF337418).value) {
-      return const Color(0xFF80A416); // 4. Olive Green #80A416
-    } else if (val == const Color(0xFFB91C1D).value) {
-      return const Color(0xFFB91C1D); // 5. Crimson Red #B91C1D
+      return const Color(0xFF80A416); // 4. #80A416 (Olive Green)
+    } else if (val == const Color(0xFF9D8DF1).value || val == const Color(0xFF9D4EDD).value) {
+      return const Color(0xFF9D8DF1); // 5. #9D8DF1 (Vibrant Light Purple)
+    } else if (val == const Color(0xFF810100).value || val == const Color(0xFFB91C1D).value || val == const Color(0xFFDF2531).value) {
+      return const Color(0xFF810100); // 6. #810100 (Deep Crimson Red)
     }
-    return borderColor.withOpacity(1.0);
+    return borderColor;
   }
 
   bool get _isLightSolidFill {
+    final int val = _solidBgColor.value;
+    if (val == const Color(0xFFFFEDA8).value ||
+        val == const Color(0xFFC4E326).value ||
+        val == const Color(0xFFB1A9DA).value ||
+        val == const Color(0xFF9D8DF1).value) {
+      return true; // Light swatches need dark, crisp typography
+    }
     return _solidBgColor.computeLuminance() > 0.40;
   }
 
   bool get _isRedThreatCard {
-    return isAlert || _solidBgColor.value == const Color(0xFFB91C1D).value;
+    final int val = _solidBgColor.value;
+    return isAlert || val == const Color(0xFF810100).value || val == const Color(0xFFB91C1D).value;
   }
 
   bool get _isSolidFill {
@@ -63,15 +74,14 @@ class CyberStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Exact requested text colors: #EBECEE for white text, yellow for threat amount on red cards!
-    final Color titleColor = _isLightSolidFill ? const Color(0xFF0A0A0E) : const Color(0xFFEBECEE);
+    final Color titleColor = _isLightSolidFill ? const Color(0xFF0A0A0E) : const Color(0xFFFFFFFF);
     final Color valueColor = _isRedThreatCard
-        ? const Color(0xFFFFEA00) // Bright Yellowish color for threat amount on red cards!
-        : (_isLightSolidFill ? const Color(0xFF050A07) : const Color(0xFFEBECEE));
+        ? const Color(0xFFFFEA00) // Bright Yellowish color for threat amount on red cards
+        : (_isLightSolidFill ? const Color(0xFF050A07) : const Color(0xFFFFFFFF));
     final Color subColor = _isRedThreatCard
         ? const Color(0xFFFFD54F)
-        : (_isLightSolidFill ? const Color(0xFF1E293B) : const Color(0xFFD1D5DB));
-    final Color accentColor = _isLightSolidFill ? const Color(0xFF050A07) : const Color(0xFFEBECEE);
+        : (_isLightSolidFill ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0));
+    final Color accentColor = _isLightSolidFill ? const Color(0xFF050A07) : const Color(0xFFFFFFFF);
 
     Widget cardContent = CustomPaint(
       painter: _OpaqueStatCardPainter(
@@ -81,36 +91,39 @@ class CyberStatCard extends StatelessWidget {
         isLightSolidFill: _isLightSolidFill,
       ),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 32, 22, 14),
+        padding: const EdgeInsets.fromLTRB(14, 20, 16, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Top Row: Title & Icon (Barlow bold font)
+            // Top Row: Title & Icon with right padding so it never collides with chevrons
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Text(
-                    title.toUpperCase(),
-                    style: GoogleFonts.barlow(
-                      fontSize: 13.0,
-                      fontWeight: FontWeight.bold,
-                      color: titleColor,
-                      letterSpacing: 0.8,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 28.0),
+                    child: Text(
+                      title.toUpperCase(),
+                      style: GoogleFonts.barlow(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                        color: titleColor,
+                        letterSpacing: 0.6,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (icon != null) ...[
-                  const SizedBox(width: 6),
-                  Icon(icon, color: accentColor, size: 18),
+                  const SizedBox(width: 4),
+                  Icon(icon, color: accentColor, size: 16),
                 ],
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
 
-            // Middle Row: Big Numerical Value & Subtitle (Barlow bold)
+            // Middle Row: Big Numerical Value & Subtitle (Clean layout with zero symbol overlap)
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
@@ -118,7 +131,7 @@ class CyberStatCard extends StatelessWidget {
                 Text(
                   value,
                   style: GoogleFonts.barlow(
-                    fontSize: 34,
+                    fontSize: 28,
                     fontWeight: FontWeight.w900,
                     color: valueColor,
                     letterSpacing: 0.5,
@@ -132,23 +145,23 @@ class CyberStatCard extends StatelessWidget {
                         : null,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     sub,
                     style: GoogleFonts.barlow(
-                      fontSize: 12.5,
+                      fontSize: 11.5,
                       color: subColor,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
 
-            // Bottom Row: Optional Corner Tag (Clean bottom-left so + + reticles graphic is unobscured!)
+            // Bottom Row: Corner Tag
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -159,7 +172,7 @@ class CyberStatCard extends StatelessWidget {
                       fontFamily: 'monospace',
                       fontSize: 8.5,
                       fontWeight: FontWeight.bold,
-                      color: accentColor.withOpacity(0.9),
+                      color: accentColor.withOpacity(0.85),
                       letterSpacing: 1.0,
                     ),
                   ),
@@ -203,11 +216,17 @@ class _OpaqueStatCardPainter extends CustomPainter {
     final double h = size.height;
     final double c = 14.0; // Corner chamfer size
 
+    // Dark cyber stroke - NEVER white boundary!
     final Color strokeColor = isLightSolidFill
-        ? const Color(0xFF050A07)
-        : const Color(0xFFEBECEE); // Exact #EBECEE specified by user
+        ? const Color(0xFF0F1410)
+        : const Color(0xFF140505);
 
-    // 1. Armor HUD Notched Polygon Boundary Path (Matching media_1789022641185.png)
+    // Decorative symbol accent color
+    final Color symbolColor = isLightSolidFill
+        ? const Color(0xFF0F1410).withOpacity(0.70)
+        : const Color(0xFFFFFFFF).withOpacity(0.70);
+
+    // 1. Armor HUD Notched Polygon Boundary Path
     final path = Path()
       ..moveTo(c, 0)
       ..lineTo(w - c - 18, 0)
@@ -231,88 +250,69 @@ class _OpaqueStatCardPainter extends CustomPainter {
       ..lineTo(0, c)
       ..close();
 
-    // Fill 100% Solid Opaque Background
+    // Fill 100% Solid Opaque Background with swatch color
     final fillPaint = Paint()
       ..color = solidBackgroundColor
       ..style = PaintingStyle.fill;
     canvas.drawPath(path, fillPaint);
 
-    // Boundary Frame Stroke Line
+    // Boundary Frame Stroke Line: Dark Cyber Frame (NO WHITE BOUNDARY)
     final borderPaint = Paint()
       ..color = strokeColor
-      ..strokeWidth = 2.0
+      ..strokeWidth = 1.6
       ..style = PaintingStyle.stroke;
     canvas.drawPath(path, borderPaint);
 
-    // 2. Top-Left Slanted Parallel Bars (///) - Matching Image Accents
+    // 2. Top-Left Slanted Parallel Bars (///) - Sits neatly above title
     final barPaint = Paint()
-      ..color = strokeColor
+      ..color = symbolColor
       ..style = PaintingStyle.fill;
 
-    const double barW = 4.0;
-    const double barH = 11.0;
+    const double barW = 3.0;
+    const double barH = 8.0;
     const double barX = 14.0;
-    const double barY = 10.0;
+    const double barY = 8.0;
 
     for (int i = 0; i < 3; i++) {
       final barPath = Path();
-      final double xOffset = barX + (i * 7.5);
-      barPath.moveTo(xOffset + 4, barY);
-      barPath.lineTo(xOffset + 4 + barW, barY);
+      final double xOffset = barX + (i * 6.0);
+      barPath.moveTo(xOffset + 3, barY);
+      barPath.lineTo(xOffset + 3 + barW, barY);
       barPath.lineTo(xOffset + barW, barY + barH);
       barPath.lineTo(xOffset, barY + barH);
       barPath.close();
       canvas.drawPath(barPath, barPaint);
     }
 
-    // 3. Top-Right Directional Chevrons (<<) - Matching Image Accents
+    // 3. Top-Right Directional Chevrons (<<)
     final chevronPaint = Paint()
-      ..color = strokeColor
-      ..strokeWidth = 2.2
+      ..color = symbolColor
+      ..strokeWidth = 1.8
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.square;
 
-    final double chevX = w - 34.0;
-    const double chevY = 12.0;
+    final double chevX = w - 28.0;
+    const double chevY = 9.0;
     for (int i = 0; i < 2; i++) {
-      final double cx = chevX + (i * 8.0);
+      final double cx = chevX + (i * 7.0);
       final chevPath = Path()
-        ..moveTo(cx + 6, chevY)
-        ..lineTo(cx, chevY + 5)
-        ..lineTo(cx + 6, chevY + 10);
+        ..moveTo(cx + 5, chevY)
+        ..lineTo(cx, chevY + 4)
+        ..lineTo(cx + 5, chevY + 8);
       canvas.drawPath(chevPath, chevronPaint);
     }
 
-    // 4. Bottom-Left Target Crosshair Reticles (+ + / + +) - Matching Image Accents
-    final reticlePaint = Paint()
-      ..color = strokeColor.withOpacity(0.85)
-      ..strokeWidth = 1.4
-      ..style = PaintingStyle.stroke;
-
-    const double retX = 16.0;
-    final double retY = h - 26.0;
-    const double crossLen = 3.5;
-
-    for (int row = 0; row < 2; row++) {
-      for (int col = 0; col < 2; col++) {
-        final double rx = retX + (col * 10.0);
-        final double ry = retY + (row * 10.0);
-        canvas.drawLine(Offset(rx, ry - crossLen), Offset(rx, ry + crossLen), reticlePaint);
-        canvas.drawLine(Offset(rx - crossLen, ry), Offset(rx + crossLen, ry), reticlePaint);
-      }
-    }
-
-    // 5. Vertical Side Vent Hatch Ticks - Matching Right Edge of Image
+    // 4. Vertical Side Vent Hatch Ticks on Right Edge
     final hatchPaint = Paint()
-      ..color = strokeColor.withOpacity(0.75)
-      ..strokeWidth = 1.6
+      ..color = symbolColor.withOpacity(0.5)
+      ..strokeWidth = 1.2
       ..style = PaintingStyle.stroke;
 
-    final double hatchX = w - 8.0;
-    final double hatchStartY = h / 2 - 14.0;
-    for (int i = 0; i < 5; i++) {
-      final double hy = hatchStartY + (i * 7.0);
-      canvas.drawLine(Offset(hatchX, hy), Offset(hatchX + 4, hy - 4), hatchPaint);
+    final double hatchX = w - 6.0;
+    final double hatchStartY = h / 2 - 10.0;
+    for (int i = 0; i < 4; i++) {
+      final double hy = hatchStartY + (i * 6.0);
+      canvas.drawLine(Offset(hatchX, hy), Offset(hatchX + 3, hy - 3), hatchPaint);
     }
   }
 

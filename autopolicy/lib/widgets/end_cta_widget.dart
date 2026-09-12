@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'chamfered_cyber_button.dart';
 import '../screens/login_screen.dart';
-import '../screens/signup_screen.dart';
 
 class EndCtaWidget extends StatefulWidget {
   final bool isActive;
@@ -85,18 +84,6 @@ class _EndCtaWidgetState extends State<EndCtaWidget> {
     Navigator.of(context).push(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 600),
-      ),
-    );
-  }
-
-  void _navigateToSignup() {
-    Navigator.of(context).push(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const SignupPage(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -262,23 +249,14 @@ class _EndCtaWidgetState extends State<EndCtaWidget> {
                       transform: _showButtons
                           ? Matrix4.identity()
                           : (Matrix4.identity()..translate(0.0, 24.0, 0.0)),
-                      child: Wrap(
-                        spacing: 16,
-                        runSpacing: 14,
-                        alignment: WrapAlignment.center,
-                        children: [
-                          ChamferedCyberButton(
-                            text: 'CREATE ACCOUNT',
-                            backgroundColor: const Color(0xFF80A416),
-                            hoverColor: const Color(0xFFBBF438),
-                            textColor: Colors.black,
-                            onTap: _navigateToSignup,
-                          ),
-                          _GhostCyberButton(
-                            text: 'SIGN IN',
-                            onTap: _navigateToLogin,
-                          ),
-                        ],
+                      child: Center(
+                        child: ChamferedCyberButton(
+                          text: 'SIGN IN TO CONSOLE',
+                          backgroundColor: const Color(0xFF80A416),
+                          hoverColor: const Color(0xFFBBF438),
+                          textColor: Colors.black,
+                          onTap: _navigateToLogin,
+                        ),
                       ),
                     ),
                   ),

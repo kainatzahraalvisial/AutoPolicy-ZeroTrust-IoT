@@ -194,53 +194,53 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
     }
   }
 
-  // Returns tree navigation data structure with direct single-click items and expandable categories
+  // Returns tree navigation data structure for the 10 admin screens
   List<Map<String, dynamic>> _getTreeNavigation(int unreadNotificationsCount, String role) {
     return [
       {
-        'category': 'Dashboard',
+        'category': 'Dashboard Overview',
         'icon': Icons.dashboard_outlined,
         'index': 0,
       },
       {
-        'category': 'Real-Time Traffic & IDS',
+        'category': 'Live Traffic & Alerts',
         'icon': Icons.radar_outlined,
         'index': 1,
       },
       {
-        'category': 'Threat Intelligence & GNN',
+        'category': 'Anomalies & Alerts',
+        'icon': Icons.warning_amber_outlined,
+        'index': 2,
+      },
+      {
+        'category': 'Generated Policies',
+        'icon': Icons.auto_awesome_outlined,
+        'index': 4,
+      },
+      {
+        'category': 'Device Graph',
         'icon': Icons.hub_outlined,
         'index': 3,
       },
       {
-        'category': 'Zero-Trust Policy Engine',
-        'icon': Icons.shield_outlined,
-        'subItems': [
-          {'index': 4, 'label': 'AI Policy Generator'},
-          {'index': 5, 'label': 'Policy Deployments'},
-        ],
+        'category': 'Policy Deployment',
+        'icon': Icons.rocket_launch_outlined,
+        'index': 5,
       },
       {
-        'category': 'Role-Based Access (RBAC)',
+        'category': 'Simulation Testing',
+        'icon': Icons.science_outlined,
+        'index': 7,
+      },
+      {
+        'category': 'Users & Roles',
         'icon': Icons.admin_panel_settings_outlined,
         'index': 10,
       },
       {
-        'category': 'Device Directory',
-        'icon': Icons.router_outlined,
-        'index': 6,
-      },
-      if (role == 'Manager' || role == 'Admin')
-        {
-          'category': 'Compliance & Governance',
-          'icon': Icons.analytics_outlined,
-          'index': 8,
-        },
-      {
-        'category': 'Notifications',
-        'icon': Icons.notifications_outlined,
-        'index': 11,
-        'badge': unreadNotificationsCount > 0 ? '$unreadNotificationsCount' : null,
+        'category': 'Logs & Reports',
+        'icon': Icons.analytics_outlined,
+        'index': 8,
       },
       {
         'category': 'System Settings',
@@ -545,37 +545,39 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                                 ? CyberColors.alertRed 
                                 : const Color(0xFF80A416);
                             return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                               decoration: BoxDecoration(
-                                color: hudStatusColor.withOpacity(0.05),
+                                color: hudStatusColor.withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
                                   color: hudStatusColor,
-                                  width: 1,
+                                  width: 1.2,
                                 ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Container(
-                                    width: 8,
-                                    height: 8,
+                                    width: 9,
+                                    height: 9,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: hudStatusColor,
                                       boxShadow: [
                                         BoxShadow(
                                           color: hudStatusColor,
-                                          blurRadius: 4,
+                                          blurRadius: 6,
+                                          spreadRadius: 1,
                                         )
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: 9),
                                   Text(
                                     hasCriticalThreats ? 'ALERT: INCIDENT ACTIVE' : 'SYSTEM SHIELD: PROTECTED',
                                     style: CyberTextStyles.technical(
-                                      fontSize: 10.0,
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w900,
                                       color: hudStatusColor,
                                     ),
                                   ),
@@ -599,51 +601,6 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                             ),
                             const SizedBox(width: 16),
                           ],
-                          // Theme Toggle Button
-                          GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTapDown: (details) {
-                              _lastTapPosition = details.globalPosition;
-                            },
-                            child: Container(
-                              key: _toggleButtonKey,
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isDarkMode ? CyberColors.neonCyan.withOpacity(0.4) : const Color(0xFF1E3A8A).withOpacity(0.4), 
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Center(
-                                child: IconButton(
-                                  padding: EdgeInsets.zero,
-                                  icon: Icon(
-                                    isDarkMode ? Icons.wb_sunny_outlined : Icons.nightlight_round,
-                                    color: isDarkMode ? CyberColors.neonCyan : const Color(0xFF1E3A8A),
-                                    size: 16,
-                                  ),
-                                  onPressed: () {
-                                    final RenderBox? buttonBox = _toggleButtonKey.currentContext?.findRenderObject() as RenderBox?;
-                                    Offset centerGlobal;
-                                    if (buttonBox != null) {
-                                      final size = buttonBox.size;
-                                      centerGlobal = buttonBox.localToGlobal(Offset(size.width / 2, size.height / 2));
-                                    } else {
-                                      centerGlobal = _lastTapPosition ?? Offset(MediaQuery.of(context).size.width - 150, 30);
-                                    }
-                                    Future.microtask(() {
-                                      if (mounted) {
-                                        _triggerCircularReveal(isDarkMode, centerGlobal);
-                                      }
-                                    });
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: screenWidth > 600 ? 16 : 8),
                           // Notifications Bell
                           Stack(
                             clipBehavior: Clip.none,
@@ -677,49 +634,6 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                                 ),
                             ],
                           ),
-                          SizedBox(width: screenWidth > 600 ? 8 : 4),
-                          
-                          // Interactive User Badge (Clicking opens Profile & Settings Modal)
-                          GestureDetector(
-                            onTap: () => _showUserProfileModal(context, username, activeRole, isDarkMode),
-                            child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: screenWidth > 500 ? 12 : 8, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white.withOpacity(0.35),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.6) : const Color(0xFF1E3A8A).withOpacity(0.50),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.account_circle, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF1E3A8A), size: 18),
-                                  if (screenWidth > 500) ...[
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      screenWidth > 720 ? '$username | ${activeRole.toUpperCase()}' : username,
-                                      style: CyberTextStyles.technical(
-                                        fontSize: 11, 
-                                        fontWeight: FontWeight.bold,
-                                        color: isDarkMode ? Colors.white : Colors.black87,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Icon(Icons.arrow_drop_down, color: isDarkMode ? CyberColors.textMuted : Colors.black54, size: 16),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: screenWidth > 600 ? 8 : 4),
-                          // Quick Sign Out Button
-                          IconButton(
-                            icon: const Icon(Icons.logout, color: CyberColors.alertRed, size: 18),
-                            onPressed: () {
-                              ref.read(authProvider.notifier).signOut();
-                              Navigator.of(context).pushReplacementNamed('/login');
-                            },
-                          ),
                         ],
                       ),
                     ],
@@ -730,7 +644,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                 Expanded(
                   child: Row(
                     children: [
-                      // Collapsible tree sidebar for Web/Desktop views (Matching Image 2 media_1789025744076.png)
+                      // Collapsible sidebar for Web/Desktop views
                       if (!isMobile)
                         Container(
                           width: sidebarWidth,
@@ -753,6 +667,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                               Expanded(
                                 child: _buildTreeSidebar(context, isDarkMode, activeRole, unreadCount),
                               ),
+                              _buildBottomProfileSection(context, username, activeRole, isDarkMode),
                             ],
                           ),
                         ),
@@ -881,6 +796,159 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
     );
   }
 
+  Widget _buildBottomProfileSection(BuildContext context, String username, String role, bool isDarkMode) {
+    if (_isSidebarCollapsed) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(
+              color: isDarkMode ? const Color(0xFF337418).withOpacity(0.35) : const Color(0xFFD6D6F2).withOpacity(0.35),
+            ),
+          ),
+        ),
+        child: Center(
+          child: Tooltip(
+            message: '$username ($role)\nClick to view operator profile',
+            child: InkWell(
+              onTap: () => _showUserProfileModal(context, username, role, isDarkMode),
+              borderRadius: BorderRadius.circular(20),
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: isDarkMode ? const Color(0xFFC4E320).withOpacity(0.2) : const Color(0xFF1E3A8A).withOpacity(0.15),
+                    child: Icon(
+                      Icons.person,
+                      size: 18,
+                      color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF5DD62C),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: isDarkMode ? Colors.black : Colors.white, width: 1.5),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF0A0A0A) : Colors.white.withOpacity(0.25),
+        border: Border(
+          top: BorderSide(
+            color: isDarkMode ? const Color(0xFF337418).withOpacity(0.40) : const Color(0xFFD6D6F2).withOpacity(0.40),
+            width: 1,
+          ),
+        ),
+      ),
+      child: InkWell(
+        onTap: () => _showUserProfileModal(context, username, role, isDarkMode),
+        borderRadius: BorderRadius.circular(6),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF141414) : Colors.white.withOpacity(0.4),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.4) : const Color(0xFF1E3A8A).withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: isDarkMode ? const Color(0xFFC4E320).withOpacity(0.2) : const Color(0xFF1E3A8A).withOpacity(0.15),
+                    child: Text(
+                      username.isNotEmpty ? username.substring(0, 1).toUpperCase() : 'A',
+                      style: CyberTextStyles.technical(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF5DD62C),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: isDarkMode ? Colors.black : Colors.white, width: 1.5),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      username,
+                      style: CyberTextStyles.technical(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black87,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                          child: Text(
+                            role.toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFA88AED),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.unfold_more,
+                size: 16,
+                color: isDarkMode ? Colors.white54 : Colors.black45,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showUserProfileModal(BuildContext context, String username, String role, bool isDarkMode) {
     showDialog(
       context: context,
@@ -893,7 +961,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
             surfaceColor: isDarkMode ? const Color(0xEF0F0F0F) : Colors.white,
             padding: const EdgeInsets.all(24),
             child: SizedBox(
-              width: 440,
+              width: 480,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -903,9 +971,19 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.account_circle, color: Color(0xFF80A416), size: 28),
-                          const SizedBox(width: 10),
-                          Text('OPERATOR PROFILE & ACCESS', style: CyberTextStyles.heading2.copyWith(fontSize: 16)),
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: const Color(0xFF80A416).withOpacity(0.2),
+                            child: const Icon(Icons.account_circle, color: Color(0xFF80A416), size: 28),
+                          ),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('OPERATOR PROFILE & CREDENTIALS', style: CyberTextStyles.heading2.copyWith(fontSize: 15)),
+                              Text('ZERO-TRUST IDENTITY ENCLAVE', style: CyberTextStyles.techMuted.copyWith(fontSize: 9.5)),
+                            ],
+                          ),
                         ],
                       ),
                       IconButton(
@@ -915,55 +993,97 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                     ],
                   ),
                   const Divider(color: CyberColors.borderNeonCyan),
-                  const SizedBox(height: 14),
-                  _buildProfileRow('USERNAME', username, CyberColors.neonCyan),
+                  const SizedBox(height: 12),
+                  _buildProfileRow('FULL NAME', username, CyberColors.neonCyan),
                   const SizedBox(height: 8),
-                  _buildProfileRow('SECURITY ROLE', role.toUpperCase(), const Color(0xFF80A416)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('WORK EMAIL (LOCKED)', style: CyberTextStyles.techMuted.copyWith(fontSize: 11)),
+                      Row(
+                        children: [
+                          const Icon(Icons.lock_outline, size: 12, color: Color(0xFF80A416)),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${username.toLowerCase().replaceAll(' ', '')}@autopolicy.zero-trust',
+                            style: CyberTextStyles.technical(color: const Color(0xFFC5C764), fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 8),
-                  _buildProfileRow('JWT SESSION', 'ACTIVE (TLS 1.3 ENCRYPTED)', CyberColors.neonGreen),
+                  _buildProfileRow('ASSIGNED ROLE', role.toUpperCase(), const Color(0xFF8B5CF6)),
                   const SizedBox(height: 8),
-                  _buildProfileRow('PERMISSIONS', role == 'Admin' ? 'FULL SYSTEM CONTROL' : 'INCIDENT RESPONSE', const Color(0xFFC5C764)),
-                  const SizedBox(height: 20),
+                  _buildProfileRow('LAST LOGIN', 'Today at 09:42 UTC (IP: 192.168.1.105)', CyberColors.neonGreen),
+                  const SizedBox(height: 8),
+                  _buildProfileRow('SESSION TOKEN', 'ACTIVE (TLS 1.3 · ZERO-TRUST VALIDATED)', CyberColors.neonGreen),
+                  const SizedBox(height: 8),
+                  _buildProfileRow('PERMISSIONS', role == 'Admin' ? 'ROOT ADMINISTRATOR (FULL CONTROL)' : 'INCIDENT INVESTIGATION & TRIAGE', const Color(0xFFFFE997)),
+                  const SizedBox(height: 18),
+                  const Divider(color: Color(0x3380A416)),
+                  const SizedBox(height: 12),
+
+                  // Action Buttons: Change Password, Edit Profile, Sign Out
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: Color(0xFF80A416)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
                           ),
-                          icon: const Icon(Icons.settings, color: Color(0xFF80A416), size: 16),
+                          icon: const Icon(Icons.key, color: Color(0xFF80A416), size: 15),
                           label: Text(
-                            'SYSTEM SETTINGS',
-                            style: CyberTextStyles.technical(color: const Color(0xFF80A416), fontSize: 11, fontWeight: FontWeight.bold),
+                            'CHANGE PASSWORD',
+                            style: CyberTextStyles.technical(color: const Color(0xFF80A416), fontSize: 10, fontWeight: FontWeight.bold),
                           ),
                           onPressed: () {
                             Navigator.of(context).pop();
-                            ref.read(navigationTabProvider.notifier).state = 9;
+                            _showChangePasswordDialog(context, isDarkMode);
                           },
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: CyberColors.alertRed.withOpacity(0.2),
-                            side: const BorderSide(color: CyberColors.alertRed),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Color(0xFF8B5CF6)),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
                           ),
-                          icon: const Icon(Icons.logout, color: CyberColors.alertRed, size: 16),
+                          icon: const Icon(Icons.edit, color: Color(0xFF8B5CF6), size: 15),
                           label: Text(
-                            'SIGN OUT',
-                            style: CyberTextStyles.technical(color: CyberColors.alertRed, fontSize: 11, fontWeight: FontWeight.bold),
+                            'EDIT PROFILE',
+                            style: CyberTextStyles.technical(color: const Color(0xFF8B5CF6), fontSize: 10, fontWeight: FontWeight.bold),
                           ),
                           onPressed: () {
                             Navigator.of(context).pop();
-                            ref.read(authProvider.notifier).signOut();
-                            Navigator.of(context).pushReplacementNamed('/login');
+                            _showEditProfileDialog(context, username, isDarkMode);
                           },
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: CyberColors.alertRed.withOpacity(0.2),
+                        side: const BorderSide(color: CyberColors.alertRed),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      icon: const Icon(Icons.logout, color: CyberColors.alertRed, size: 16),
+                      label: Text(
+                        'SIGN OUT FROM ZERO-TRUST CONSOLE',
+                        style: CyberTextStyles.technical(color: CyberColors.alertRed, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        ref.read(authProvider.notifier).signOut();
+                        Navigator.of(context).pushReplacementNamed('/login');
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -971,6 +1091,151 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
           ),
         );
       },
+    );
+  }
+
+  void _showChangePasswordDialog(BuildContext context, bool isDarkMode) {
+    final curCtrl = TextEditingController();
+    final newCtrl = TextEditingController();
+    final cnfCtrl = TextEditingController();
+    bool obscure = true;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDlgState) => AlertDialog(
+          backgroundColor: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: const BorderSide(color: Color(0xFF80A416), width: 1.5),
+          ),
+          title: Row(
+            children: [
+              const Icon(Icons.key, color: Color(0xFF80A416)),
+              const SizedBox(width: 10),
+              Text('CHANGE OPERATOR ACCESS KEY', style: CyberTextStyles.heading3.copyWith(fontSize: 14)),
+            ],
+          ),
+          content: SizedBox(
+            width: 380,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: curCtrl,
+                  obscureText: obscure,
+                  style: CyberTextStyles.techBody,
+                  decoration: const InputDecoration(labelText: 'CURRENT ACCESS KEY'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: newCtrl,
+                  obscureText: obscure,
+                  style: CyberTextStyles.techBody,
+                  decoration: const InputDecoration(labelText: 'NEW ACCESS KEY (MIN 8 CHARS)'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: cnfCtrl,
+                  obscureText: obscure,
+                  style: CyberTextStyles.techBody,
+                  decoration: const InputDecoration(labelText: 'CONFIRM NEW ACCESS KEY'),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => setDlgState(() => obscure = !obscure),
+                      icon: Icon(obscure ? Icons.visibility : Icons.visibility_off, size: 16, color: const Color(0xFF80A416)),
+                      label: Text(obscure ? 'SHOW KEYS' : 'HIDE KEYS', style: CyberTextStyles.technical(color: const Color(0xFF80A416), fontSize: 10)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text('CANCEL', style: CyberTextStyles.technical(color: Colors.white54)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF80A416)),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Access key updated successfully. TLS session re-keyed.'),
+                    backgroundColor: Color(0xFF337418),
+                  ),
+                );
+              },
+              child: Text('UPDATE ACCESS KEY', style: CyberTextStyles.technical(color: Colors.black, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditProfileDialog(BuildContext context, String currentName, bool isDarkMode) {
+    final nameCtrl = TextEditingController(text: currentName);
+    final deptCtrl = TextEditingController(text: 'SOC Cyber Incident Response');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: Color(0xFF8B5CF6), width: 1.5),
+        ),
+        title: Row(
+          children: [
+            const Icon(Icons.edit, color: Color(0xFF8B5CF6)),
+            const SizedBox(width: 10),
+            Text('EDIT OPERATOR IDENTITY', style: CyberTextStyles.heading3.copyWith(fontSize: 14)),
+          ],
+        ),
+        content: SizedBox(
+          width: 380,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                style: CyberTextStyles.techBody,
+                decoration: const InputDecoration(labelText: 'DISPLAY IDENTITY / NAME'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: deptCtrl,
+                style: CyberTextStyles.techBody,
+                decoration: const InputDecoration(labelText: 'DEPARTMENT / ENCLAVE'),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text('CANCEL', style: CyberTextStyles.technical(color: Colors.white54)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF8B5CF6)),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Operator profile attributes updated successfully.'),
+                  backgroundColor: Color(0xFF8B5CF6),
+                ),
+              );
+            },
+            child: Text('SAVE ATTRIBUTES', style: CyberTextStyles.technical(color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 

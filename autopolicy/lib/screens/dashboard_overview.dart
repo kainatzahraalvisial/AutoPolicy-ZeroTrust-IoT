@@ -1,15 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../providers/security_provider.dart';
 import '../providers/navigation_provider.dart';
 import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
-import '../widgets/cyber_hud_frame.dart';
-import '../widgets/global_soc_ingress_map.dart';
-import '../widgets/cyber_flow_bar_chart.dart';
 import '../widgets/cyber_radial_donut_chart.dart';
 import '../widgets/cyber_stat_card.dart';
+import '../widgets/cyber_traffic_line_chart.dart';
 import '../models/policy.dart';
 
 class DashboardOverview extends ConsumerStatefulWidget {
@@ -27,6 +26,50 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
     '[13:42:15] OPA Rego -> Microsegmentation rule #1042 compiled',
     '[13:42:18] Zero-Trust -> Microsegment quarantine enforced',
     '[13:42:20] All 12 IoT Edge gateways online & safe',
+  ];
+
+  // Recent 5 alerts mock data per admin specification
+  final List<Map<String, dynamic>> _recentAlerts = [
+    {
+      'time': '14:18:22',
+      'device': 'Edge Gateway 01',
+      'ip': '10.128.4.12',
+      'attack': 'Syn-Flood DDoS Surge',
+      'severity': 'CRITICAL',
+      'color': const Color(0xFFDF2531),
+    },
+    {
+      'time': '14:12:05',
+      'device': 'Smart Meter Alpha',
+      'ip': '10.128.4.45',
+      'attack': 'Port Scan Sweep',
+      'severity': 'HIGH',
+      'color': const Color(0xFFFF9900),
+    },
+    {
+      'time': '13:58:40',
+      'device': 'Valve Actuator 04',
+      'ip': '10.128.8.19',
+      'attack': 'Unauthorized Modbus Write',
+      'severity': 'CRITICAL',
+      'color': const Color(0xFFDF2531),
+    },
+    {
+      'time': '13:45:11',
+      'device': 'Camera Edge Node',
+      'ip': '10.128.8.88',
+      'attack': 'Data Exfiltration Spike',
+      'severity': 'HIGH',
+      'color': const Color(0xFFFF9900),
+    },
+    {
+      'time': '13:20:00',
+      'device': 'HVAC Controller',
+      'ip': '10.128.4.99',
+      'attack': 'ARP Poisoning Attempt',
+      'severity': 'MEDIUM',
+      'color': const Color(0xFFFFE997),
+    },
   ];
 
   @override
@@ -63,11 +106,12 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
     final bool isMobile = Responsive.isMobile(context);
     final bool isTablet = Responsive.isTablet(context);
 
-    final totalDevices = securityState.devices.length;
+    final totalDevices = securityState.devices.isNotEmpty ? securityState.devices.length : 1248;
     final activeThreats = securityState.anomalies.where((anm) => !anm.isMitigated).length;
-    final generatedPoliciesCount = securityState.policies.length;
-    final blockedAttacksCount = securityState.totalBlockedAttacks;
+    final generatedPoliciesCount = securityState.policies.isNotEmpty ? securityState.policies.length : 342;
+    final blockedAttacksCount = securityState.totalBlockedAttacks > 0 ? securityState.totalBlockedAttacks : 4892;
     final pendingApprovalsCount = securityState.policies.where((p) => p.status == PolicyStatus.pending).length;
+    final int pendingCount = pendingApprovalsCount > 0 ? pendingApprovalsCount : 24;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -76,7 +120,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── 1. TOP TERMINAL HEADER BAR ──────────────────────────────────
+            // ── 1. TOP TERMINAL HEADER & QUICK ACTIONS ───────────────────────
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
@@ -84,154 +128,203 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                 border: Border.all(color: const Color(0xFF5DD62C).withOpacity(0.40), width: 1.0),
                 borderRadius: BorderRadius.circular(4),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'AUTOPOLICY ZERO-TRUST SOC DASHBOARD',
-                        style: CyberTextStyles.displayTitle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: const Color(0xFF5DD62C),
-                        ).copyWith(letterSpacing: 2.0),
-                      ),
-                      const SizedBox(height: 3),
-                      Row(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'ROLE: ADMINISTRATOR (RBAC ENFORCED)',
-                            style: CyberTextStyles.technical(
-                              fontSize: 10,
-                              color: const Color(0xFF8B5CF6), // Purple Accent!
-                              fontWeight: FontWeight.bold,
-                            ),
+                            'AUTOPOLICY ZERO-TRUST SOC DASHBOARD',
+                            style: CyberTextStyles.displayTitle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF5DD62C),
+                            ).copyWith(letterSpacing: 2.0),
                           ),
-                          const SizedBox(width: 14),
-                          Text(
-                            'SYSTEM STATUS: ZERO-TRUST ENFORCING',
-                            style: CyberTextStyles.technical(
-                              fontSize: 10,
-                              color: const Color(0xFFC5C764),
-                            ),
+                          const SizedBox(height: 3),
+                          Row(
+                            children: [
+                              Text(
+                                'ROLE: ADMINISTRATOR (RBAC ENFORCED)',
+                                style: CyberTextStyles.technical(
+                                  fontSize: 10,
+                                  color: const Color(0xFF8B5CF6),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Text(
+                                'SYSTEM STATUS: ZERO-TRUST ENFORCING',
+                                style: CyberTextStyles.technical(
+                                  fontSize: 10,
+                                  color: const Color(0xFFC5C764),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
+                      // Quick Action Buttons directly in header
+                      if (!isMobile)
+                        Row(
+                          children: [
+                            _buildQuickActionBtn(
+                              icon: Icons.pending_actions_outlined,
+                              label: 'REVIEW PENDING POLICIES ($pendingCount)',
+                              color: const Color(0xFFC4E320),
+                              onTap: () => ref.read(navigationTabProvider.notifier).state = 4,
+                            ),
+                            const SizedBox(width: 8),
+                            _buildQuickActionBtn(
+                              icon: Icons.warning_amber_outlined,
+                              label: 'VIEW CRITICAL ALERTS (${activeThreats > 0 ? activeThreats : 5})',
+                              color: const Color(0xFFDF2531),
+                              onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+                            ),
+                          ],
+                        ),
                     ],
                   ),
+                  if (isMobile) ...[
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildQuickActionBtn(
+                          icon: Icons.pending_actions_outlined,
+                          label: 'REVIEW POLICIES ($pendingCount)',
+                          color: const Color(0xFFC4E320),
+                          onTap: () => ref.read(navigationTabProvider.notifier).state = 4,
+                        ),
+                        _buildQuickActionBtn(
+                          icon: Icons.warning_amber_outlined,
+                          label: 'CRITICAL ALERTS (${activeThreats > 0 ? activeThreats : 5})',
+                          color: const Color(0xFFDF2531),
+                          onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
             const SizedBox(height: 12),
 
-            // ── 2. ESSENTIAL FIGURE CARDS GRID (EXACT 5-COLOR SEQUENCE) ──
+            // ── 2. TOP 6 STATISTICS CARDS (SPECIFICATION GRID) ───────────────
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: isMobile ? 1 : (isTablet ? 2 : 5),
+              crossAxisCount: isMobile ? 2 : (isTablet ? 3 : 6),
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
-              childAspectRatio: isMobile ? 2.5 : 1.5,
+              childAspectRatio: isMobile ? 1.6 : (isTablet ? 1.3 : 1.16),
               children: [
+                // 1. Total IoT Devices (#FFEDA8)
                 CyberStatCard(
                   title: 'TOTAL IOT DEVICES',
-                  value: '$totalDevices',
-                  sub: '12 Connected Nodes',
+                  value: totalDevices > 1000 ? '1,248' : '$totalDevices',
+                  sub: '1,226 Online · 22 Offline',
                   icon: Icons.router_outlined,
-                  borderColor: const Color(0xFFFFE997), // 1. Yellow (#FFE997)
+                  borderColor: const Color(0xFFFFEDA8), // 1. #FFEDA8 (Pale Cream Yellow)
                   tag: 'H17',
-                  onTap: () {
-                    ref.read(navigationTabProvider.notifier).state = 6;
-                  },
+                  onTap: () => ref.read(navigationTabProvider.notifier).state = 6,
                 ),
+                // 2. Policies Generated (#C4E326)
+                CyberStatCard(
+                  title: 'POLICIES GENERATED',
+                  value: '$generatedPoliciesCount',
+                  sub: '$pendingCount Pending Review',
+                  icon: Icons.auto_awesome_outlined,
+                  borderColor: const Color(0xFFC4E326), // 2. #C4E326 (Bright Neon Lime-Green)
+                  tag: 'H18',
+                  onTap: () => ref.read(navigationTabProvider.notifier).state = 4,
+                ),
+                // 3. Policies Deployed (#B1A9DA)
                 CyberStatCard(
                   title: 'POLICIES DEPLOYED',
-                  value: '$generatedPoliciesCount',
-                  sub: 'OPA Rego Enforced',
-                  icon: Icons.rule_folder_outlined,
-                  borderColor: const Color(0xFFA88AED), // 2. Indigo Purple (#A88AED)
-                  tag: 'H18',
-                  onTap: () {
-                    ref.read(navigationTabProvider.notifier).state = 5;
-                  },
-                ),
-                CyberStatCard(
-                  title: 'BLOCKED ATTACKS',
-                  value: '$blockedAttacksCount',
-                  sub: 'Quarantined Flows',
-                  icon: Icons.gpp_good_outlined,
-                  borderColor: const Color(0xFFC4E320), // 3. Bright Light Green (#C4E320)
+                  value: '298',
+                  sub: 'Active in OPA Sidecars',
+                  icon: Icons.shield_outlined,
+                  borderColor: const Color(0xFFB1A9DA), // 3. #B1A9DA (Pastel Lavender)
                   tag: 'H19',
-                  onTap: () {
-                    ref.read(navigationTabProvider.notifier).state = 1;
-                  },
+                  onTap: () => ref.read(navigationTabProvider.notifier).state = 5,
                 ),
+                // 4. Blocked Attacks 24h (#80A416)
                 CyberStatCard(
-                  title: 'PENDING APPROVALS',
-                  value: '$pendingApprovalsCount',
-                  sub: 'Awaiting Sign-off',
-                  icon: Icons.pending_actions_outlined,
-                  borderColor: const Color(0xFF80A416), // 4. Olive Green (#80A416)
+                  title: 'BLOCKED ATTACKS 24H',
+                  value: '$blockedAttacksCount',
+                  sub: '100% Ingress Quarantined',
+                  icon: Icons.gpp_good_outlined,
+                  borderColor: const Color(0xFF80A416), // 4. #80A416 (Olive Green)
                   tag: 'H20',
-                  onTap: () {
-                    ref.read(navigationTabProvider.notifier).state = 5;
-                  },
+                  onTap: () => ref.read(navigationTabProvider.notifier).state = 1,
                 ),
+                // 5. System Health (#9D8DF1)
                 CyberStatCard(
-                  title: 'ACTIVE THREATS [IDS/GNN]',
-                  value: '$activeThreats',
-                  sub: activeThreats > 0 ? 'Critical Quarantine' : 'Zero Threat Spikes',
-                  icon: Icons.gpp_maybe_outlined,
-                  borderColor: const Color(0xFFB91C1D), // 5. Crimson Red (#B91C1D)
-                  isAlert: activeThreats > 0,
+                  title: 'SYSTEM HEALTH',
+                  value: '99.4%',
+                  sub: 'Zeek, GNN & OPA Nominal',
+                  icon: Icons.health_and_safety_outlined,
+                  borderColor: const Color(0xFF9D8DF1), // 5. #9D8DF1 (Vibrant Light Purple)
                   tag: 'H21',
-                  onTap: () {
-                    ref.read(navigationTabProvider.notifier).state = 2;
-                  },
+                  onTap: () => ref.read(navigationTabProvider.notifier).state = 9,
+                ),
+                // 6. Active Threats (#810100)
+                CyberStatCard(
+                  title: 'ACTIVE THREATS',
+                  value: activeThreats > 0 ? '$activeThreats' : '17',
+                  sub: '5 Critical · 12 High',
+                  icon: Icons.gpp_maybe_outlined,
+                  borderColor: const Color(0xFF810100), // 6. #810100 (Deep Crimson Red)
+                  isAlert: true,
+                  tag: 'H22',
+                  onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 8),
 
-            // ── 3. MAIN 3-COLUMN TERMINAL SECTION (HERO MAP & CONTROLS) ──────
+            // ── 3. MAIN DASHBOARD CONTENT SPLIT (NO MAP) ─────────────────────
             if (!isMobile && !isTablet)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // LEFT COLUMN: Quick Actions & Architecture Status
+                  // LEFT COLUMN (Hero Line Chart + Recent Alerts Table)
                   Expanded(
-                    flex: 3,
+                    flex: 7,
                     child: Column(
                       children: [
-                        _buildLeftQuickActions(),
-                        const SizedBox(height: 12),
-                        _buildLeftModelArchitectureStatus(),
+                        // 1-Hour Real-Time Traffic Line Chart
+                        CyberTrafficLineChart(
+                          height: 250,
+                          onViewDetails: () => ref.read(navigationTabProvider.notifier).state = 1,
+                        ),
+                        const SizedBox(height: 8),
+                        // Recent Alerts (Last 5)
+                        _buildRecentAlertsTable(),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
 
-                  // CENTER COLUMN: Global SOC Ingress Map (Hero)
+                  // RIGHT COLUMN (Policy Status Summary + Donut Chart + Health)
                   Expanded(
-                    flex: 6,
-                    child: Column(
-                      children: const [
-                        GlobalSocIngressMap(height: 380),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-
-                  // RIGHT COLUMN: Policy Controls & Real-Time Feed
-                  Expanded(
-                    flex: 3,
+                    flex: 5,
                     child: Column(
                       children: [
-                        _buildRightPolicyControls(),
-                        const SizedBox(height: 12),
-                        _buildRightRealTimeFeed(),
+                        // Policy Status Summary
+                        _buildPolicyStatusSummaryCard(),
+                        const SizedBox(height: 8),
+                        // Top Attack Types Donut Chart
+                        const CyberRadialDonutChart(height: 200),
+                        const SizedBox(height: 8),
+                        // System Component Health Panel
+                        _buildSystemComponentHealthPanel(),
                       ],
                     ),
                   ),
@@ -240,59 +333,34 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
             else
               Column(
                 children: [
-                  const GlobalSocIngressMap(height: 340),
-                  const SizedBox(height: 12),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          children: [
-                            _buildLeftQuickActions(),
-                            const SizedBox(height: 12),
-                            _buildLeftModelArchitectureStatus(),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          children: [
-                            _buildRightPolicyControls(),
-                            const SizedBox(height: 12),
-                            _buildRightRealTimeFeed(),
-                          ],
-                        ),
-                      ),
-                    ],
+                  // 1-Hour Real-Time Traffic Line Chart
+                  CyberTrafficLineChart(
+                    height: 230,
+                    onViewDetails: () => ref.read(navigationTabProvider.notifier).state = 1,
                   ),
+                  const SizedBox(height: 8),
+                  // Recent Alerts (Last 5)
+                  _buildRecentAlertsTable(),
+                  const SizedBox(height: 8),
+                  // Policy Status Summary
+                  _buildPolicyStatusSummaryCard(),
+                  const SizedBox(height: 8),
+                  // Top Attack Types Donut Chart
+                  const CyberRadialDonutChart(height: 200),
+                  const SizedBox(height: 8),
+                  // System Component Health Panel
+                  _buildSystemComponentHealthPanel(),
                 ],
               ),
 
-            const SizedBox(height: 14),
+            const SizedBox(height: 8),
 
-            // ── 4. BOTTOM ROW GRID (DONUT CHART & LIVE SYSTEM LOG) ─────────────
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Donut Chart: Threat Classification
-                const Expanded(
-                  flex: 5,
-                  child: CyberRadialDonutChart(height: 190),
-                ),
-                const SizedBox(width: 12),
+            // ── 4. BOTTOM LOG & AUDIT FEED BAR ───────────────────────────────
+            _buildSystemLogPanel(height: 95),
 
-                // Live Security & Audit Log Panel
-                Expanded(
-                  flex: 6,
-                  child: _buildSystemLogPanel(height: 190),
-                ),
-              ],
-            ),
+            const SizedBox(height: 8),
 
-            const SizedBox(height: 14),
-
-            // ── 5. BOTTOM SYSTEM MESSAGE FOOTER ────────────────────────────────
+            // ── 5. BOTTOM SYSTEM MESSAGE FOOTER ──────────────────────────────
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
@@ -307,7 +375,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'PIPELINE STATUS: IDS Capture → GNN Classification → OPA Enforcement Active.',
+                        'PIPELINE STATUS: Zeek IDS Capture → PyTorch GNN Inference → OPA Rego Microsegmentation Active.',
                         style: CyberTextStyles.technical(
                           fontSize: 10,
                           color: const Color(0xFF5DD62C),
@@ -315,7 +383,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                         ),
                       ),
                       Text(
-                        '99.4% HEALTH',
+                        '99.4% HEALTH NOMINAL',
                         style: CyberTextStyles.technical(
                           fontSize: 10,
                           color: const Color(0xFF8B5CF6),
@@ -327,11 +395,11 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                   const SizedBox(height: 6),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(2),
-                    child: LinearProgressIndicator(
+                    child: const LinearProgressIndicator(
                       value: 0.994,
                       minHeight: 4,
-                      backgroundColor: const Color(0xFF202020),
-                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF8B5CF6)),
+                      backgroundColor: Color(0xFF202020),
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF8B5CF6)),
                     ),
                   ),
                 ],
@@ -343,166 +411,229 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
     );
   }
 
-  // ── HELPER WIDGETS & INTERACTIVE ACTION LISTENERS ─────────────────────────
-
-  Widget _windowBtn(String symbol, {bool isClose = false}) {
+  // ── RECENT ALERTS TABLE (LAST 5) ──────────────────────────────────────────
+  Widget _buildRecentAlertsTable() {
     return Container(
-      width: 22,
-      height: 22,
-      decoration: BoxDecoration(
-        color: isClose ? const Color(0x35DF2531) : const Color(0x208B5CF6),
-        border: Border.all(
-          color: isClose ? const Color(0xFFDF2531) : const Color(0xFF8B5CF6).withOpacity(0.5),
-          width: 1,
-        ),
-        borderRadius: BorderRadius.circular(3),
-      ),
-      child: Center(
-        child: Text(
-          symbol,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            color: isClose ? const Color(0xFFDF2531) : const Color(0xFFF8F8F8),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Tactical Figure Card with Frame (media_1788769893400.png) - Fixed Padding & Spacing!
-  Widget _buildTacticalFigureCard({
-    required String title,
-    required String value,
-    required String sub,
-    required IconData icon,
-    required Color borderColor,
-    required int targetTab,
-    bool isValueAlert = false,
-  }) {
-    final Color valueColor = isValueAlert ? const Color(0xFFDF2531) : const Color(0xFFF8F8F8);
-
-    return CyberHudFrame(
-      design: CyberFrameDesign.tacticalArmorNotch,
-      baseBorderColor: borderColor,
-      hoverBorderColor: borderColor,
-      surfaceColor: borderColor.withOpacity(0.14),
-      // Increased top padding to 24px so title is NOT squished against upper armor notch!
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
-      onTap: () {
-        ref.read(navigationTabProvider.notifier).state = targetTab;
-      },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: CyberTextStyles.technical(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFFC5C764),
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(icon, color: borderColor, size: 16),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                value,
-                style: CyberTextStyles.displayTitle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: valueColor,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  sub,
-                  style: CyberTextStyles.techMuted.copyWith(
-                    fontSize: 9,
-                    color: const Color(0xFF5E7343),
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          // Segmented baseline indicator
-          Row(
-            children: List.generate(
-              10,
-              (idx) => Expanded(
-                child: Container(
-                  height: 2.5,
-                  margin: const EdgeInsets.symmetric(horizontal: 1),
-                  color: idx < 7 ? borderColor : borderColor.withOpacity(0.2),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Quick Actions Panel (Left Column)
-  Widget _buildLeftQuickActions() {
-    return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: const Color(0xFF0F0F0F),
-        border: Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.40), width: 1.0),
+        border: Border.all(color: const Color(0xFFDF2531).withOpacity(0.35), width: 1.0),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'QUICK ACTIONS',
-            style: CyberTextStyles.technical(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF8B5CF6), // Purple Accent!
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.warning_amber_outlined, color: Color(0xFFDF2531), size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    'RECENT THREAT ALERTS (LAST 5 INCIDENTS)',
+                    style: CyberTextStyles.technical(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFFDF2531),
+                    ),
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+                child: Text(
+                  'ALL ANOMALIES FEED →',
+                  style: CyberTextStyles.technical(
+                    fontSize: 9,
+                    color: const Color(0xFF8B5CF6),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
-          _actionItem('[+] Generate OPA Policy', 4),
-          _actionItem('[⚡] Trigger GNN Graph Scan', 3),
-          _actionItem('[📡] Inspect IDS Packet Feed', 1),
-          _actionItem('[🛡️] Quarantine IoT Device', 6),
-          _actionItem('[📋] View Pending Sign-offs', 5),
-          const SizedBox(height: 10),
-          GestureDetector(
+          const Divider(color: Color(0xFF222222), height: 1),
+          const SizedBox(height: 6),
+
+          // Table Header
+          Row(
+            children: [
+              Expanded(flex: 2, child: Text('TIMESTAMP', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70))),
+              Expanded(flex: 3, child: Text('DEVICE ASSET', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70))),
+              Expanded(flex: 4, child: Text('ATTACK VECTOR', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70))),
+              Expanded(flex: 2, child: Text('SEVERITY', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70))),
+              Expanded(flex: 2, child: Text('ACTION', textAlign: TextAlign.right, style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70))),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Divider(color: Color(0xFF222222), height: 1),
+
+          // Table Rows
+          ..._recentAlerts.map((alert) {
+            final Color sevColor = alert['color'] as Color;
+            return Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0xFF181818), width: 1)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      alert['time'] as String,
+                      style: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFFC5C764)),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          alert['device'] as String,
+                          style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700, color: Colors.white),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          alert['ip'] as String,
+                          style: GoogleFonts.spaceGrotesk(fontSize: 11, color: Colors.white60),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    flex: 4,
+                    child: Text(
+                      alert['attack'] as String,
+                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: sevColor.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(3),
+                          border: Border.all(color: sevColor, width: 0.8),
+                        ),
+                        child: Text(
+                          alert['severity'] as String,
+                          style: GoogleFonts.spaceGrotesk(fontSize: 10.5, fontWeight: FontWeight.bold, color: sevColor),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: InkWell(
+                        onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF8B5CF6).withOpacity(0.20),
+                            borderRadius: BorderRadius.circular(3),
+                            border: Border.all(color: const Color(0xFFA88AED), width: 1.0),
+                          ),
+                          child: Text(
+                            'TRIAGE',
+                            style: CyberTextStyles.technical(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFFA88AED),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // ── POLICY STATUS SUMMARY CARD ────────────────────────────────────────────
+  Widget _buildPolicyStatusSummaryCard() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F0F0F),
+        border: Border.all(color: const Color(0xFFC4E320).withOpacity(0.35), width: 1.0),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.shield_outlined, color: Color(0xFFC4E320), size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    'POLICY STATUS BREAKDOWN',
+                    style: CyberTextStyles.technical(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFFC4E320),
+                    ),
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: () => ref.read(navigationTabProvider.notifier).state = 4,
+                child: Text(
+                  'REVIEW ALL →',
+                  style: CyberTextStyles.technical(
+                    fontSize: 9,
+                    color: const Color(0xFF8B5CF6),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          _buildPolicyStatusRow('1. PENDING APPROVAL', '24 Policies', const Color(0xFFFFE997), 0.15),
+          const SizedBox(height: 8),
+          _buildPolicyStatusRow('2. APPROVED BY ADMIN', '20 Policies', const Color(0xFF8B5CF6), 0.12),
+          const SizedBox(height: 8),
+          _buildPolicyStatusRow('3. DEPLOYED IN OPA', '298 Policies', const Color(0xFF5DD62C), 0.85),
+          const SizedBox(height: 8),
+          _buildPolicyStatusRow('4. REJECTED / AUDITED', '8 Policies', const Color(0xFFDF2531), 0.05),
+
+          const SizedBox(height: 12),
+          InkWell(
             onTap: () => ref.read(navigationTabProvider.notifier).state = 4,
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+              padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF8B5CF6).withOpacity(0.15),
-                border: Border.all(color: const Color(0xFF8B5CF6), width: 1.0),
+                color: const Color(0xFFC4E320).withOpacity(0.12),
+                border: Border.all(color: const Color(0xFFC4E320), width: 1.0),
                 borderRadius: BorderRadius.circular(3),
               ),
               child: Center(
                 child: Text(
-                  'IDS → GNN → OPA ACTIVE 🛡️',
+                  'MANAGE ZERO-TRUST POLICIES',
                   style: CyberTextStyles.technical(
                     fontSize: 9.5,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFFF8F8F8),
+                    color: const Color(0xFFC4E320),
                   ),
                 ),
               ),
@@ -513,73 +644,122 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
     );
   }
 
-  Widget _actionItem(String label, int targetTab) {
+  Widget _buildPolicyStatusRow(String label, String count, Color color, double progress) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.white)),
+            Text(count, style: GoogleFonts.spaceGrotesk(fontSize: 12.5, fontWeight: FontWeight.bold, color: color)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(2),
+          child: LinearProgressIndicator(
+            value: progress,
+            minHeight: 4,
+            backgroundColor: const Color(0xFF222222),
+            valueColor: AlwaysStoppedAnimation<Color>(color),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── SYSTEM COMPONENT HEALTH PANEL ─────────────────────────────────────────
+  Widget _buildSystemComponentHealthPanel() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F0F0F),
+        border: Border.all(color: const Color(0xFF80A416).withOpacity(0.35), width: 1.0),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.hub_outlined, color: Color(0xFF80A416), size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    'ZERO-TRUST ENGINE HEALTH',
+                    style: CyberTextStyles.technical(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF80A416),
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                'ALL NOMINAL',
+                style: CyberTextStyles.technical(
+                  fontSize: 10.5,
+                  color: const Color(0xFF5DD62C),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _healthRowItem('Zeek Network Sensor', '1.4k pkts/s · 1.2ms latency', const Color(0xFF5DD62C)),
+          _healthRowItem('PyTorch GNN Embeddings', '64-dim · 4.8ms inference', const Color(0xFF8B5CF6)),
+          _healthRowItem('Open Policy Agent (OPA)', '298 Active Microsegments', const Color(0xFFC4E320)),
+          _healthRowItem('RBAC Zero-Trust Enclave', '100% Policy Sync', const Color(0xFFFFE997)),
+        ],
+      ),
+    );
+  }
+
+  Widget _healthRowItem(String title, String val, Color color) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3.5),
-      child: InkWell(
-        onTap: () => ref.read(navigationTabProvider.notifier).state = targetTab,
-        borderRadius: BorderRadius.circular(3),
-        child: Text(
-          label,
-          style: CyberTextStyles.technical(
-            fontSize: 9.5,
-            color: const Color(0xFF5DD62C),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // Model & Pipeline Health (Left Column)
-  Widget _buildLeftPipelineHealth() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
-        border: Border.all(color: const Color(0xFF5DD62C).withOpacity(0.40), width: 1.0),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(vertical: 2.5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            'PIPELINE & MODEL HEALTH',
-            style: CyberTextStyles.technical(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF5DD62C),
-            ),
-          ),
-          const SizedBox(height: 10),
-          _healthRow('IDS Ingress Rate', '1.4k pkts/s', 1),
-          _healthRow('GNN Graph Accuracy', '98.6%', 3),
-          _healthRow('OPA Rego Latency', '1.2 ms', 4),
-          _healthRow('IoT Mesh Status', '99.4%', 6),
-          _healthRow('RBAC Security', 'Enforced', 9),
+          Text(title, style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w500, color: Colors.white70)),
+          Text(val, style: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
         ],
       ),
     );
   }
 
-  Widget _healthRow(String k, String v, int targetTab) {
+  // ── QUICK ACTION BUTTON HELPER ────────────────────────────────────────────
+  Widget _buildQuickActionBtn({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
-      onTap: () => ref.read(navigationTabProvider.notifier).state = targetTab,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3.5),
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: color.withOpacity(0.7), width: 1.0),
+        ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Text(
-                k,
-                style: CyberTextStyles.technical(fontSize: 9.5, color: const Color(0xFF5E7343)),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
+            Icon(icon, size: 14, color: color),
             const SizedBox(width: 6),
             Text(
-              v,
-              style: CyberTextStyles.technical(fontSize: 9.5, fontWeight: FontWeight.bold, color: const Color(0xFF8B5CF6)),
+              label,
+              style: CyberTextStyles.technical(
+                fontSize: 10.5,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
             ),
           ],
         ),
@@ -587,186 +767,14 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
     );
   }
 
-  // Policy & Threat Controls (Right Column)
-  Widget _buildRightPolicyControls() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
-        border: Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.40), width: 1.0),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'PIPELINE STAGE CONTROLS',
-            style: CyberTextStyles.technical(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF8B5CF6),
-            ),
-          ),
-          const SizedBox(height: 10),
-          _controlRow('1. IDS CAPTURE', '> ACTIVE', 1),
-          _controlRow('2. GNN CLASSIFIER', '> SCANNING', 3),
-          _controlRow('3. OPA REGO ENGINE', '> ENFORCING', 4),
-          _controlRow('4. AUTO QUARANTINE', '> ENABLED', 5),
-        ],
-      ),
-    );
-  }
-
-  Widget _controlRow(String k, String v, int targetTab) {
-    return InkWell(
-      onTap: () => ref.read(navigationTabProvider.notifier).state = targetTab,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3.5),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                k,
-                style: CyberTextStyles.technical(fontSize: 9, color: const Color(0xFF5E7343)),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              v,
-              style: CyberTextStyles.technical(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF5DD62C)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Live IoT Protocol Feed (Right Column)
-  Widget _buildRightRealTimeFeed() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
-        border: Border.all(color: const Color(0xFF5DD62C).withOpacity(0.40), width: 1.0),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'LIVE IOT TELEMETRY FEED',
-            style: CyberTextStyles.technical(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF5DD62C),
-            ),
-          ),
-          const SizedBox(height: 10),
-          _feedItem('MQTT / TLS 1.3', '542 pkts/s'),
-          _feedItem('CoAP / DTLS', '318 pkts/s'),
-          _feedItem('HTTP/2 REST', '142 pkts/s'),
-          _feedItem('gRPC / REGO', '595 rules/s'),
-        ],
-      ),
-    );
-  }
-
-  Widget _feedItem(String proto, String val) {
-    return InkWell(
-      onTap: () => ref.read(navigationTabProvider.notifier).state = 1,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3.5),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                proto,
-                style: CyberTextStyles.technical(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFF8B5CF6)),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              val,
-              style: CyberTextStyles.technical(fontSize: 9, color: const Color(0xFFAD9F3C)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Model & AI Architecture Status (Left Column 3rd Card)
-  Widget _buildLeftModelArchitectureStatus() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
-        border: Border.all(color: const Color(0xFF00F0FF).withOpacity(0.40), width: 1.0),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'MODEL ARCHITECTURE STATUS',
-            style: CyberTextStyles.technical(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF00F0FF),
-            ),
-          ),
-          const SizedBox(height: 10),
-          _healthRow('PyTorch Transformer', '1.07M Params', 4),
-          _healthRow('GNN Node Embeddings', '64 Dim', 3),
-          _healthRow('Zero-Leakage Hash', 'Verified (H0)', 4),
-          _healthRow('OPA Rego Compiler', '100% Valid', 5),
-        ],
-      ),
-    );
-  }
-
-  // Active Rule Summary (Right Column 3rd Card)
-  Widget _buildRightActiveRuleSummary() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
-        border: Border.all(color: const Color(0xFF00F0FF).withOpacity(0.40), width: 1.0),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'ACTIVE POLICY RULE SUMMARY',
-            style: CyberTextStyles.technical(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF00F0FF),
-            ),
-          ),
-          const SizedBox(height: 10),
-          _controlRow('DENY ALL ATTACKS', 'ENFORCED', 5),
-          _controlRow('MQTT MICROSEGMENT', 'ACTIVE', 5),
-          _controlRow('COAP RATE-LIMIT', 'ACTIVE', 5),
-          _controlRow('DEVICE QUARANTINE', 'ENABLED', 2),
-        ],
-      ),
-    );
-  }
-
-  // System & Incident Log Panel (Bottom Row Right)
+  // ── LIVE SYSTEM LOG PANEL (BOTTOM) ────────────────────────────────────────
   Widget _buildSystemLogPanel({required double height}) {
     return Container(
       height: height,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFF0F0F0F),
-        border: Border.all(color: const Color(0xFF5DD62C).withOpacity(0.40), width: 1.0),
+        border: Border.all(color: const Color(0xFF5DD62C).withOpacity(0.35), width: 1.0),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Column(
@@ -776,9 +784,9 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'LIVE SECURITY & AUDIT LOG',
+                'LIVE SECURITY & AUDIT EVENT LEDGER',
                 style: CyberTextStyles.technical(
-                  fontSize: 11,
+                  fontSize: 11.5,
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFF5DD62C),
                 ),
@@ -786,27 +794,29 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
               InkWell(
                 onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
                 child: Text(
-                  'VIEW ANOMALIES →',
-                  style: CyberTextStyles.techMuted.copyWith(fontSize: 8.5, color: const Color(0xFF8B5CF6), fontWeight: FontWeight.bold),
+                  'VIEW INCIDENTS →',
+                  style: CyberTextStyles.technical(
+                    fontSize: 10,
+                    color: const Color(0xFFA88AED),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Expanded(
             child: ListView.builder(
               itemCount: _systemLogs.length,
               itemBuilder: (context, idx) {
-                return InkWell(
-                  onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2.5),
-                    child: Text(
-                      _systemLogs[idx],
-                      style: CyberTextStyles.technical(
-                        fontSize: 9.5,
-                        color: idx == 0 ? const Color(0xFF5DD62C) : const Color(0xFF5E7343),
-                      ),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 1.5),
+                  child: Text(
+                    _systemLogs[idx],
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 11,
+                      fontWeight: idx == 0 ? FontWeight.w700 : FontWeight.w500,
+                      color: idx == 0 ? const Color(0xFF5DD62C) : Colors.white60,
                     ),
                   ),
                 );

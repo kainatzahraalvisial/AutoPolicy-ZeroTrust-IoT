@@ -459,23 +459,32 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         leading: const Icon(Icons.g_mobiledata, size: 20, color: AP.lime),
                       ),
                       const SizedBox(height: 16),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('No clearance yet? ',
-                            style: GoogleFonts.spaceGrotesk(fontSize: 13.0, color: AP.muted)),
-                          GestureDetector(
-                            onTap: () => Navigator.pushReplacementNamed(context, '/signup'),
-                            child: MouseRegion(
-                              cursor: SystemMouseCursors.click,
-                              child: Text('REQUEST ACCESS →',
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AP.olive.withOpacity(0.12),
+                          border: Border.all(color: AP.olive.withOpacity(0.35)),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.shield_outlined, size: 14, color: AP.lime),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                'ZERO-TRUST: OPERATORS PROVISIONED BY ADMIN ONLY',
                                 style: GoogleFonts.orbitron(
-                                  fontSize: 9.5, letterSpacing: 1.4, color: AP.lime,
+                                  fontSize: 8.5,
+                                  letterSpacing: 0.8,
+                                  color: const Color(0xFFD5E5D3),
+                                  fontWeight: FontWeight.bold,
                                 ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 14),
                       Divider(color: AP.olive.withOpacity(0.18), height: 1),

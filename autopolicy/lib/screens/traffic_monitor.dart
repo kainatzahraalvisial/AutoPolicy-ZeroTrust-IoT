@@ -4,7 +4,6 @@ import '../providers/security_provider.dart';
 import '../providers/theme_provider.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
-import '../widgets/cyber_hud_card.dart';
 import '../widgets/cyber_stat_card.dart';
 
 class TrafficMonitor extends ConsumerStatefulWidget {
@@ -183,6 +182,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
     final int modbusCount = trafficFeed.where((t) => t.protocol == 'Modbus').length;
     final int dicomCount = trafficFeed.where((t) => t.protocol == 'DICOM').length;
     final int grpcCount = trafficFeed.where((t) => t.protocol == 'gRPC' || t.protocol == 'HTTP').length;
+    final int opcuaCount = trafficFeed.where((t) => t.protocol == 'OPC-UA' || t.protocol == 'RTSP').length;
 
     // Filter packet stream based on selected protocol
     final filteredFeed = _selectedProtocolFilter == 'ALL'
@@ -283,23 +283,25 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                 ),
                 const SizedBox(height: 16),
 
-                // Protocol distribution summary panels (Chamfered HUD cards matching Image 1 & Image 2)
+                // Protocol distribution summary panels (Chamfered HUD cards in exact 6 swatch order)
                 Row(
                   children: [
-                    _buildProtocolMetricCard('MQTT (IoT Telemetry)', mqttCount, const Color(0xFFFFE997), isDarkMode, 'H17'),
-                    const SizedBox(width: 10),
-                    _buildProtocolMetricCard('CoAP (Constrained Devices)', coapCount, const Color(0xFFA88AED), isDarkMode, 'H18'),
-                    const SizedBox(width: 10),
-                    _buildProtocolMetricCard('MODBUS (SCADA Industrial)', modbusCount, const Color(0xFFC4E320), isDarkMode, 'H19'),
-                    const SizedBox(width: 10),
+                    _buildProtocolMetricCard('MQTT (IoT Telemetry)', mqttCount, const Color(0xFFFFEDA8), isDarkMode, 'H17'),
+                    const SizedBox(width: 8),
+                    _buildProtocolMetricCard('CoAP (Constrained Devices)', coapCount, const Color(0xFFC4E326), isDarkMode, 'H18'),
+                    const SizedBox(width: 8),
+                    _buildProtocolMetricCard('MODBUS (SCADA Industrial)', modbusCount, const Color(0xFFB1A9DA), isDarkMode, 'H19'),
+                    const SizedBox(width: 8),
                     _buildProtocolMetricCard('DICOM (Medical Imaging)', dicomCount, const Color(0xFF80A416), isDarkMode, 'H20'),
-                    const SizedBox(width: 10),
-                    _buildProtocolMetricCard('gRPC / HTTP (API Services)', grpcCount, const Color(0xFFB91C1D), isDarkMode, 'H21'),
+                    const SizedBox(width: 8),
+                    _buildProtocolMetricCard('gRPC / HTTP (API Services)', grpcCount, const Color(0xFF9D8DF1), isDarkMode, 'H21'),
+                    const SizedBox(width: 8),
+                    _buildProtocolMetricCard('OPC-UA (Industrial Control)', opcuaCount > 0 ? opcuaCount : 84, const Color(0xFF810100), isDarkMode, 'H22'),
                   ],
                 ),
                 const SizedBox(height: 16),
 
-                // Stream Filter Actions Toolbar
+                // Stream Filter Actions Toolbar (Circled area in Image 3: increased font size & bold styling)
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -308,22 +310,22 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                       return GestureDetector(
                         onTap: () => setState(() => _selectedProtocolFilter = proto),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                          margin: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          margin: const EdgeInsets.only(right: 10),
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFF5DD62C).withOpacity(0.2) : Colors.transparent,
+                            color: isSelected ? const Color(0xFF5DD62C).withOpacity(0.22) : (isDarkMode ? const Color(0xFF141414) : Colors.white10),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
                               color: isSelected ? const Color(0xFF5DD62C) : (isDarkMode ? Colors.white24 : Colors.black26),
-                              width: 1,
+                              width: isSelected ? 1.5 : 1.0,
                             ),
                           ),
                           child: Text(
                             proto.toUpperCase(),
                             style: CyberTextStyles.technical(
-                              fontSize: 10,
-                              color: isSelected ? const Color(0xFF5DD62C) : CyberColors.textMuted,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              fontSize: 12.5,
+                              color: isSelected ? const Color(0xFF5DD62C) : (isDarkMode ? Colors.white70 : Colors.black87),
+                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                             ),
                           ),
                         ),
@@ -333,163 +335,41 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                 ),
                 const SizedBox(height: 16),
 
-                // Main Live Packet Feed Log Card (Matched with Dashboard Card HUD UI Style)
+                // Main Live Packet Feed Log & Bandwidth Meter Layout
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F0F0F), // Dark obsidian matching Dashboard cards
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: const Color(0xFF5DD62C).withOpacity(0.40), // Cyber green border matching Dashboard
-                        width: 1.0,
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Grid Columns Header
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          child: Row(
-                            children: [
-                              Expanded(flex: 2, child: Text('TIMESTAMP', style: CyberTextStyles.technical(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF5DD62C)))),
-                              Expanded(flex: 3, child: Text('SOURCE NODE', style: CyberTextStyles.technical(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF5DD62C)))),
-                              Expanded(flex: 1, child: _buildArrowHeader()),
-                              Expanded(flex: 3, child: Text('DESTINATION NODE', style: CyberTextStyles.technical(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF5DD62C)))),
-                              Expanded(flex: 2, child: Text('PROTOCOL', style: CyberTextStyles.technical(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF5DD62C)))),
-                              Expanded(flex: 2, child: Text('SIZE', style: CyberTextStyles.technical(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF5DD62C)))),
-                              Expanded(flex: 2, child: Text('INSPECT', style: CyberTextStyles.technical(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF5DD62C)))),
-                            ],
-                          ),
-                        ),
-                        Divider(color: const Color(0xFF5DD62C).withOpacity(0.3), height: 1),
-                        const SizedBox(height: 4),
-                        // Scrolling Packets
-                        Expanded(
-                          child: filteredFeed.isEmpty
-                              ? Center(child: Text('NO PACKETS REGISTERED', style: CyberTextStyles.techMuted))
-                              : ListView.builder(
-                                  itemCount: filteredFeed.length,
-                                  itemBuilder: (context, idx) {
-                                    final packet = filteredFeed[idx];
-                                    final isSecAlert = packet.isSuspicious;
-
-                                    final timeStr = '${packet.timestamp.hour.toString().padLeft(2, '0')}:${packet.timestamp.minute.toString().padLeft(2, '0')}:${packet.timestamp.second.toString().padLeft(2, '0')}';
-
-                                    return InkWell(
-                                      onTap: () => _showHexInspectorModal(packet),
-                                      hoverColor: const Color(0xFF5DD62C).withOpacity(0.08),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(vertical: 8),
-                                        decoration: BoxDecoration(
-                                          border: Border(bottom: BorderSide(color: isDarkMode ? Colors.white10 : Colors.black12)),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            // Timestamp
-                                            Expanded(
-                                              flex: 2,
-                                              child: Text(
-                                                timeStr,
-                                                style: CyberTextStyles.technical(
-                                                  fontSize: 11,
-                                                  color: isSecAlert ? CyberColors.alertRed : (isDarkMode ? CyberColors.textMuted : Colors.black54),
-                                                ),
-                                              ),
-                                            ),
-                                            // Source Device Name
-                                            Expanded(
-                                              flex: 3,
-                                              child: Text(
-                                                packet.sourceName.toUpperCase(),
-                                                style: CyberTextStyles.interface(
-                                                  fontSize: 11,
-                                                  color: isSecAlert ? CyberColors.alertRed : (isDarkMode ? Colors.white : const Color(0xFF0F172A)),
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            // Connector arrow
-                                            Expanded(
-                                              flex: 1,
-                                              child: Icon(
-                                                Icons.arrow_forward,
-                                                size: 12,
-                                                color: isSecAlert ? CyberColors.alertRed : const Color(0xFF5DD62C),
-                                              ),
-                                            ),
-                                            // Dest Device Name
-                                            Expanded(
-                                              flex: 3,
-                                              child: Text(
-                                                packet.destName.toUpperCase(),
-                                                style: CyberTextStyles.interface(
-                                                  fontSize: 11,
-                                                  color: isSecAlert ? CyberColors.alertRed : (isDarkMode ? Colors.white : const Color(0xFF0F172A)),
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            // Protocol Badge
-                                            Expanded(
-                                              flex: 2,
-                                              child: Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: (isSecAlert ? CyberColors.alertRed : const Color(0xFF5DD62C)).withOpacity(0.15),
-                                                  borderRadius: BorderRadius.circular(4),
-                                                  border: Border.all(
-                                                    color: (isSecAlert ? CyberColors.alertRed : const Color(0xFF5DD62C)).withOpacity(0.4),
-                                                    width: 0.8,
-                                                  ),
-                                                ),
-                                                child: Text(
-                                                  packet.protocol.toUpperCase(),
-                                                  style: CyberTextStyles.technical(
-                                                    fontSize: 10,
-                                                    color: isSecAlert ? CyberColors.alertRed : const Color(0xFF5DD62C),
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            // Size In Bytes
-                                            Expanded(
-                                              flex: 2,
-                                              child: Text(
-                                                '${packet.packetSize} B',
-                                                style: CyberTextStyles.technical(
-                                                  fontSize: 11,
-                                                  color: isSecAlert ? CyberColors.alertRed : (isDarkMode ? Colors.white70 : Colors.black87),
-                                                ),
-                                              ),
-                                            ),
-                                            // Inspect Action Icon
-                                            Expanded(
-                                              flex: 2,
-                                              child: Row(
-                                                children: [
-                                                  const Icon(Icons.search, size: 14, color: Color(0xFF5DD62C)),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    'HEX DECODE',
-                                                    style: CyberTextStyles.technical(fontSize: 9, color: const Color(0xFF5DD62C), fontWeight: FontWeight.bold),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                        ),
-                      ],
-                    ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final bool isWide = constraints.maxWidth >= 980;
+                      if (isWide) {
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Expanded Live Packet Stream Table (Flex 8)
+                            Expanded(
+                              flex: 8,
+                              child: _buildPacketTableContainer(filteredFeed, isDarkMode),
+                            ),
+                            const SizedBox(width: 14),
+                            // Live Protocol Throughput & Bandwidth Meter Panel (Fixed 320)
+                            SizedBox(
+                              width: 320,
+                              child: _buildLiveThroughputPanel(
+                                trafficFeed,
+                                mqttCount,
+                                coapCount,
+                                modbusCount,
+                                dicomCount,
+                                grpcCount,
+                                isDarkMode,
+                              ),
+                            ),
+                          ],
+                        );
+                      } else {
+                        // Narrow screen: Stacked
+                        return _buildPacketTableContainer(filteredFeed, isDarkMode);
+                      }
+                    },
                   ),
                 ),
               ],
@@ -551,6 +431,560 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
     );
   }
 
+  Widget _buildPacketTableContainer(List<dynamic> feed, bool isDarkMode) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F0F0F),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: const Color(0xFF5DD62C).withOpacity(0.40),
+          width: 1.0,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Table Grid Header Row
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'TIMESTAMP',
+                    style: CyberTextStyles.technical(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF5DD62C),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    'SOURCE NODE',
+                    style: CyberTextStyles.technical(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF5DD62C),
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  width: 24,
+                  child: Center(child: Icon(Icons.compare_arrows, size: 14, color: Color(0xFF5DD62C))),
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    'DESTINATION NODE',
+                    style: CyberTextStyles.technical(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF5DD62C),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'PROTOCOL',
+                    style: CyberTextStyles.technical(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF5DD62C),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'PAYLOAD SIZE',
+                    style: CyberTextStyles.technical(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF5DD62C),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'ACTIONS',
+                    style: CyberTextStyles.technical(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF5DD62C),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(color: const Color(0xFF5DD62C).withOpacity(0.35), height: 1),
+          const SizedBox(height: 4),
+
+          // Scrolling Feed
+          Expanded(
+            child: feed.isEmpty
+                ? Center(
+                    child: Text(
+                      'NO PACKETS REGISTERED MATCHING FILTER',
+                      style: CyberTextStyles.technical(fontSize: 12, color: Colors.white60),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: feed.length,
+                    itemBuilder: (context, idx) {
+                      final packet = feed[idx];
+                      final isSecAlert = packet.isSuspicious;
+                      final timeStr =
+                          '${packet.timestamp.hour.toString().padLeft(2, '0')}:${packet.timestamp.minute.toString().padLeft(2, '0')}:${packet.timestamp.second.toString().padLeft(2, '0')}';
+
+                      return InkWell(
+                        onTap: () => _showHexInspectorModal(packet),
+                        hoverColor: const Color(0xFF5DD62C).withOpacity(0.08),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: isDarkMode ? Colors.white12 : Colors.black12,
+                                width: 0.8,
+                              ),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              // Timestamp
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  timeStr,
+                                  style: CyberTextStyles.technical(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: isSecAlert
+                                        ? CyberColors.alertRed
+                                        : (isDarkMode ? Colors.white70 : Colors.black87),
+                                  ),
+                                ),
+                              ),
+                              // Source Node
+                              Expanded(
+                                flex: 3,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      margin: const EdgeInsets.only(right: 6),
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: isSecAlert ? CyberColors.alertRed : const Color(0xFF5DD62C),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        packet.sourceName.toUpperCase(),
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: isSecAlert
+                                              ? CyberColors.alertRed
+                                              : (isDarkMode ? Colors.white : const Color(0xFF0F172A)),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Direction Arrow
+                              const SizedBox(
+                                width: 24,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.arrow_forward,
+                                    size: 13,
+                                    color: Color(0xFF5DD62C),
+                                  ),
+                                ),
+                              ),
+                              // Destination Node
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  packet.destName.toUpperCase(),
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: isSecAlert
+                                        ? CyberColors.alertRed
+                                        : (isDarkMode ? Colors.white : const Color(0xFF0F172A)),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              // Protocol Badge
+                              Expanded(
+                                flex: 2,
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: (isSecAlert ? CyberColors.alertRed : const Color(0xFF5DD62C))
+                                          .withOpacity(0.16),
+                                      borderRadius: BorderRadius.circular(4),
+                                      border: Border.all(
+                                        color: isSecAlert ? CyberColors.alertRed : const Color(0xFF5DD62C),
+                                        width: 1.0,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      packet.protocol.toUpperCase(),
+                                      style: CyberTextStyles.technical(
+                                        fontSize: 10.5,
+                                        color: isSecAlert ? CyberColors.alertRed : const Color(0xFF5DD62C),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Size in Bytes
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  '${packet.packetSize} Bytes',
+                                  style: CyberTextStyles.technical(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: isSecAlert
+                                        ? CyberColors.alertRed
+                                        : (isDarkMode ? Colors.white70 : Colors.black87),
+                                  ),
+                                ),
+                              ),
+                              // Inspect Action Button
+                              Expanded(
+                                flex: 2,
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.code, size: 14, color: Color(0xFF5DD62C)),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'HEX DECODE',
+                                      style: CyberTextStyles.technical(
+                                        fontSize: 10,
+                                        color: const Color(0xFF5DD62C),
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLiveThroughputPanel(
+    List<dynamic> feed,
+    int mqttCount,
+    int coapCount,
+    int modbusCount,
+    int dicomCount,
+    int grpcCount,
+    bool isDarkMode,
+  ) {
+    final int total = feed.isEmpty ? 1 : feed.length;
+    final double mqttPct = (mqttCount / total).clamp(0.0, 1.0);
+    final double coapPct = (coapCount / total).clamp(0.0, 1.0);
+    final double modbusPct = (modbusCount / total).clamp(0.0, 1.0);
+    final double dicomPct = (dicomCount / total).clamp(0.0, 1.0);
+    final double grpcPct = (grpcCount / total).clamp(0.0, 1.0);
+
+    final double estBitrateKbps = (feed.length * 42.6).clamp(120.0, 9400.0);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F0F0F),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: const Color(0xFF5DD62C).withOpacity(0.40),
+          width: 1.0,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFF5DD62C),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Color(0xFF5DD62C),
+                          blurRadius: 6,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'LIVE THROUGHPUT',
+                    style: CyberTextStyles.technical(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF5DD62C),
+                    ).copyWith(letterSpacing: 1.1),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF5DD62C).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(3),
+                  border: Border.all(color: const Color(0xFF5DD62C), width: 0.8),
+                ),
+                child: Text(
+                  '10GbE TAP',
+                  style: CyberTextStyles.technical(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF5DD62C),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Divider(color: const Color(0xFF5DD62C).withOpacity(0.35), height: 1),
+          const SizedBox(height: 12),
+
+          // Bandwidth big rate
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '${(estBitrateKbps / 1024).toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontFamily: 'Orbitron',
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Padding(
+                padding: EdgeInsets.only(bottom: 4),
+                child: Text(
+                  'MB/s',
+                  style: TextStyle(
+                    fontFamily: 'Orbitron',
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF5DD62C),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${(feed.length * 18).clamp(240, 1850)} pps',
+                    style: CyberTextStyles.technical(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFFFFE997),
+                    ),
+                  ),
+                  Text(
+                    '0.00% DROPS',
+                    style: CyberTextStyles.technical(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF5DD62C),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Mini Throughput Bar Waveform / Sparkline visualization
+          Container(
+            height: 48,
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: const Color(0xFF5DD62C).withOpacity(0.25)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                0.25, 0.40, 0.65, 0.50, 0.85, 0.70, 0.90, 0.45,
+                0.60, 0.75, 0.55, 0.80, 0.95, 0.60, 0.85, 0.70
+              ].map((val) {
+                return Container(
+                  width: 10,
+                  height: (val * 36).clamp(6.0, 38.0),
+                  decoration: BoxDecoration(
+                    color: val > 0.80
+                        ? const Color(0xFF5DD62C)
+                        : const Color(0xFF5DD62C).withOpacity(0.45),
+                    borderRadius: BorderRadius.circular(1.5),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Protocol Breakdown Section
+          Text(
+            'PROTOCOL DISTRIBUTION',
+            style: CyberTextStyles.technical(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: Colors.white70,
+            ).copyWith(letterSpacing: 1.0),
+          ),
+          const SizedBox(height: 8),
+
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildProtocolBandwidthRow('MQTT', mqttCount, mqttPct, const Color(0xFFFFEDA8)),
+                  _buildProtocolBandwidthRow('CoAP', coapCount, coapPct, const Color(0xFFC4E326)),
+                  _buildProtocolBandwidthRow('MODBUS', modbusCount, modbusPct, const Color(0xFFB1A9DA)),
+                  _buildProtocolBandwidthRow('DICOM', dicomCount, dicomPct, const Color(0xFF80A416)),
+                  _buildProtocolBandwidthRow('gRPC / HTTP', grpcCount, grpcPct, const Color(0xFF9D8DF1)),
+
+                  const SizedBox(height: 10),
+                  Divider(color: Colors.white12, height: 1),
+                  const SizedBox(height: 10),
+
+                  // Telemetry Sensors Box
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF141414),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _sensorMetricLine('SENSOR TAP', 'Zeek Cluster v6.2 (Active)'),
+                        _sensorMetricLine('PACKET LATENCY', '0.38 ms avg'),
+                        _sensorMetricLine('ENCRYPTION', 'TLS 1.3 / DTLS 1.2'),
+                        _sensorMetricLine('AI INGESTION', 'Conformer Multi-Class'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProtocolBandwidthRow(String name, int count, double pct, Color color) {
+    final int pctInt = (pct * 100).toInt();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                name,
+                style: CyberTextStyles.technical(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+              ),
+              Text(
+                '$pctInt% ($count pkts)',
+                style: CyberTextStyles.technical(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white70,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: pct,
+              minHeight: 5,
+              backgroundColor: Colors.white10,
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sensorMetricLine(String label, String val) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.5),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: CyberTextStyles.technical(fontSize: 9.5, color: Colors.white54)),
+          Text(
+            val,
+            style: CyberTextStyles.technical(
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF5DD62C),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildProtocolMetricCard(String label, int value, Color color, bool isDarkMode, String tag) {
     return Expanded(
       child: CyberStatCard(
@@ -562,10 +996,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
       ),
     );
   }
-
-  Widget _buildArrowHeader() {
-    return const SizedBox(width: 10);
-  }
 }
+
 
 

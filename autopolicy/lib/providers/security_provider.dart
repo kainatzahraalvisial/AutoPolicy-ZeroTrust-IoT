@@ -468,6 +468,27 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
     state = state.copyWith(notifications: [n, ...state.notifications]);
   }
 
+  void toggleDeviceIsolation(String deviceId) {
+    final target = state.devices.firstWhere((d) => d.id == deviceId, orElse: () => state.devices.first);
+    final isCurrentlyIsolated = target.status == DeviceStatus.isolated;
+    state = state.copyWith(
+      devices: state.devices.map((device) {
+        if (device.id == deviceId) {
+          return device.copyWith(
+            status: isCurrentlyIsolated ? (device.riskScore > 0.6 ? DeviceStatus.warning : DeviceStatus.safe) : DeviceStatus.isolated,
+          );
+        }
+        return device;
+      }).toList(),
+    );
+    _pushNotification(
+      isCurrentlyIsolated
+          ? 'Device ${target.name} reconnected to telemetry network.'
+          : 'Zero-Trust Quarantine: ${target.name} isolated from all traffic paths.',
+      isCurrentlyIsolated ? 'info' : 'warning',
+    );
+  }
+
   @override
   void dispose() {
     _simulationTimer?.cancel();
