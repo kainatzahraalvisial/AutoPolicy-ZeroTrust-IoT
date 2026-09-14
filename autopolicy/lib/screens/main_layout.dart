@@ -194,8 +194,100 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
     }
   }
 
-  // Returns tree navigation data structure for the 10 admin screens
+  // Returns tree navigation data structure tailored strictly for each user role
   List<Map<String, dynamic>> _getTreeNavigation(int unreadNotificationsCount, String role) {
+    final bool isAdmin = role == 'Admin';
+    final bool isEngineer = role == 'Security Engineer' || role == 'engineer';
+    final bool isManager = role == 'Manager';
+
+    if (isManager) {
+      return [
+        {
+          'category': 'Executive Dashboard',
+          'icon': Icons.dashboard_outlined,
+          'index': 0,
+        },
+        {
+          'category': 'Security Posture',
+          'icon': Icons.security_outlined,
+          'index': 2,
+        },
+        {
+          'category': 'Compliance & Governance',
+          'icon': Icons.analytics_outlined,
+          'index': 8,
+        },
+        {
+          'category': 'Device Overview',
+          'icon': Icons.router_outlined,
+          'index': 6,
+        },
+        {
+          'category': 'Notifications',
+          'icon': Icons.notifications_outlined,
+          'index': 11,
+          'badge': unreadNotificationsCount > 0 ? '$unreadNotificationsCount' : null,
+        },
+      ];
+    }
+
+    if (isEngineer) {
+      return [
+        {
+          'category': 'Operational Dashboard',
+          'icon': Icons.dashboard_outlined,
+          'index': 0,
+        },
+        {
+          'category': 'Live Traffic & IDS',
+          'icon': Icons.radar_outlined,
+          'index': 1,
+        },
+        {
+          'category': 'Anomalies & Alerts',
+          'icon': Icons.warning_amber_outlined,
+          'index': 2,
+        },
+        {
+          'category': 'AI Policy Generator',
+          'icon': Icons.auto_awesome_outlined,
+          'index': 4,
+        },
+        {
+          'category': 'Device Graph (GNN)',
+          'icon': Icons.hub_outlined,
+          'index': 3,
+        },
+        {
+          'category': 'Policy Deployments',
+          'icon': Icons.rocket_launch_outlined,
+          'index': 5,
+        },
+        {
+          'category': 'Simulation Testing',
+          'icon': Icons.science_outlined,
+          'index': 7,
+        },
+        {
+          'category': 'Device Directory',
+          'icon': Icons.router_outlined,
+          'index': 6,
+        },
+        {
+          'category': 'Operational Reports',
+          'icon': Icons.analytics_outlined,
+          'index': 8,
+        },
+        {
+          'category': 'Notifications',
+          'icon': Icons.notifications_outlined,
+          'index': 11,
+          'badge': unreadNotificationsCount > 0 ? '$unreadNotificationsCount' : null,
+        },
+      ];
+    }
+
+    // Default / Admin Full System Access
     return [
       {
         'category': 'Dashboard Overview',
@@ -590,6 +682,9 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                       // Clock & Active User Scopes
                       Row(
                         children: [
+                          // Developer Live Role Switcher Pill
+                          _buildDevRoleSwitcher(context, activeRole, isDarkMode),
+                          const SizedBox(width: 12),
                           // Clock
                           if (screenWidth > 620) ...[
                             Text(
@@ -793,6 +888,87 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
     return Container(
       key: _contentAreaKey,
       child: _buildContentUI(context, isDarkMode),
+    );
+  }
+
+  Widget _buildDevRoleSwitcher(BuildContext context, String activeRole, bool isDarkMode) {
+    // Normalize role string matching auth provider
+    String currentRoleVal = 'Admin';
+    if (activeRole.toLowerCase().contains('engineer')) {
+      currentRoleVal = 'Security Engineer';
+    } else if (activeRole.toLowerCase().contains('manager')) {
+      currentRoleVal = 'Manager';
+    } else {
+      currentRoleVal = 'Admin';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF141428) : const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF3B82F6),
+          width: 1.2,
+        ),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: currentRoleVal,
+          isDense: true,
+          dropdownColor: isDarkMode ? const Color(0xFF0F0F1A) : Colors.white,
+          icon: Icon(
+            Icons.arrow_drop_down,
+            color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF1E3A8A),
+            size: 18,
+          ),
+          style: CyberTextStyles.technical(
+            fontSize: 11.0,
+            fontWeight: FontWeight.bold,
+            color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF1E3A8A),
+          ),
+          items: const [
+            DropdownMenuItem(
+              value: 'Admin',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.admin_panel_settings_outlined, size: 14, color: Color(0xFFC4E320)),
+                  SizedBox(width: 6),
+                  Text('🎭 ROLE: Admin'),
+                ],
+              ),
+            ),
+            DropdownMenuItem(
+              value: 'Security Engineer',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.shield_outlined, size: 14, color: Color(0xFFA88AED)),
+                  SizedBox(width: 6),
+                  Text('🎭 ROLE: Sec Engineer'),
+                ],
+              ),
+            ),
+            DropdownMenuItem(
+              value: 'Manager',
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.analytics_outlined, size: 14, color: Color(0xFFFFE997)),
+                  SizedBox(width: 6),
+                  Text('🎭 ROLE: Manager'),
+                ],
+              ),
+            ),
+          ],
+          onChanged: (newRole) {
+            if (newRole != null) {
+              ref.read(authProvider.notifier).switchRole(newRole);
+            }
+          },
+        ),
+      ),
     );
   }
 

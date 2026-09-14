@@ -35,6 +35,24 @@ class AuthNotifier extends StateNotifier<UserProfile?> {
     await _authService.logout();
     state = null;
   }
+
+  void switchRole(String newRole) {
+    if (state != null) {
+      state = UserProfile(
+        username: state!.username,
+        email: state!.email,
+        role: newRole,
+        token: state!.token,
+      );
+    } else {
+      state = UserProfile(
+        username: 'DEV_OPERATOR',
+        email: 'operator@autopolicy.zero-trust',
+        role: newRole,
+        token: 'dev-mock-jwt-token',
+      );
+    }
+  }
 }
 
 // Global Auth Provider

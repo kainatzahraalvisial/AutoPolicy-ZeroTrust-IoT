@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/security_provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/navigation_provider.dart';
 import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
@@ -103,6 +104,11 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
   @override
   Widget build(BuildContext context) {
     final securityState = ref.watch(securityProvider);
+    final authSession = ref.watch(authProvider);
+    final String activeRole = authSession?.role ?? 'Admin';
+    final bool isEngineer = activeRole.toLowerCase().contains('engineer');
+    final bool isManager = activeRole.toLowerCase().contains('manager');
+
     final bool isMobile = Responsive.isMobile(context);
     final bool isTablet = Responsive.isTablet(context);
 
@@ -112,6 +118,16 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
     final blockedAttacksCount = securityState.totalBlockedAttacks > 0 ? securityState.totalBlockedAttacks : 4892;
     final pendingApprovalsCount = securityState.policies.where((p) => p.status == PolicyStatus.pending).length;
     final int pendingCount = pendingApprovalsCount > 0 ? pendingApprovalsCount : 24;
+
+    String headerTitle = 'AUTOPOLICY ZERO-TRUST SOC DASHBOARD';
+    String headerRoleLabel = 'ROLE: ROOT ADMINISTRATOR (FULL CONTROL)';
+    if (isEngineer) {
+      headerTitle = 'OPERATIONAL SECURITY & INCIDENT CONSOLE';
+      headerRoleLabel = 'ROLE: SECURITY ENGINEER (TRIAGE & AI POLICY)';
+    } else if (isManager) {
+      headerTitle = 'EXECUTIVE SECURITY POSTURE & COMPLIANCE SUMMARY';
+      headerRoleLabel = 'ROLE: SECURITY MANAGER (GOVERNANCE & SLA)';
+    }
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -134,39 +150,42 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'AUTOPOLICY ZERO-TRUST SOC DASHBOARD',
-                            style: CyberTextStyles.displayTitle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              color: const Color(0xFF5DD62C),
-                            ).copyWith(letterSpacing: 2.0),
-                          ),
-                          const SizedBox(height: 3),
-                          Row(
-                            children: [
-                              Text(
-                                'ROLE: ADMINISTRATOR (RBAC ENFORCED)',
-                                style: CyberTextStyles.technical(
-                                  fontSize: 10,
-                                  color: const Color(0xFF8B5CF6),
-                                  fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              headerTitle,
+                              style: CyberTextStyles.displayTitle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF5DD62C),
+                              ).copyWith(letterSpacing: 1.8),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 3),
+                            Row(
+                              children: [
+                                Text(
+                                  headerRoleLabel,
+                                  style: CyberTextStyles.technical(
+                                    fontSize: 10,
+                                    color: const Color(0xFF8B5CF6),
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 14),
-                              Text(
-                                'SYSTEM STATUS: ZERO-TRUST ENFORCING',
-                                style: CyberTextStyles.technical(
-                                  fontSize: 10,
-                                  color: const Color(0xFFC5C764),
+                                const SizedBox(width: 14),
+                                Text(
+                                  'SYSTEM STATUS: ZERO-TRUST ENFORCING',
+                                  style: CyberTextStyles.technical(
+                                    fontSize: 10,
+                                    color: const Color(0xFFC5C764),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                       // Quick Action Buttons directly in header
                       if (!isMobile)
@@ -181,7 +200,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                             const SizedBox(width: 8),
                             _buildQuickActionBtn(
                               icon: Icons.warning_amber_outlined,
-                              label: 'VIEW CRITICAL ALERTS (${activeThreats > 0 ? activeThreats : 5})',
+                              label: 'VIEW CRITICAL ALERTS (${activeThreats > 0 ? activeThreats : 17})',
                               color: const Color(0xFFDF2531),
                               onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
                             ),
@@ -203,7 +222,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                         ),
                         _buildQuickActionBtn(
                           icon: Icons.warning_amber_outlined,
-                          label: 'CRITICAL ALERTS (${activeThreats > 0 ? activeThreats : 5})',
+                          label: 'CRITICAL ALERTS (${activeThreats > 0 ? activeThreats : 17})',
                           color: const Color(0xFFDF2531),
                           onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
                         ),
@@ -215,7 +234,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
             ),
             const SizedBox(height: 12),
 
-            // ── 2. TOP 6 STATISTICS CARDS (SPECIFICATION GRID) ───────────────
+            // ── 2. TOP 6 STATISTICS CARDS (ROLE-TAILORED SPECIFICATION GRID) ──
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -223,69 +242,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
               crossAxisSpacing: 10,
               mainAxisSpacing: 10,
               childAspectRatio: isMobile ? 1.6 : (isTablet ? 1.3 : 1.16),
-              children: [
-                // 1. Total IoT Devices (#FFEDA8)
-                CyberStatCard(
-                  title: 'TOTAL IOT DEVICES',
-                  value: totalDevices > 1000 ? '1,248' : '$totalDevices',
-                  sub: '1,226 Online · 22 Offline',
-                  icon: Icons.router_outlined,
-                  borderColor: const Color(0xFFFFEDA8), // 1. #FFEDA8 (Pale Cream Yellow)
-                  tag: 'H17',
-                  onTap: () => ref.read(navigationTabProvider.notifier).state = 6,
-                ),
-                // 2. Policies Generated (#C4E326)
-                CyberStatCard(
-                  title: 'POLICIES GENERATED',
-                  value: '$generatedPoliciesCount',
-                  sub: '$pendingCount Pending Review',
-                  icon: Icons.auto_awesome_outlined,
-                  borderColor: const Color(0xFFC4E326), // 2. #C4E326 (Bright Neon Lime-Green)
-                  tag: 'H18',
-                  onTap: () => ref.read(navigationTabProvider.notifier).state = 4,
-                ),
-                // 3. Policies Deployed (#B1A9DA)
-                CyberStatCard(
-                  title: 'POLICIES DEPLOYED',
-                  value: '298',
-                  sub: 'Active in OPA Sidecars',
-                  icon: Icons.shield_outlined,
-                  borderColor: const Color(0xFFB1A9DA), // 3. #B1A9DA (Pastel Lavender)
-                  tag: 'H19',
-                  onTap: () => ref.read(navigationTabProvider.notifier).state = 5,
-                ),
-                // 4. Blocked Attacks 24h (#80A416)
-                CyberStatCard(
-                  title: 'BLOCKED ATTACKS 24H',
-                  value: '$blockedAttacksCount',
-                  sub: '100% Ingress Quarantined',
-                  icon: Icons.gpp_good_outlined,
-                  borderColor: const Color(0xFF80A416), // 4. #80A416 (Olive Green)
-                  tag: 'H20',
-                  onTap: () => ref.read(navigationTabProvider.notifier).state = 1,
-                ),
-                // 5. System Health (#9D8DF1)
-                CyberStatCard(
-                  title: 'SYSTEM HEALTH',
-                  value: '99.4%',
-                  sub: 'Zeek, GNN & OPA Nominal',
-                  icon: Icons.health_and_safety_outlined,
-                  borderColor: const Color(0xFF9D8DF1), // 5. #9D8DF1 (Vibrant Light Purple)
-                  tag: 'H21',
-                  onTap: () => ref.read(navigationTabProvider.notifier).state = 9,
-                ),
-                // 6. Active Threats (#810100)
-                CyberStatCard(
-                  title: 'ACTIVE THREATS',
-                  value: activeThreats > 0 ? '$activeThreats' : '17',
-                  sub: '5 Critical · 12 High',
-                  icon: Icons.gpp_maybe_outlined,
-                  borderColor: const Color(0xFF810100), // 6. #810100 (Deep Crimson Red)
-                  isAlert: true,
-                  tag: 'H22',
-                  onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
-                ),
-              ],
+              children: _buildRoleSpecificStatCards(context, isEngineer, isManager, totalDevices, activeThreats, generatedPoliciesCount, blockedAttacksCount, pendingCount),
             ),
             const SizedBox(height: 8),
 
@@ -409,6 +366,197 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
         ),
       ),
     );
+  }
+
+  // ── ROLE-SPECIFIC 6 STAT CARDS BUILDER ─────────────────────────────────────
+  List<Widget> _buildRoleSpecificStatCards(
+    BuildContext context,
+    bool isEngineer,
+    bool isManager,
+    int totalDevices,
+    int activeThreats,
+    int generatedPoliciesCount,
+    int blockedAttacksCount,
+    int pendingCount,
+  ) {
+    if (isManager) {
+      return [
+        CyberStatCard(
+          title: 'SECURITY POSTURE SCORE',
+          value: '94.0%',
+          sub: '+2.4% this week',
+          icon: Icons.shield_outlined,
+          borderColor: const Color(0xFFC4E326),
+          tag: 'M01',
+          onTap: () => ref.read(navigationTabProvider.notifier).state = 8,
+        ),
+        CyberStatCard(
+          title: 'COMPLIANCE SCORE',
+          value: '91.2%',
+          sub: 'ISO 27001 / NIST SP 800-207',
+          icon: Icons.verified_outlined,
+          borderColor: const Color(0xFF9D8DF1),
+          tag: 'M02',
+          onTap: () => ref.read(navigationTabProvider.notifier).state = 8,
+        ),
+        CyberStatCard(
+          title: 'ACTIVE THREATS',
+          value: activeThreats > 0 ? '$activeThreats' : '17',
+          sub: '5 Critical · 12 High',
+          icon: Icons.gpp_maybe_outlined,
+          borderColor: const Color(0xFF810100),
+          isAlert: true,
+          tag: 'M03',
+          onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+        ),
+        CyberStatCard(
+          title: 'MTTR (AVG RESP TIME)',
+          value: '18 min',
+          sub: '-4 min vs last month',
+          icon: Icons.timer_outlined,
+          borderColor: const Color(0xFFFFEDA8),
+          tag: 'M04',
+          onTap: () => ref.read(navigationTabProvider.notifier).state = 8,
+        ),
+        CyberStatCard(
+          title: 'TOTAL IOT ASSETS',
+          value: totalDevices > 1000 ? '1,248' : '$totalDevices',
+          sub: '1,226 Online · 22 Offline',
+          icon: Icons.router_outlined,
+          borderColor: const Color(0xFFB1A9DA),
+          tag: 'M05',
+          onTap: () => ref.read(navigationTabProvider.notifier).state = 6,
+        ),
+        CyberStatCard(
+          title: 'MITIGATED (30D)',
+          value: '12.4K',
+          sub: '100% Ingress Quarantined',
+          icon: Icons.gpp_good_outlined,
+          borderColor: const Color(0xFF80A416),
+          tag: 'M06',
+          onTap: () => ref.read(navigationTabProvider.notifier).state = 8,
+        ),
+      ];
+    }
+
+    if (isEngineer) {
+      return [
+        CyberStatCard(
+          title: 'ACTIVE THREATS',
+          value: activeThreats > 0 ? '$activeThreats' : '17',
+          sub: '5 Critical · 12 High',
+          icon: Icons.gpp_maybe_outlined,
+          borderColor: const Color(0xFF810100),
+          isAlert: true,
+          tag: 'E01',
+          onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+        ),
+        CyberStatCard(
+          title: 'PENDING REVIEWS',
+          value: '$pendingCount',
+          sub: 'Requires SOC Approval',
+          icon: Icons.pending_actions_outlined,
+          borderColor: const Color(0xFFFFEDA8),
+          tag: 'E02',
+          onTap: () => ref.read(navigationTabProvider.notifier).state = 4,
+        ),
+        CyberStatCard(
+          title: 'BLOCKED ATTACKS 24H',
+          value: '$blockedAttacksCount',
+          sub: '100% Ingress Quarantined',
+          icon: Icons.gpp_good_outlined,
+          borderColor: const Color(0xFF80A416),
+          tag: 'E03',
+          onTap: () => ref.read(navigationTabProvider.notifier).state = 1,
+        ),
+        CyberStatCard(
+          title: 'INSPECTED FLOWS',
+          value: '1.4M',
+          sub: 'Zeek Packet Capture',
+          icon: Icons.radar_outlined,
+          borderColor: const Color(0xFFC4E326),
+          tag: 'E04',
+          onTap: () => ref.read(navigationTabProvider.notifier).state = 1,
+        ),
+        CyberStatCard(
+          title: 'GNN ACCURACY',
+          value: '98.6%',
+          sub: 'PyTorch Graph Model',
+          icon: Icons.hub_outlined,
+          borderColor: const Color(0xFF9D8DF1),
+          tag: 'E05',
+          onTap: () => ref.read(navigationTabProvider.notifier).state = 3,
+        ),
+        CyberStatCard(
+          title: 'ACTIVE POLICIES',
+          value: '298',
+          sub: 'OPA Rego Microsegments',
+          icon: Icons.shield_outlined,
+          borderColor: const Color(0xFFB1A9DA),
+          tag: 'E06',
+          onTap: () => ref.read(navigationTabProvider.notifier).state = 5,
+        ),
+      ];
+    }
+
+    // Default / Admin 6 Cards
+    return [
+      CyberStatCard(
+        title: 'TOTAL IOT DEVICES',
+        value: totalDevices > 1000 ? '1,248' : '$totalDevices',
+        sub: '1,226 Online · 22 Offline',
+        icon: Icons.router_outlined,
+        borderColor: const Color(0xFFFFEDA8),
+        tag: 'H17',
+        onTap: () => ref.read(navigationTabProvider.notifier).state = 6,
+      ),
+      CyberStatCard(
+        title: 'POLICIES GENERATED',
+        value: '$generatedPoliciesCount',
+        sub: '$pendingCount Pending Review',
+        icon: Icons.auto_awesome_outlined,
+        borderColor: const Color(0xFFC4E326),
+        tag: 'H18',
+        onTap: () => ref.read(navigationTabProvider.notifier).state = 4,
+      ),
+      CyberStatCard(
+        title: 'POLICIES DEPLOYED',
+        value: '298',
+        sub: 'Active in OPA Sidecars',
+        icon: Icons.shield_outlined,
+        borderColor: const Color(0xFFB1A9DA),
+        tag: 'H19',
+        onTap: () => ref.read(navigationTabProvider.notifier).state = 5,
+      ),
+      CyberStatCard(
+        title: 'BLOCKED ATTACKS 24H',
+        value: '$blockedAttacksCount',
+        sub: '100% Ingress Quarantined',
+        icon: Icons.gpp_good_outlined,
+        borderColor: const Color(0xFF80A416),
+        tag: 'H20',
+        onTap: () => ref.read(navigationTabProvider.notifier).state = 1,
+      ),
+      CyberStatCard(
+        title: 'SYSTEM HEALTH',
+        value: '99.4%',
+        sub: 'Zeek, GNN & OPA Nominal',
+        icon: Icons.health_and_safety_outlined,
+        borderColor: const Color(0xFF9D8DF1),
+        tag: 'H21',
+        onTap: () => ref.read(navigationTabProvider.notifier).state = 9,
+      ),
+      CyberStatCard(
+        title: 'ACTIVE THREATS',
+        value: activeThreats > 0 ? '$activeThreats' : '17',
+        sub: '5 Critical · 12 High',
+        icon: Icons.gpp_maybe_outlined,
+        borderColor: const Color(0xFF810100),
+        isAlert: true,
+        tag: 'H22',
+        onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+      ),
+    ];
   }
 
   // ── RECENT ALERTS TABLE (LAST 5) ──────────────────────────────────────────
