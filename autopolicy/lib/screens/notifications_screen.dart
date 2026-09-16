@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/security_provider.dart';
+import '../providers/theme_provider.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
 import '../widgets/glass_container.dart';
@@ -20,6 +21,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = ref.watch(themeModeProvider);
     final securityState = ref.watch(securityProvider);
     final notifications = securityState.notifications;
 
@@ -45,9 +47,19 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('SYSTEM INCIDENT & SECURITY NOTIFICATIONS', style: CyberTextStyles.heading2),
+                    Text(
+                      'SYSTEM INCIDENT & SECURITY NOTIFICATIONS',
+                      style: CyberTextStyles.heading2.copyWith(
+                        color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text('REAL-TIME LOG STREAM, THREAT DETECTIONS & DEPLOYMENT INCIDENTS', style: CyberTextStyles.techMuted),
+                    Text(
+                      'REAL-TIME LOG STREAM, THREAT DETECTIONS & DEPLOYMENT INCIDENTS',
+                      style: CyberTextStyles.techMuted.copyWith(
+                        color: isDarkMode ? Colors.white54 : const Color(0xFF64748B),
+                      ),
+                    ),
                   ],
                 ),
                 Row(
@@ -70,19 +82,19 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             Row(
               children: [
                 Expanded(
-                  child: _buildMetricCard('TOTAL LOG ENTRIES', '${notifications.length}', const Color(0xFFFFE997), 'H17'),
+                  child: _buildMetricCard('TOTAL LOG ENTRIES', '${notifications.length}', const Color(0xFFFFE997), 'H17', isDarkMode),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _buildMetricCard('CRITICAL THREATS', '${notifications.where((n) => n.type == 'threat').length}', const Color(0xFFB91C1D), 'H18'),
+                  child: _buildMetricCard('CRITICAL THREATS', '${notifications.where((n) => n.type == 'threat').length}', const Color(0xFFB91C1D), 'H18', isDarkMode),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _buildMetricCard('WARNING ALERTS', '${notifications.where((n) => n.type == 'warning').length}', const Color(0xFFA88AED), 'H19'),
+                  child: _buildMetricCard('WARNING ALERTS', '${notifications.where((n) => n.type == 'warning').length}', const Color(0xFFA88AED), 'H19', isDarkMode),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _buildMetricCard('REGO DEPLOYMENTS', '${notifications.where((n) => n.type == 'deploy').length}', const Color(0xFFC4E320), 'H20'),
+                  child: _buildMetricCard('REGO DEPLOYMENTS', '${notifications.where((n) => n.type == 'deploy').length}', const Color(0xFFC4E320), 'H20', isDarkMode),
                 ),
               ],
             ),
@@ -98,10 +110,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     margin: const EdgeInsets.only(right: 10),
                     decoration: BoxDecoration(
-                      color: isSelected ? const Color(0xFFC4E320).withOpacity(0.2) : Colors.transparent,
+                      color: isSelected
+                          ? (isDarkMode ? const Color(0xFFC4E320).withOpacity(0.2) : const Color(0xFFEBECCC))
+                          : (isDarkMode ? Colors.transparent : const Color(0xFFFAF9F6)),
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(
-                        color: isSelected ? const Color(0xFFC4E320) : Colors.white24,
+                        color: isSelected
+                            ? (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416))
+                            : (isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
                         width: 1,
                       ),
                     ),
@@ -109,7 +125,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       filter,
                       style: CyberTextStyles.technical(
                         fontSize: 11,
-                        color: isSelected ? const Color(0xFFC4E320) : Colors.white70,
+                        color: isSelected
+                            ? (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A))
+                            : (isDarkMode ? Colors.white70 : const Color(0xFF475569)),
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
@@ -131,7 +149,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                           children: [
                             const Icon(Icons.shield_outlined, color: Color(0xFFC4E320), size: 48),
                             const SizedBox(height: 12),
-                            Text('ALL SYSTEMS OPERATIONAL. NO UNRESOLVED NOTIFICATIONS.', style: CyberTextStyles.technical(color: Colors.white, fontSize: 12)),
+                            Text(
+                              'ALL SYSTEMS OPERATIONAL. NO UNRESOLVED NOTIFICATIONS.',
+                              style: CyberTextStyles.technical(
+                                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -149,9 +173,23 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                           margin: const EdgeInsets.only(bottom: 10),
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0F0F0F),
+                            color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
                             borderRadius: BorderRadius.circular(4),
-                            border: Border(left: BorderSide(color: statusColor, width: 4)),
+                            border: Border(
+                              left: BorderSide(color: statusColor, width: 4),
+                              top: BorderSide(color: isDarkMode ? Colors.transparent : const Color(0xFFCDD4B2)),
+                              right: BorderSide(color: isDarkMode ? Colors.transparent : const Color(0xFFCDD4B2)),
+                              bottom: BorderSide(color: isDarkMode ? Colors.transparent : const Color(0xFFCDD4B2)),
+                            ),
+                            boxShadow: isDarkMode
+                                ? null
+                                : [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.04),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                           ),
                           child: Row(
                             children: [
@@ -174,14 +212,20 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                         ),
                                         Text(
                                           '${n.timestamp.hour.toString().padLeft(2, '0')}:${n.timestamp.minute.toString().padLeft(2, '0')}:${n.timestamp.second.toString().padLeft(2, '0')}',
-                                          style: CyberTextStyles.techMuted.copyWith(fontSize: 9.5),
+                                          style: CyberTextStyles.techMuted.copyWith(
+                                            fontSize: 9.5,
+                                            color: isDarkMode ? Colors.white54 : const Color(0xFF64748B),
+                                          ),
                                         ),
                                       ],
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
                                       n.message,
-                                      style: CyberTextStyles.interface(fontSize: 12.0, color: Colors.white),
+                                      style: CyberTextStyles.interface(
+                                        fontSize: 12.0,
+                                        color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -198,14 +242,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     );
   }
 
-  Widget _buildMetricCard(String title, String val, Color color, String tag) {
+  Widget _buildMetricCard(String title, String val, Color color, String tag, bool isDarkMode) {
     return GlassContainer(
       padding: const EdgeInsets.all(12),
       borderColor: color,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: CyberTextStyles.technical(fontSize: 9, color: Colors.white70)),
+          Text(title, style: CyberTextStyles.technical(fontSize: 9, color: isDarkMode ? Colors.white70 : const Color(0xFF475569))),
           const SizedBox(height: 6),
           Text(val, style: TextStyle(fontFamily: 'monospace', fontSize: 24, fontWeight: FontWeight.w900, color: color)),
         ],

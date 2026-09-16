@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/device.dart';
 import '../providers/security_provider.dart';
-import '../theme/colors.dart';
+import '../providers/theme_provider.dart';
 import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
 import '../widgets/cyber_hud_card.dart';
@@ -99,38 +99,41 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
   final List<String> _simLogs = [];
 
   void _runSimulation() {
-    if (_isExecuting || _selectedScenarioIdx == null) return;
-    final currentScenario = _scenarios[_selectedScenarioIdx!];
+    if (_selectedScenarioIdx == null) return;
+    final scn = _scenarios[_selectedScenarioIdx!];
 
     setState(() {
       _isExecuting = true;
       _execProgress = 0.0;
       _simLogs.clear();
-      _simLogs.add('[INIT] Isolating simulation virtual sandbox environment...');
-      _simLogs.add('[PCAP] Streaming ${currentScenario['vector']} payload across virtual interfaces...');
+      _simLogs.add('[INIT] Isolating veth sandbox container network namespace...');
     });
 
-    Timer.periodic(const Duration(milliseconds: 280), (timer) {
+    Timer.periodic(const Duration(milliseconds: 300), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
       setState(() {
-        _execProgress += 0.20;
-        if (_execProgress >= 0.4 && _simLogs.length < 3) {
-          _simLogs.add('[OPA] Sidecar microsegments evaluating ${currentScenario['packetsPerSec']}...');
+        _execProgress += 0.15;
+        if (_execProgress >= 0.3 && _simLogs.length == 1) {
+          _simLogs.add('[OPA] Synchronizing sidecar policy rules from /etc/opa/policies...');
+        } else if (_execProgress >= 0.6 && _simLogs.length == 2) {
+          _simLogs.add('[SURGE] Injected ${_scenarios[_selectedScenarioIdx!]['packetsPerSec']} threat packets (${_scenarios[_selectedScenarioIdx!]['vector']})...');
+        } else if (_execProgress >= 0.85 && _simLogs.length == 3) {
+          _simLogs.add('[VERDICT] Enforced OPA Zero-Trust microsegmentation barrier.');
         }
-        if (_execProgress >= 0.7 && _simLogs.length < 4) {
-          _simLogs.add('[GNN] Node correlation updated: Threat signature confirmed.');
-        }
+
         if (_execProgress >= 1.0) {
           _execProgress = 1.0;
           _isExecuting = false;
-          _simLogs.add('[SUCCESS] Simulation complete: ${currentScenario['blockedRate']}% of attack vectors blocked.');
+          _simLogs.add('[SUCCESS] Simulation complete: ${_scenarios[_selectedScenarioIdx!]['blockedRate']}% blocked, ${_scenarios[_selectedScenarioIdx!]['leakedRate']}% leak rate.');
           timer.cancel();
 
+          // If a target device was selected, record the simulated vector
           if (_selectedTargetDeviceId != null) {
-            ref.read(securityProvider.notifier).manualAttackTrigger(
+            final currentScenario = _scenarios[_selectedScenarioIdx!];
+            ref.read(securityProvider.notifier).recordDeviceSimulationTest(
               _selectedTargetDeviceId!,
               currentScenario['vector'] as String,
             );
@@ -142,6 +145,7 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = ref.watch(themeModeProvider);
     final securityState = ref.watch(securityProvider);
     final eligibleDevices = securityState.devices.where((d) => d.status == DeviceStatus.safe).toList();
     final bool isMobile = Responsive.isMobile(context);
@@ -163,16 +167,16 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Page Header with Badge
-            _buildPageHeader(),
+            _buildPageHeader(isDarkMode),
             const SizedBox(height: 16),
 
             // SECTION 1: Scenario Selection (Horizontal 5 Selectable Cards)
-            _buildScenarioSelectionRow(),
+            _buildScenarioSelectionRow(isDarkMode),
             const SizedBox(height: 16),
 
             // SECTION 2: Two-Column Workstation (Left 40% Config, Right 60% Results)
             if (activeScenario == null)
-              _buildEmptyState()
+              _buildEmptyState(isDarkMode)
             else if (!isMobile)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,22 +184,22 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
                   // Left Column (~40%): Scenario Configuration
                   Expanded(
                     flex: 4,
-                    child: _buildScenarioConfigCard(activeScenario, eligibleDevices, effectiveDeviceId),
+                    child: _buildScenarioConfigCard(activeScenario, eligibleDevices, effectiveDeviceId, isDarkMode),
                   ),
                   const SizedBox(width: 16),
                   // Right Column (~60%): Results & Metrics
                   Expanded(
                     flex: 6,
-                    child: _buildResultsAndMetricsCard(activeScenario),
+                    child: _buildResultsAndMetricsCard(activeScenario, isDarkMode),
                   ),
                 ],
               )
             else
               Column(
                 children: [
-                  _buildScenarioConfigCard(activeScenario, eligibleDevices, effectiveDeviceId),
+                  _buildScenarioConfigCard(activeScenario, eligibleDevices, effectiveDeviceId, isDarkMode),
                   const SizedBox(height: 16),
-                  _buildResultsAndMetricsCard(activeScenario),
+                  _buildResultsAndMetricsCard(activeScenario, isDarkMode),
                 ],
               ),
           ],
@@ -205,7 +209,7 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
   }
 
   // ── PAGE HEADER ────────────────────────────────────────────────────────────
-  Widget _buildPageHeader() {
+  Widget _buildPageHeader(bool isDarkMode) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -218,7 +222,7 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
               style: CyberTextStyles.displayTitle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
-                color: const Color(0xFF5DD62C),
+                color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
               ).copyWith(letterSpacing: 2.0),
             ),
             const SizedBox(height: 3),
@@ -226,7 +230,7 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
               'Stress-test Zero-Trust policies in a safe sandbox',
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: Colors.white70,
+                color: isDarkMode ? Colors.white70 : const Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -236,18 +240,22 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFF5DD62C).withOpacity(0.12),
+            color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.12) : const Color(0xFFEBECCC),
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: const Color(0xFF5DD62C), width: 1.0),
+            border: Border.all(color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2), width: 1.0),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.shield_outlined, color: Color(0xFF5DD62C), size: 16),
+              Icon(Icons.shield_outlined, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416), size: 16),
               const SizedBox(width: 6),
               Text(
                 'SANDBOX ISOLATED – ZERO PROD LEAKAGE',
-                style: CyberTextStyles.technical(fontSize: 10.5, fontWeight: FontWeight.bold, color: const Color(0xFF5DD62C)),
+                style: CyberTextStyles.technical(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                ),
               ),
             ],
           ),
@@ -257,7 +265,7 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
   }
 
   // ── SECTION 1: SCENARIO SELECTION (HORIZONTAL 5 CARDS) ─────────────────────
-  Widget _buildScenarioSelectionRow() {
+  Widget _buildScenarioSelectionRow(bool isDarkMode) {
     final bool isMobile = Responsive.isMobile(context);
 
     if (isMobile) {
@@ -268,7 +276,7 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
           itemCount: _scenarios.length,
           itemBuilder: (context, idx) => Padding(
             padding: const EdgeInsets.only(right: 12.0),
-            child: _buildScenarioTile(idx, 260),
+            child: _buildScenarioTile(idx, 260, isDarkMode),
           ),
         ),
       );
@@ -281,7 +289,7 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
           return Expanded(
             child: Padding(
               padding: EdgeInsets.only(right: idx < _scenarios.length - 1 ? 10.0 : 0.0),
-              child: _buildScenarioTile(idx, null),
+              child: _buildScenarioTile(idx, null, isDarkMode),
             ),
           );
         }),
@@ -289,7 +297,7 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
     );
   }
 
-  Widget _buildScenarioTile(int idx, double? width) {
+  Widget _buildScenarioTile(int idx, double? width, bool isDarkMode) {
     final scn = _scenarios[idx];
     final bool isSelected = _selectedScenarioIdx == idx;
     final bool isHovered = _hoveredScenarioIdx == idx;
@@ -310,6 +318,7 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
             accentColor: color,
             isSelected: isSelected,
             isHovered: isHovered,
+            isDarkMode: isDarkMode,
           ),
           child: Container(
             width: width,
@@ -341,7 +350,7 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
                       style: CyberTextStyles.technical(
                         fontSize: 13.5,
                         fontWeight: FontWeight.w900,
-                        color: Colors.white,
+                        color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
                       ).copyWith(letterSpacing: 0.4),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -352,7 +361,9 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
                       style: GoogleFonts.inter(
                         fontSize: 11.5,
                         fontWeight: FontWeight.w500,
-                        color: isSelected ? Colors.white : Colors.white70,
+                        color: isDarkMode
+                            ? (isSelected ? Colors.white : Colors.white70)
+                            : const Color(0xFF475569),
                         height: 1.2,
                       ),
                       maxLines: 2,
@@ -369,23 +380,27 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
   }
 
   // ── EMPTY STATE ────────────────────────────────────────────────────────────
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool isDarkMode) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
+        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFF252525)),
+        border: Border.all(color: isDarkMode ? const Color(0xFF252525) : const Color(0xFFCDD4B2)),
       ),
       child: Center(
         child: Column(
           children: [
-            const Icon(Icons.touch_app_outlined, size: 36, color: Colors.white30),
+            Icon(Icons.touch_app_outlined, size: 36, color: isDarkMode ? Colors.white30 : const Color(0xFF64748B)),
             const SizedBox(height: 12),
             Text(
               'Select a simulation scenario above to begin',
-              style: GoogleFonts.inter(fontSize: 14, color: Colors.white60, fontWeight: FontWeight.w500),
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: isDarkMode ? Colors.white60 : const Color(0xFF0F172A),
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -394,12 +409,12 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
   }
 
   // ── LEFT COLUMN: SCENARIO CONFIGURATION (≈40%) ─────────────────────────────
-  Widget _buildScenarioConfigCard(Map<String, dynamic> scenario, List<IoTDevice> eligibleDevices, String? effectiveDeviceId) {
+  Widget _buildScenarioConfigCard(Map<String, dynamic> scenario, List<IoTDevice> eligibleDevices, String? effectiveDeviceId, bool isDarkMode) {
     final Color color = scenario['color'] as Color;
 
     return CyberHudCard(
       tag: scenario['tag'] as String,
-      borderColor: color,
+      borderColor: isDarkMode ? color : const Color(0xFFCDD4B2),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -412,37 +427,58 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
                 const SizedBox(width: 8),
                 Text(
                   'SCENARIO CONFIGURATION',
-                  style: CyberTextStyles.technical(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: CyberTextStyles.technical(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            const Divider(color: Color(0xFF252525), height: 1),
+            Divider(color: isDarkMode ? const Color(0xFF252525) : const Color(0xFFCDD4B2), height: 1),
             const SizedBox(height: 14),
 
             // Target System Asset (SAFE DROPDOWN)
-            Text('TARGET SYSTEM ASSET', style: CyberTextStyles.technical(fontSize: 10.5, color: const Color(0xFF5DD62C), fontWeight: FontWeight.bold)),
+            Text(
+              'TARGET SYSTEM ASSET',
+              style: CyberTextStyles.technical(
+                fontSize: 10.5,
+                color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 6),
             if (eligibleDevices.isEmpty)
               Container(
                 padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: const Color(0xFF161616), borderRadius: BorderRadius.circular(4)),
-                child: Text('NO SAFE DEVICES DETECTED (ALL QUARANTINED)', style: GoogleFonts.inter(fontSize: 12, color: Colors.white54)),
+                decoration: BoxDecoration(
+                  color: isDarkMode ? const Color(0xFF161616) : const Color(0xFFFAF9F6),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: isDarkMode ? Colors.transparent : const Color(0xFFCDD4B2)),
+                ),
+                child: Text(
+                  'NO SAFE DEVICES DETECTED (ALL QUARANTINED)',
+                  style: GoogleFonts.inter(fontSize: 12, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B)),
+                ),
               )
             else
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF161616),
+                  color: isDarkMode ? const Color(0xFF161616) : const Color(0xFFFAF9F6),
                   borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: Colors.white24),
+                  border: Border.all(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: effectiveDeviceId,
                     isExpanded: true,
-                    dropdownColor: const Color(0xFF161616),
-                    style: GoogleFonts.inter(fontSize: 12.5, color: Colors.white),
+                    dropdownColor: isDarkMode ? const Color(0xFF161616) : const Color(0xFFFAF9F6),
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                    ),
                     items: eligibleDevices.map((d) {
                       return DropdownMenuItem<String>(
                         value: d.id,
@@ -464,7 +500,7 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('THROUGHPUT VOLUME', style: CyberTextStyles.technical(fontSize: 10, color: Colors.white54)),
+                      Text('THROUGHPUT VOLUME', style: CyberTextStyles.technical(fontSize: 10, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B))),
                       const SizedBox(height: 3),
                       Text(scenario['packetsPerSec'] as String, style: GoogleFonts.spaceGrotesk(fontSize: 13, fontWeight: FontWeight.bold, color: color)),
                     ],
@@ -474,9 +510,16 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('ATTACK VECTOR SIGNATURE', style: CyberTextStyles.technical(fontSize: 10, color: Colors.white54)),
+                      Text('ATTACK VECTOR SIGNATURE', style: CyberTextStyles.technical(fontSize: 10, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B))),
                       const SizedBox(height: 3),
-                      Text(scenario['vector'] as String, style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.bold, color: Colors.white)),
+                      Text(
+                        scenario['vector'] as String,
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -488,17 +531,17 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFF121212),
+                color: isDarkMode ? const Color(0xFF121212) : const Color(0xFFFAF9F6),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: Colors.white10),
+                border: Border.all(color: isDarkMode ? Colors.white10 : const Color(0xFFCDD4B2)),
               ),
               child: Column(
                 children: [
-                  _buildConfigParamRow('VIRTUAL SANDBOX INTERFACE', 'veth_isolated_0'),
+                  _buildConfigParamRow('VIRTUAL SANDBOX INTERFACE', 'veth_isolated_0', isDarkMode),
                   const SizedBox(height: 6),
-                  _buildConfigParamRow('OPA SIDECAR ENFORCEMENT', 'ACTIVE (Localhost:8181)'),
+                  _buildConfigParamRow('OPA SIDECAR ENFORCEMENT', 'ACTIVE (Localhost:8181)', isDarkMode),
                   const SizedBox(height: 6),
-                  _buildConfigParamRow('CONCURRENT THREAT WORKERS', '16 Workers (Multi-threaded)'),
+                  _buildConfigParamRow('CONCURRENT THREAT WORKERS', '16 Workers (Multi-threaded)', isDarkMode),
                 ],
               ),
             ),
@@ -511,7 +554,7 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
                 child: LinearProgressIndicator(
                   value: _execProgress,
                   minHeight: 6,
-                  backgroundColor: const Color(0xFF222222),
+                  backgroundColor: isDarkMode ? const Color(0xFF222222) : const Color(0xFFE2E8F0),
                   valueColor: AlwaysStoppedAnimation<Color>(color),
                 ),
               ),
@@ -524,14 +567,14 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
               height: 44,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: color,
-                  foregroundColor: Colors.black,
+                  backgroundColor: isDarkMode ? color : const Color(0xFFB8A9C1),
+                  foregroundColor: isDarkMode ? Colors.black : const Color(0xFF0F172A),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                 ),
-                icon: Icon(_isExecuting ? Icons.hourglass_top : Icons.play_arrow, size: 18, color: Colors.black),
+                icon: Icon(_isExecuting ? Icons.hourglass_top : Icons.play_arrow, size: 18, color: isDarkMode ? Colors.black : const Color(0xFF0F172A)),
                 label: Text(
                   _isExecuting ? 'SIMULATING THREAT SURGE...' : 'EXECUTE ISOLATED SIMULATION',
-                  style: CyberTextStyles.technical(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black),
+                  style: CyberTextStyles.technical(fontSize: 12, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.black : const Color(0xFF0F172A)),
                 ),
                 onPressed: _isExecuting ? null : _runSimulation,
               ),
@@ -542,18 +585,18 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
     );
   }
 
-  Widget _buildConfigParamRow(String label, String val) {
+  Widget _buildConfigParamRow(String label, String val, bool isDarkMode) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: CyberTextStyles.technical(fontSize: 9.5, color: Colors.white54)),
-        Text(val, style: GoogleFonts.spaceGrotesk(fontSize: 10.5, color: const Color(0xFFC5C764), fontWeight: FontWeight.bold)),
+        Text(label, style: CyberTextStyles.technical(fontSize: 9.5, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B))),
+        Text(val, style: GoogleFonts.spaceGrotesk(fontSize: 10.5, color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF80A416), fontWeight: FontWeight.bold)),
       ],
     );
   }
 
   // ── RIGHT COLUMN: RESULTS & METRICS CARD (≈60%) ────────────────────────────
-  Widget _buildResultsAndMetricsCard(Map<String, dynamic> scenario) {
+  Widget _buildResultsAndMetricsCard(Map<String, dynamic> scenario, bool isDarkMode) {
     final Color color = scenario['color'] as Color;
     final double blocked = scenario['blockedRate'] as double;
     final double leaked = scenario['leakedRate'] as double;
@@ -561,7 +604,7 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
 
     return CyberHudCard(
       tag: 'RES-01',
-      borderColor: const Color(0xFF5DD62C),
+      borderColor: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -573,22 +616,29 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.analytics_outlined, color: Color(0xFF5DD62C), size: 18),
+                    Icon(Icons.analytics_outlined, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416), size: 18),
                     const SizedBox(width: 8),
                     Text(
                       'RESULTS & MITIGATION METRICS',
-                      style: CyberTextStyles.technical(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: CyberTextStyles.technical(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                      ),
                     ),
                   ],
                 ),
                 Text(
                   'OPA ZERO-TRUST STATUS',
-                  style: CyberTextStyles.technical(fontSize: 9.5, color: const Color(0xFF5DD62C)),
+                  style: CyberTextStyles.technical(
+                    fontSize: 9.5,
+                    color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            const Divider(color: Color(0xFF252525), height: 1),
+            Divider(color: isDarkMode ? const Color(0xFF252525) : const Color(0xFFCDD4B2), height: 1),
             const SizedBox(height: 14),
 
             // Big Key Metrics (Blocked vs Leaked)
@@ -599,9 +649,9 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF5DD62C).withOpacity(0.08),
+                      color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.08) : const Color(0xFF5DD62C).withOpacity(0.12),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: const Color(0xFF5DD62C).withOpacity(0.4)),
+                      border: Border.all(color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.4) : const Color(0xFFCDD4B2)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -609,7 +659,10 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
                         Text('THREAT VECTORS BLOCKED', style: CyberTextStyles.technical(fontSize: 10, color: const Color(0xFF5DD62C), fontWeight: FontWeight.bold)),
                         const SizedBox(height: 4),
                         Text('$blocked%', style: GoogleFonts.barlow(fontSize: 32, fontWeight: FontWeight.w900, color: const Color(0xFF5DD62C))),
-                        Text('Quarantined before core mesh penetration', style: GoogleFonts.inter(fontSize: 10, color: Colors.white54)),
+                        Text(
+                          'Quarantined before core mesh penetration',
+                          style: GoogleFonts.inter(fontSize: 10, color: isDarkMode ? Colors.white54 : const Color(0xFF475569)),
+                        ),
                       ],
                     ),
                   ),
@@ -620,9 +673,9 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
                   child: Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFDF2531).withOpacity(0.08),
+                      color: isDarkMode ? const Color(0xFFDF2531).withOpacity(0.08) : const Color(0xFFDF2531).withOpacity(0.10),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: const Color(0xFFDF2531).withOpacity(0.4)),
+                      border: Border.all(color: isDarkMode ? const Color(0xFFDF2531).withOpacity(0.4) : const Color(0xFFCDD4B2)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,7 +683,10 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
                         Text('LEAKED / UNCONTAINED', style: CyberTextStyles.technical(fontSize: 10, color: const Color(0xFFDF2531), fontWeight: FontWeight.bold)),
                         const SizedBox(height: 4),
                         Text('$leaked%', style: GoogleFonts.barlow(fontSize: 32, fontWeight: FontWeight.w900, color: const Color(0xFFDF2531))),
-                        Text(leaked == 0 ? 'Zero blast radius exposure' : 'Surged packets during policy handshake', style: GoogleFonts.inter(fontSize: 10, color: Colors.white54)),
+                        Text(
+                          leaked == 0 ? 'Zero blast radius exposure' : 'Surged packets during policy handshake',
+                          style: GoogleFonts.inter(fontSize: 10, color: isDarkMode ? Colors.white54 : const Color(0xFF475569)),
+                        ),
                       ],
                     ),
                   ),
@@ -643,9 +699,9 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF141414),
+                color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: Colors.white12),
+                border: Border.all(color: isDarkMode ? Colors.white12 : const Color(0xFFCDD4B2)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -653,8 +709,22 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('FALSE POSITIVE RISK GAUGE', style: CyberTextStyles.technical(fontSize: 10.5, color: Colors.white, fontWeight: FontWeight.bold)),
-                      Text('$falsePos% RISK INDEX', style: GoogleFonts.spaceGrotesk(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFFFFE997))),
+                      Text(
+                        'FALSE POSITIVE RISK GAUGE',
+                        style: CyberTextStyles.technical(
+                          fontSize: 10.5,
+                          color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        '$falsePos% RISK INDEX',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? const Color(0xFFFFE997) : const Color(0xFF80A416),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 6),
@@ -663,8 +733,8 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
                     child: LinearProgressIndicator(
                       value: (falsePos / 10).clamp(0.0, 1.0),
                       minHeight: 6,
-                      backgroundColor: const Color(0xFF222222),
-                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFFE997)),
+                      backgroundColor: isDarkMode ? const Color(0xFF222222) : const Color(0xFFE2E8F0),
+                      valueColor: AlwaysStoppedAnimation<Color>(isDarkMode ? const Color(0xFFFFE997) : const Color(0xFF80A416)),
                     ),
                   ),
                 ],
@@ -676,27 +746,35 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF070707),
+                color: isDarkMode ? const Color(0xFF070707) : const Color(0xFFFAF9F6),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: const Color(0xFFC4E320).withOpacity(0.4)),
+                border: Border.all(color: isDarkMode ? const Color(0xFFC4E320).withOpacity(0.4) : const Color(0xFFCDD4B2)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.auto_awesome, color: Color(0xFFC4E320), size: 14),
+                      Icon(Icons.auto_awesome, color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416), size: 14),
                       const SizedBox(width: 6),
                       Text(
                         'AI REGO POLICY RECOMMENDATION',
-                        style: CyberTextStyles.technical(fontSize: 10.5, color: const Color(0xFFC4E320), fontWeight: FontWeight.bold),
+                        style: CyberTextStyles.technical(
+                          fontSize: 10.5,
+                          color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   Text(
                     scenario['regoRule'] as String,
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 10.5, color: Color(0xFFC4E320)),
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 10.5,
+                      color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A),
+                    ),
                   ),
                 ],
               ),
@@ -709,12 +787,17 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFF050505),
+                color: isDarkMode ? const Color(0xFF050505) : const Color(0xFFFAF9F6),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: Colors.white10),
+                border: Border.all(color: isDarkMode ? Colors.white10 : const Color(0xFFCDD4B2)),
               ),
               child: _simLogs.isEmpty
-                  ? Center(child: Text('Awaiting simulation trigger...', style: CyberTextStyles.technical(fontSize: 10.5, color: Colors.white30)))
+                  ? Center(
+                      child: Text(
+                        'Awaiting simulation trigger...',
+                        style: CyberTextStyles.technical(fontSize: 10.5, color: isDarkMode ? Colors.white30 : const Color(0xFF64748B)),
+                      ),
+                    )
                   : ListView.builder(
                       itemCount: _simLogs.length,
                       itemBuilder: (context, idx) {
@@ -725,7 +808,9 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
                             style: TextStyle(
                               fontFamily: 'monospace',
                               fontSize: 10.5,
-                              color: idx == _simLogs.length - 1 ? const Color(0xFF5DD62C) : Colors.white60,
+                              color: idx == _simLogs.length - 1
+                                  ? (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416))
+                                  : (isDarkMode ? Colors.white60 : const Color(0xFF334155)),
                             ),
                           ),
                         );
@@ -749,11 +834,13 @@ class _SimulationHudCardPainter extends CustomPainter {
   final Color accentColor;
   final bool isSelected;
   final bool isHovered;
+  final bool isDarkMode;
 
   _SimulationHudCardPainter({
     required this.accentColor,
     required this.isSelected,
     required this.isHovered,
+    this.isDarkMode = true,
   });
 
   @override
@@ -778,9 +865,13 @@ class _SimulationHudCardPainter extends CustomPainter {
 
     // 2. Fill background
     final bgPaint = Paint()
-      ..color = isSelected
-          ? accentColor.withOpacity(0.18)
-          : (isHovered ? const Color(0xFF141812) : const Color(0xFF0C0E0B))
+      ..color = isDarkMode
+          ? (isSelected
+              ? accentColor.withOpacity(0.18)
+              : (isHovered ? const Color(0xFF141812) : const Color(0xFF0C0E0B)))
+          : (isSelected
+              ? accentColor.withOpacity(0.20)
+              : (isHovered ? const Color(0xFFEBECCC) : const Color(0xFFFAF9F6)))
       ..style = PaintingStyle.fill;
     canvas.drawPath(mainPath, bgPaint);
 
@@ -823,7 +914,7 @@ class _SimulationHudCardPainter extends CustomPainter {
     canvas.save();
     canvas.clipPath(hazardClip);
     final hazardBgPaint = Paint()
-      ..color = const Color(0xFF070906)
+      ..color = isDarkMode ? const Color(0xFF070906) : const Color(0xFFEBECCC)
       ..style = PaintingStyle.fill;
     canvas.drawRect(Rect.fromLTRB(w - stepW, h - stepH, w, h), hazardBgPaint);
 
@@ -846,14 +937,16 @@ class _SimulationHudCardPainter extends CustomPainter {
 
     // 7. Outer border stroke around main path
     final outerBorderPaint = Paint()
-      ..color = isSelected
-          ? accentColor
-          : (isHovered ? accentColor.withOpacity(0.85) : accentColor.withOpacity(0.50))
+      ..color = isDarkMode
+          ? (isSelected
+              ? accentColor
+              : (isHovered ? accentColor.withOpacity(0.85) : accentColor.withOpacity(0.50)))
+          : (isSelected ? accentColor : const Color(0xFFCDD4B2))
       ..strokeWidth = isSelected ? 2.0 : 1.2
       ..style = PaintingStyle.stroke;
     canvas.drawPath(mainPath, outerBorderPaint);
 
-    // 8. Glowing / thick bottom accent line (as in Image 4)
+    // 8. Glowing / thick bottom accent line
     final bottomLedgePath = Path()
       ..moveTo(0, h)
       ..lineTo(w - stepW, h)
@@ -866,8 +959,8 @@ class _SimulationHudCardPainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
     canvas.drawPath(bottomLedgePath, bottomLedgePaint);
 
-    // Glowing blur when selected or hovered
-    if (isSelected || isHovered) {
+    // Glowing blur when selected or hovered (in dark mode only)
+    if (isDarkMode && (isSelected || isHovered)) {
       final glowPaint = Paint()
         ..color = accentColor.withOpacity(isSelected ? 0.35 : 0.20)
         ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 8)
@@ -901,6 +994,7 @@ class _SimulationHudCardPainter extends CustomPainter {
   bool shouldRepaint(covariant _SimulationHudCardPainter oldDelegate) {
     return oldDelegate.accentColor != accentColor ||
         oldDelegate.isSelected != isSelected ||
-        oldDelegate.isHovered != isHovered;
+        oldDelegate.isHovered != isHovered ||
+        oldDelegate.isDarkMode != isDarkMode;
   }
 }

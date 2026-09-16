@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/cyber_button.dart';
+import '../providers/theme_provider.dart';
 
 // ═════════════════════════════════════════════════════════════
 // SIGNUP PAGE
@@ -57,7 +58,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
       await ref.read(authProvider.notifier).signUp(
         _email.text.trim(),
         _password.text,
-        _org.text.trim().isNotEmpty ? _org.text.trim() : 'Organization Member',
+        'Admin',
       );
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/dashboard');
@@ -74,12 +75,18 @@ class _SignupPageState extends ConsumerState<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = ref.watch(themeModeProvider);
+    final brandTitleColor = isDarkMode ? AP.white : const Color(0xFF0F172A);
+    final textColor = isDarkMode ? AP.white : const Color(0xFF0F172A);
+    final subtextColor = isDarkMode ? const Color(0xFFD5E5D3) : const Color(0xFF64748B);
+    final labelColor = isDarkMode ? AP.lime : const Color(0xFF80A416);
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFFFAF9F6),
       body: Stack(
         children: [
           // Background Grid Squares
-          Positioned.fill(child: CustomPaint(painter: GridPainter())),
+          Positioned.fill(child: CustomPaint(painter: GridPainter(isDarkMode: isDarkMode))),
           // Nav bar
           Positioned(
             top: 0, left: 0, right: 0,
@@ -91,23 +98,67 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                     Row(
                       children: [
                         Container(
-                          width: 6, height: 6,
+                          width: 7, height: 7,
                           decoration: const BoxDecoration(
-                            color: AP.bright, shape: BoxShape.circle,
-                            boxShadow: [BoxShadow(color: AP.bright, blurRadius: 10)],
+                            color: Color(0xFFC4E320), shape: BoxShape.circle,
+                            boxShadow: [BoxShadow(color: Color(0xFFC4E320), blurRadius: 10)],
                           ),
                         ),
                         const SizedBox(width: 9),
                         Text('AutoPolicy',
                           style: GoogleFonts.orbitron(
                             fontWeight: FontWeight.w900, fontSize: 14,
-                            letterSpacing: 3.2, color: AP.white,
+                            letterSpacing: 3.2, color: brandTitleColor,
                           ),
                         ),
                       ],
                     ),
                     const Spacer(),
+                    // Theme Switcher Live Pill
+                    InkWell(
+                      onTap: () => ref.read(themeModeProvider.notifier).state = !isDarkMode,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: isDarkMode ? const Color(0xFF141414) : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416),
+                            width: 1.0,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416)).withOpacity(0.15),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isDarkMode ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                              size: 14,
+                              color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              isDarkMode ? 'DARK' : 'LIGHT',
+                              style: GoogleFonts.orbitron(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416),
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
                     _BackToExploreButton(
+                      isDarkMode: isDarkMode,
                       onTap: () => Navigator.pushReplacementNamed(context, '/landing'),
                     ),
                   ],
@@ -123,6 +174,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                 key: _formKey,
                 child: VrFrame(
                   maxWidth: 470,
+                  isDarkMode: isDarkMode,
                   padding: const EdgeInsets.fromLTRB(22, 18, 22, 14),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -130,7 +182,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                       // Header
                       Text('ROOT ENCLAVE INITIALIZATION',
                         style: TextStyle(
-                          fontSize: 7.5, letterSpacing: 2.8, color: AP.lime,
+                          fontSize: 7.5, letterSpacing: 2.8, color: labelColor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -138,12 +190,12 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                       Text('First-Time Admin Setup',
                         style: GoogleFonts.orbitron(
                           fontWeight: FontWeight.w900, fontSize: 18,
-                          letterSpacing: 0.5, color: AP.white,
+                          letterSpacing: 0.5, color: textColor,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text('Initialize primary administrator credentials for this deployment',
-                        style: GoogleFonts.spaceGrotesk(fontSize: 12.0, color: const Color(0xFFD5E5D3)),
+                        style: GoogleFonts.spaceGrotesk(fontSize: 12.0, color: subtextColor),
                       ),
                       const SizedBox(height: 12),
 
@@ -154,12 +206,14 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _label('First Name'),
+                                _label('First Name', isDarkMode),
                                 FieldShell(
+                                  isDarkMode: isDarkMode,
                                   child: TextFormField(
                                     controller: _fname,
-                                    style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 13),
-                                    decoration: _inputDeco('Ava'),
+                                    cursorColor: isDarkMode ? AP.lime : Colors.black,
+                                    style: GoogleFonts.spaceGrotesk(color: textColor, fontSize: 13),
+                                    decoration: _inputDeco('Ava', isDarkMode),
                                     validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                                   ),
                                 ),
@@ -171,12 +225,14 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _label('Last Name'),
+                                _label('Last Name', isDarkMode),
                                 FieldShell(
+                                  isDarkMode: isDarkMode,
                                   child: TextFormField(
                                     controller: _lname,
-                                    style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 13),
-                                    decoration: _inputDeco('Chen'),
+                                    cursorColor: isDarkMode ? AP.lime : Colors.black,
+                                    style: GoogleFonts.spaceGrotesk(color: textColor, fontSize: 13),
+                                    decoration: _inputDeco('Chen', isDarkMode),
                                     validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                                   ),
                                 ),
@@ -194,12 +250,14 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _label('Organization'),
+                                _label('Organization', isDarkMode),
                                 FieldShell(
+                                  isDarkMode: isDarkMode,
                                   child: TextFormField(
                                     controller: _org,
-                                    style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 13),
-                                    decoration: _inputDeco('CyberSOC Labs'),
+                                    cursorColor: isDarkMode ? AP.lime : Colors.black,
+                                    style: GoogleFonts.spaceGrotesk(color: textColor, fontSize: 13),
+                                    decoration: _inputDeco('CyberSOC Labs', isDarkMode),
                                     validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
                                   ),
                                 ),
@@ -211,12 +269,14 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _label('Work Email'),
+                                _label('Work Email', isDarkMode),
                                 FieldShell(
+                                  isDarkMode: isDarkMode,
                                   child: TextFormField(
                                     controller: _email,
-                                    style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 13),
-                                    decoration: _inputDeco('operator@network.io'),
+                                    cursorColor: isDarkMode ? AP.lime : Colors.black,
+                                    style: GoogleFonts.spaceGrotesk(color: textColor, fontSize: 13),
+                                    decoration: _inputDeco('operator@network.io', isDarkMode),
                                     keyboardType: TextInputType.emailAddress,
                                     validator: (value) {
                                       if (value == null || value.trim().isEmpty) return 'Required';
@@ -241,20 +301,22 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _label('Access Key'),
+                                _label('Access Key', isDarkMode),
                                 FieldShell(
+                                  isDarkMode: isDarkMode,
                                   child: TextFormField(
                                     controller: _password,
+                                    cursorColor: isDarkMode ? AP.lime : Colors.black,
                                     obscureText: _obscure,
-                                    style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 13),
-                                    decoration: _inputDeco('Min. 12 chars').copyWith(
+                                    style: GoogleFonts.spaceGrotesk(color: textColor, fontSize: 13),
+                                    decoration: _inputDeco('Min. 12 chars', isDarkMode).copyWith(
                                       suffixIcon: IconButton(
                                         padding: EdgeInsets.zero,
                                         constraints: const BoxConstraints(),
                                         icon: Icon(
                                           _obscure ? Icons.visibility_off : Icons.visibility,
                                           size: 14,
-                                          color: AP.muted,
+                                          color: isDarkMode ? AP.muted : const Color(0xFF64748B),
                                         ),
                                         onPressed: () => setState(() => _obscure = !_obscure),
                                       ),
@@ -274,13 +336,15 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _label('Confirm Key'),
+                                _label('Confirm Key', isDarkMode),
                                 FieldShell(
+                                  isDarkMode: isDarkMode,
                                   child: TextFormField(
                                     controller: _password2,
+                                    cursorColor: isDarkMode ? AP.lime : Colors.black,
                                     obscureText: true,
-                                    style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 13),
-                                    decoration: _inputDeco('Repeat key'),
+                                    style: GoogleFonts.spaceGrotesk(color: textColor, fontSize: 13),
+                                    decoration: _inputDeco('Repeat key', isDarkMode),
                                     validator: (v) {
                                       if (v == null || v.isEmpty) return 'Required';
                                       if (v != _password.text) return 'Mismatch';
@@ -307,19 +371,29 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                                 _terms = v ?? false;
                                 if (_terms) _errorMessage = '';
                               }),
-                              activeColor: AP.olive,
-                              side: BorderSide(color: AP.olive.withOpacity(0.45)),
+                              activeColor: isDarkMode ? const Color(0xFF80A416) : const Color(0xFFB8A9C1),
+                              side: BorderSide(
+                                color: isDarkMode ? AP.olive.withOpacity(0.45) : const Color(0xFFCDD4B2),
+                                width: 1.2,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text.rich(
                               TextSpan(
-                                style: GoogleFonts.spaceGrotesk(fontSize: 11.5, color: AP.muted, height: 1.3),
-                                children: const [
-                                  TextSpan(text: 'I agree to the '),
-                                  TextSpan(text: 'Terms & Security Policy', style: TextStyle(color: AP.lime)),
-                                  TextSpan(text: '. Sessions may be audited.'),
+                                style: GoogleFonts.spaceGrotesk(
+                                  fontSize: 11.5, 
+                                  color: isDarkMode ? AP.muted : const Color(0xFF475569), 
+                                  height: 1.3,
+                                ),
+                                children: [
+                                  const TextSpan(text: 'I agree to the '),
+                                  TextSpan(
+                                    text: 'Terms & Security Policy', 
+                                    style: TextStyle(color: labelColor, fontWeight: FontWeight.bold),
+                                  ),
+                                  const TextSpan(text: '. Sessions may be audited.'),
                                 ],
                               ),
                             ),
@@ -340,6 +414,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                       // Submit Button
                       CyberButton(
                         label: _isLoading ? 'INITIALIZING ENCLAVE...' : 'INITIALIZE ROOT ENCLAVE',
+                        isDarkMode: isDarkMode,
                         onTap: _isLoading ? null : _handleSignup,
                       ),
                       const SizedBox(height: 8),
@@ -347,14 +422,14 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text('Existing operator credentials? ',
-                            style: TextStyle(fontSize: 10, color: AP.muted)),
+                            style: TextStyle(fontSize: 10, color: subtextColor)),
                           GestureDetector(
                             onTap: () => Navigator.pushReplacementNamed(context, '/login'),
                             child: MouseRegion(
                               cursor: SystemMouseCursors.click,
                               child: Text('SIGN IN →',
                                 style: GoogleFonts.orbitron(
-                                  fontSize: 8.5, letterSpacing: 1.3, color: AP.lime,
+                                  fontSize: 8.5, letterSpacing: 1.3, color: labelColor,
                                 ),
                               ),
                             ),
@@ -362,27 +437,27 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                         ],
                       ),
                       const SizedBox(height: 7),
-                      Divider(color: AP.olive.withOpacity(0.18), height: 1),
+                      Divider(color: isDarkMode ? AP.olive.withOpacity(0.18) : const Color(0xFF80A416).withOpacity(0.20), height: 1),
                       const SizedBox(height: 5),
                       Row(
                         children: [
                           Container(
                             width: 4, height: 4,
                             decoration: const BoxDecoration(
-                              color: AP.bright, shape: BoxShape.circle,
-                              boxShadow: [BoxShadow(color: AP.bright, blurRadius: 4)],
+                              color: Color(0xFFC4E320), shape: BoxShape.circle,
+                              boxShadow: [BoxShadow(color: Color(0xFFC4E320), blurRadius: 4)],
                             ),
                           ),
                           const SizedBox(width: 6),
                           Text('CHANNEL SECURE',
                             style: GoogleFonts.orbitron(
-                              fontSize: 6.5, letterSpacing: 1.2, color: AP.bright,
+                              fontSize: 6.5, letterSpacing: 1.2, color: isDarkMode ? AP.bright : const Color(0xFF80A416),
                             ),
                           ),
                           const Spacer(),
                           Text('TLS 1.3 · BUILD 1.0',
                             style: GoogleFonts.orbitron(
-                              fontSize: 6.5, letterSpacing: 1.1, color: AP.muted,
+                              fontSize: 6.5, letterSpacing: 1.1, color: subtextColor,
                             ),
                           ),
                         ],
@@ -398,33 +473,43 @@ class _SignupPageState extends ConsumerState<SignupPage> {
     );
   }
 
-  Widget _label(String t) => Padding(
+  Widget _label(String t, bool isDarkMode) => Padding(
     padding: const EdgeInsets.only(bottom: 3),
     child: Align(
       alignment: Alignment.centerLeft,
       child: Text(t.toUpperCase(),
         style: GoogleFonts.orbitron(
           fontSize: 7.5, fontWeight: FontWeight.w700,
-          letterSpacing: 1.8, color: AP.lime,
+          letterSpacing: 1.8, color: isDarkMode ? AP.lime : const Color(0xFF0F172A),
         ),
       ),
     ),
   );
 
-  InputDecoration _inputDeco(String hint) => InputDecoration(
+  InputDecoration _inputDeco(String hint, bool isDarkMode) => InputDecoration(
     hintText: hint,
-    hintStyle: TextStyle(color: AP.muted.withOpacity(0.65), fontSize: 11.5),
+    hintStyle: TextStyle(
+      color: isDarkMode ? AP.muted.withOpacity(0.65) : const Color(0xFF64748B), 
+      fontSize: 11.5,
+    ),
+    filled: true,
+    fillColor: isDarkMode ? const Color(0xE608120C) : const Color(0xFFFAF9F6), // Feather White fill
     border: InputBorder.none,
+    enabledBorder: InputBorder.none,
+    focusedBorder: InputBorder.none,
     contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
     isDense: true,
   );
 }
 
 class GridPainter extends CustomPainter {
+  final bool isDarkMode;
+  GridPainter({this.isDarkMode = true});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AP.lime.withOpacity(0.14) // Distinct, visible grid squares
+      ..color = (isDarkMode ? AP.lime.withOpacity(0.14) : const Color(0xFF80A416).withOpacity(0.08))
       ..strokeWidth = 1.0;
     const step = 48.0;
     for (double x = 0; x < size.width; x += step) {
@@ -441,7 +526,8 @@ class GridPainter extends CustomPainter {
 
 class _BackToExploreButton extends StatefulWidget {
   final VoidCallback onTap;
-  const _BackToExploreButton({required this.onTap});
+  final bool isDarkMode;
+  const _BackToExploreButton({required this.onTap, this.isDarkMode = true});
 
   @override
   State<_BackToExploreButton> createState() => _BackToExploreButtonState();
@@ -452,6 +538,9 @@ class _BackToExploreButtonState extends State<_BackToExploreButton> {
 
   @override
   Widget build(BuildContext context) {
+    final normalColor = widget.isDarkMode ? AP.lime : const Color(0xFF80A416);
+    final hoverColor = widget.isDarkMode ? AP.bright : const Color(0xFFC4E320);
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _isHovered = true),
@@ -464,11 +553,11 @@ class _BackToExploreButtonState extends State<_BackToExploreButton> {
             fontSize: 9.5,
             letterSpacing: 1.8,
             fontWeight: _isHovered ? FontWeight.w800 : FontWeight.w500,
-            color: _isHovered ? AP.bright : AP.lime,
+            color: _isHovered ? hoverColor : normalColor,
             shadows: _isHovered
                 ? [
                     BoxShadow(
-                      color: AP.bright.withOpacity(0.7),
+                      color: hoverColor.withOpacity(0.7),
                       blurRadius: 10,
                     )
                   ]

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/theme_provider.dart';
 
 /// Reusable Cyber Futuristic HUD Card with chamfered/cut angled corners
 /// and technical corner tags (e.g. H17, H18, SYS-01) matching the cyber hacking aesthetic.
-class CyberHudCard extends StatelessWidget {
+class CyberHudCard extends ConsumerWidget {
   final Widget? child;
   final String? tag; // e.g. 'H17', 'H18', 'SYS-01'
   final String? num;
@@ -37,7 +39,25 @@ class CyberHudCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDarkMode = ref.watch(themeModeProvider);
+    final isRedAlert = backgroundColor == const Color(0xFF810100) ||
+        backgroundColor == const Color(0xFFDF2531) ||
+        backgroundColor == const Color(0xFFB91C1D);
+
+    final effectiveBg = isDarkMode
+        ? backgroundColor
+        : (isRedAlert
+            ? backgroundColor
+            : (backgroundColor.computeLuminance() < 0.25
+                ? const Color(0xFFFAF9F6)
+                : backgroundColor));
+    final effectiveBorderColor = isDarkMode 
+        ? borderColor 
+        : (borderColor == const Color(0xFF5DD62C) || borderColor == const Color(0xFF80A416)
+            ? const Color(0xFFCDD4B2) 
+            : borderColor);
+
     Widget content;
     if (child != null) {
       content = child!;
@@ -49,10 +69,10 @@ class CyberHudCard extends StatelessWidget {
           if (num != null) ...[
             Text(
               num!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF5DD62C),
+                color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
                 fontFamily: 'monospace',
                 letterSpacing: 1.5,
               ),
@@ -62,10 +82,10 @@ class CyberHudCard extends StatelessWidget {
           if (title != null) ...[
             Text(
               title!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
                 letterSpacing: 1.1,
               ),
             ),
@@ -76,7 +96,7 @@ class CyberHudCard extends StatelessWidget {
               desc!,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey[400],
+                color: isDarkMode ? Colors.grey[400] : const Color(0xFF64748B),
                 height: 1.4,
               ),
             ),
@@ -87,9 +107,9 @@ class CyberHudCard extends StatelessWidget {
 
     Widget cardBody = CustomPaint(
       painter: _ChamferedCardPainter(
-        borderColor: borderColor,
+        borderColor: effectiveBorderColor,
         borderWidth: borderWidth,
-        backgroundColor: backgroundColor,
+        backgroundColor: effectiveBg,
         chamferSize: chamferSize,
       ),
       child: Container(
@@ -105,10 +125,10 @@ class CyberHudCard extends StatelessWidget {
                 alignment: Alignment.bottomLeft,
                 child: Text(
                   tag ?? label ?? '',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'monospace',
                     fontSize: 9,
-                    color: Color(0xFF80A416),
+                    color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A),
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
                   ),

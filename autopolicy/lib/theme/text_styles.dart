@@ -77,35 +77,57 @@ class CyberTextStyles {
   static void updateTheme(bool isDarkMode) {
     heading1 = displayTitle(
       fontSize: 34, 
-      color: isDarkMode ? const Color(0xFF7B96EC) : const Color(0xFF1E3A8A),
+      color: isDarkMode ? const Color(0xFF7B96EC) : const Color(0xFF80A416),
     );
     heading2 = displayTitle(
       fontSize: 24, 
-      color: isDarkMode ? const Color(0xFFF8FAFC) : Colors.black,
+      color: isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF0F172A),
     );
     heading3 = displayTitle(
       fontSize: 18, 
-      color: isDarkMode ? const Color(0xFFE2E8F0) : Colors.black87,
+      color: isDarkMode ? const Color(0xFFE2E8F0) : const Color(0xFF1E293B),
     );
     
     techBody = paragraph(
       fontSize: 16.0, 
-      color: isDarkMode ? const Color(0xFFCBD5E1) : Colors.black87,
+      color: isDarkMode ? const Color(0xFFCBD5E1) : const Color(0xFF1E293B),
     );
     techMuted = paragraph(
       fontSize: 14.5, 
-      color: isDarkMode ? const Color(0xFF9EBA9C) : Colors.black54,
+      color: isDarkMode ? const Color(0xFF9EBA9C) : const Color(0xFF64748B),
     );
     
     label = interface(
       fontSize: 14.0, 
-      color: isDarkMode ? const Color(0xFF9EBA9C) : Colors.black87, 
-      fontWeight: FontWeight.w600,
+      color: isDarkMode ? const Color(0xFF9EBA9C) : const Color(0xFF80A416), 
+      fontWeight: FontWeight.w700,
     );
     value = interface(
       fontSize: 16.5, 
-      color: isDarkMode ? Colors.white : Colors.black, 
+      color: isDarkMode ? Colors.white : const Color(0xFF0F172A), 
       fontWeight: FontWeight.bold,
     );
   }
+
+  static TextStyle heading2For(bool isDarkMode) => displayTitle(
+    fontSize: 24,
+    color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+    fontWeight: FontWeight.bold,
+  );
+
+  static TextStyle heading3For(bool isDarkMode) => displayTitle(
+    fontSize: 18,
+    color: isDarkMode ? const Color(0xFFE2E8F0) : const Color(0xFF0F172A),
+    fontWeight: FontWeight.bold,
+  );
+
+  static TextStyle techBodyFor(bool isDarkMode) => paragraph(
+    fontSize: 14.0,
+    color: isDarkMode ? const Color(0xFFCBD5E1) : const Color(0xFF0F172A),
+  );
+
+  static TextStyle techMutedFor(bool isDarkMode) => paragraph(
+    fontSize: 13.0,
+    color: isDarkMode ? const Color(0xFF9EBA9C) : const Color(0xFF64748B),
+  );
 }

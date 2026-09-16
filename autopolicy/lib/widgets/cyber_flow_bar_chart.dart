@@ -1,17 +1,18 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../theme/text_styles.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/theme_provider.dart';
 
-class CyberFlowBarChart extends StatefulWidget {
+class CyberFlowBarChart extends ConsumerStatefulWidget {
   final double height;
   const CyberFlowBarChart({super.key, this.height = 200});
 
   @override
-  State<CyberFlowBarChart> createState() => _CyberFlowBarChartState();
+  ConsumerState<CyberFlowBarChart> createState() => _CyberFlowBarChartState();
 }
 
-class _CyberFlowBarChartState extends State<CyberFlowBarChart> with SingleTickerProviderStateMixin {
+class _CyberFlowBarChartState extends ConsumerState<CyberFlowBarChart> with SingleTickerProviderStateMixin {
   late final AnimationController _animCtrl;
   final List<double> _barHeights = [
     0.35, 0.48, 0.28, 0.65, 0.52, 0.40, 0.78, 0.45, 
@@ -59,20 +60,35 @@ class _CyberFlowBarChartState extends State<CyberFlowBarChart> with SingleTicker
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = ref.watch(themeModeProvider);
+
     return Container(
       height: widget.height,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0C0D10),
-        border: Border.all(color: const Color(0xFF9D4EDD).withOpacity(0.60), width: 1.2),
+        color: isDarkMode ? const Color(0xFF0C0D10) : Colors.white,
+        border: Border.all(
+          color: isDarkMode 
+              ? const Color(0xFF9D4EDD).withOpacity(0.60) 
+              : const Color(0xFF80A416).withOpacity(0.30), 
+          width: 1.2,
+        ),
         borderRadius: BorderRadius.circular(4),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1A9D4EDD),
-            blurRadius: 10,
-            spreadRadius: 1,
-          )
-        ],
+        boxShadow: isDarkMode
+            ? const [
+                BoxShadow(
+                  color: Color(0x1A9D4EDD),
+                  blurRadius: 10,
+                  spreadRadius: 1,
+                )
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,7 +99,7 @@ class _CyberFlowBarChartState extends State<CyberFlowBarChart> with SingleTicker
             children: [
               Row(
                 children: [
-                  const Icon(Icons.analytics_outlined, color: Color(0xFF9D4EDD), size: 16),
+                  Icon(Icons.analytics_outlined, color: isDarkMode ? const Color(0xFF9D4EDD) : const Color(0xFF80A416), size: 16),
                   const SizedBox(width: 6),
                   Text(
                     'GLOBAL IoT PACKET INGRESS & THREAT SPECTRUM',
@@ -91,7 +107,7 @@ class _CyberFlowBarChartState extends State<CyberFlowBarChart> with SingleTicker
                       fontFamily: 'monospace',
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF9D4EDD),
+                      color: isDarkMode ? const Color(0xFF9D4EDD) : const Color(0xFF0F172A),
                       letterSpacing: 1.1,
                     ),
                   ),
@@ -115,7 +131,7 @@ class _CyberFlowBarChartState extends State<CyberFlowBarChart> with SingleTicker
                   const SizedBox(width: 8),
                   _buildLegendItem(
                     label: 'HTTP/REST',
-                    color: const Color(0xFFC4E326),
+                    color: isDarkMode ? const Color(0xFFC4E326) : const Color(0xFF80A416),
                     desc: 'HTTP/2 REST: Gateway API communication (280 pkts/s)',
                   ),
                   const SizedBox(width: 8),
@@ -136,21 +152,21 @@ class _CyberFlowBarChartState extends State<CyberFlowBarChart> with SingleTicker
               margin: const EdgeInsets.only(bottom: 6),
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFF181A22),
-                border: Border.all(color: const Color(0xFF9D4EDD), width: 0.8),
+                color: isDarkMode ? const Color(0xFF181A22) : const Color(0xFFF8FAFC),
+                border: Border.all(color: isDarkMode ? const Color(0xFF9D4EDD) : const Color(0xFF80A416), width: 0.8),
                 borderRadius: BorderRadius.circular(3),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline, color: Color(0xFF9D4EDD), size: 13),
+                  Icon(Icons.info_outline, color: isDarkMode ? const Color(0xFF9D4EDD) : const Color(0xFF80A416), size: 13),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       _activeLegendHover!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'monospace',
                         fontSize: 10,
-                        color: Color(0xFFEBECEE),
+                        color: isDarkMode ? const Color(0xFFEBECEE) : const Color(0xFF0F172A),
                       ),
                     ),
                   ),
@@ -169,14 +185,14 @@ class _CyberFlowBarChartState extends State<CyberFlowBarChart> with SingleTicker
                   fontFamily: 'monospace',
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
-                  color: const Color(0xFF5DD62C),
+                  color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF08652C),
                 ),
               ),
               const SizedBox(width: 10),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF9D4EDD).withOpacity(0.18),
+                  color: isDarkMode ? const Color(0xFF9D4EDD).withOpacity(0.18) : const Color(0xFF9D4EDD).withOpacity(0.10),
                   border: Border.all(color: const Color(0xFF9D4EDD), width: 0.8),
                   borderRadius: BorderRadius.circular(2),
                 ),
@@ -194,11 +210,11 @@ class _CyberFlowBarChartState extends State<CyberFlowBarChart> with SingleTicker
               if (_hoveredBarIndex != null)
                 Text(
                   'HOVERED BAR #${_hoveredBarIndex! + 1}: ${_barProtocols[_hoveredBarIndex!]} [${(_barHeights[_hoveredBarIndex!] * 1500).toInt()} pkts/s]',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'monospace',
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFC4E326),
+                    color: isDarkMode ? const Color(0xFFC4E326) : const Color(0xFF80A416),
                   ),
                 ),
             ],
@@ -235,6 +251,7 @@ class _CyberFlowBarChartState extends State<CyberFlowBarChart> with SingleTicker
                           barHeights: _barHeights,
                           pulse: _animCtrl.value,
                           hoveredIndex: _hoveredBarIndex,
+                          isDarkMode: isDarkMode,
                         ),
                       );
                     },
@@ -288,11 +305,13 @@ class _PurpleCyberBarGraphPainter extends CustomPainter {
   final List<double> barHeights;
   final double pulse;
   final int? hoveredIndex;
+  final bool isDarkMode;
 
   _PurpleCyberBarGraphPainter({
     required this.barHeights,
     required this.pulse,
     this.hoveredIndex,
+    this.isDarkMode = true,
   });
 
   @override
@@ -305,7 +324,7 @@ class _PurpleCyberBarGraphPainter extends CustomPainter {
 
     // Horizontal Grid Lines
     final gridPaint = Paint()
-      ..color = const Color(0xFF9D4EDD).withOpacity(0.15)
+      ..color = isDarkMode ? const Color(0xFF9D4EDD).withOpacity(0.15) : const Color(0xFFE2E8F0)
       ..strokeWidth = 1.0;
     canvas.drawLine(Offset(0, h), Offset(w, h), gridPaint);
     canvas.drawLine(Offset(0, h * 0.66), Offset(w, h * 0.66), gridPaint);

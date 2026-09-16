@@ -76,3 +76,21 @@ class CyberColors {
     )
   ];
 }
+
+class CyberLightPalette {
+  static const Color featherWhite = Color(0xFFFAF9F6);
+  static const Color cardWhite = Color(0xFFFFFFFF);
+  
+  // 5 New Swatch Colors from user (media_1789540084605.png)
+  static const Color cream = Color(0xFFFFF9E1);        // #FFF9E1 - Warm Cream / Ivory
+  static const Color paleSage = Color(0xFFEBECCC);     // #EBECCC - Pale Sage Green
+  static const Color sage = Color(0xFFCDD4B2);         // #CDD4B2 - Sage / Gray-Green (Border/Outline)
+  static const Color softLavender = Color(0xFFD4C9D8); // #D4C9D8 - Soft Lilac Lavender
+  static const Color darkLavender = Color(0xFFB8A9C1); // #B8A9C1 - Darker Lavender (Auth button/Accents)
+  
+  // Contrasting Black / Dark Typography
+  static const Color textBlack = Color(0xFF0F172A);
+  static const Color textDark = Color(0xFF1E293B);
+  static const Color textMuted = Color(0xFF64748B);
+  static const Color textSecondary = Color(0xFF334155);
+}

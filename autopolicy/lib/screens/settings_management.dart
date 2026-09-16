@@ -145,24 +145,36 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('SYSTEM SETTINGS & CONFIGURATION', style: CyberTextStyles.heading2),
+                      Text(
+                        'SYSTEM SETTINGS & CONFIGURATION',
+                        style: CyberTextStyles.heading2.copyWith(color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A)),
+                      ),
                       const SizedBox(height: 4),
-                      Text('ZEEK IDS, DETECTION THRESHOLDS, GNN MODEL, OPA SIDECAR & NOTIFICATIONS', style: CyberTextStyles.techMuted),
+                      Text(
+                        'ZEEK IDS, DETECTION THRESHOLDS, GNN MODEL, OPA SIDECAR & NOTIFICATIONS',
+                        style: CyberTextStyles.techMuted.copyWith(color: isDarkMode ? const Color(0xFF9EBA9C) : const Color(0xFF64748B)),
+                      ),
                     ],
                   ),
                   if (_activeSettingsTab != 0)
                     ElevatedButton.icon(
                       onPressed: () => setState(() => _activeSettingsTab = 0),
-                      icon: const Icon(Icons.arrow_back, size: 16, color: Colors.white),
-                      label: Text('ALL CONFIGURATION TILES', style: CyberTextStyles.technical(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E3A8A)),
+                      icon: Icon(Icons.arrow_back, size: 16, color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
+                      label: Text(
+                        'ALL CONFIGURATION TILES',
+                        style: CyberTextStyles.technical(color: isDarkMode ? Colors.white : const Color(0xFF0F172A), fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isDarkMode ? const Color(0xFF1E3A8A) : const Color(0xFFFAF9F6),
+                        side: BorderSide(color: isDarkMode ? const Color(0xFF3B82F6) : const Color(0xFFCDD4B2), width: 1.0),
+                      ),
                     ),
                 ],
               ),
               const SizedBox(height: 16),
 
               // Top Admin Banner
-              _buildTopAdminCard(context, adminName, adminRole, adminEmail),
+              _buildTopAdminCard(context, isDarkMode, adminName, adminRole, adminEmail),
               const SizedBox(height: 16),
 
               // Render Main Directory or Individual Sub-Pages
@@ -177,19 +189,19 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
     );
   }
 
-  Widget _buildTopAdminCard(BuildContext context, String adminName, String adminRole, String adminEmail) {
+  Widget _buildTopAdminCard(BuildContext context, bool isDarkMode, String adminName, String adminRole, String adminEmail) {
     return CyberHudCard(
       tag: 'SYS-CFG',
-      borderColor: const Color(0xFFFFE997),
+      borderColor: isDarkMode ? const Color(0xFFFFE997) : const Color(0xFFCDD4B2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             children: [
-              const CircleAvatar(
-                backgroundColor: Color(0xFFFFE997),
+              CircleAvatar(
+                backgroundColor: isDarkMode ? const Color(0xFFFFE997) : const Color(0xFFEBECCC),
                 radius: 20,
-                child: Icon(Icons.settings, color: Colors.black, size: 22),
+                child: Icon(Icons.settings, color: isDarkMode ? Colors.black : const Color(0xFF0F172A), size: 22),
               ),
               const SizedBox(width: 14),
               Column(
@@ -197,12 +209,12 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
                 children: [
                   Text(
                     'ZERO-TRUST SYSTEM CONFIGURATION HUB',
-                    style: CyberTextStyles.technical(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900),
+                    style: CyberTextStyles.technical(color: isDarkMode ? Colors.white : const Color(0xFF0F172A), fontSize: 15, fontWeight: FontWeight.w900),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'ENCLAVE: INDUSTRIAL IOT MESH · ACTIVE OPERATOR: ${adminName.toUpperCase()} ($adminRole)',
-                    style: CyberTextStyles.technical(fontSize: 13.0, fontWeight: FontWeight.bold, color: Colors.white70),
+                    style: CyberTextStyles.technical(fontSize: 13.0, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white70 : const Color(0xFF475569)),
                   ),
                 ],
               ),
@@ -217,7 +229,7 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             ),
             child: Text(
               'ALL SERVICES SYNCHRONIZED',
-              style: CyberTextStyles.technical(color: const Color(0xFF5DD62C), fontSize: 11.0, fontWeight: FontWeight.bold),
+              style: CyberTextStyles.technical(color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF08652C), fontSize: 11.0, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -337,12 +349,20 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
                           children: [
                             Text(
                               title,
-                              style: CyberTextStyles.technical(color: Colors.white, fontSize: 15.0, fontWeight: FontWeight.w900),
+                              style: CyberTextStyles.technical(
+                                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                fontSize: 15.0,
+                                fontWeight: FontWeight.w900,
+                              ),
                             ),
                             const SizedBox(height: 5),
                             Text(
                               subtitle,
-                              style: CyberTextStyles.technical(color: Colors.white70, fontSize: 13.0, fontWeight: FontWeight.w500),
+                              style: CyberTextStyles.technical(
+                                color: isDarkMode ? Colors.white70 : const Color(0xFF475569),
+                                fontSize: 13.0,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ],
                         ),
@@ -364,27 +384,30 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
   Widget _buildIndividualSettingsSubPage(BuildContext context, bool isDarkMode, String adminName, String adminRole, String adminEmail) {
     switch (_activeSettingsTab) {
       case 1:
-        return _buildZeekSubPage();
+        return _buildZeekSubPage(isDarkMode);
       case 2:
-        return _buildDetectionThresholdsSubPage();
+        return _buildDetectionThresholdsSubPage(isDarkMode);
       case 3:
-        return _buildModelRetrainingSubPage();
+        return _buildModelRetrainingSubPage(isDarkMode);
       case 4:
-        return _buildOpaSubPage();
+        return _buildOpaSubPage(isDarkMode);
       case 5:
-        return _buildWebhooksSubPage();
+        return _buildWebhooksSubPage(isDarkMode);
       case 6:
         return _buildAppearanceSubPage(isDarkMode);
       default:
-        return _buildZeekSubPage();
+        return _buildZeekSubPage(isDarkMode);
     }
   }
 
   // Sub-Page 1: Zeek Configuration
-  Widget _buildZeekSubPage() {
+  Widget _buildZeekSubPage(bool isDarkMode) {
+    final titleColor = isDarkMode ? Colors.white : const Color(0xFF0F172A);
+    final borderColor = isDarkMode ? const Color(0xFFFFE997) : const Color(0xFFCDD4B2);
+
     return CyberHudCard(
       tag: 'CFG-1',
-      borderColor: const Color(0xFFFFE997),
+      borderColor: borderColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -392,19 +415,22 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             children: [
               const Icon(Icons.radar_outlined, color: Color(0xFFFFE997), size: 22),
               const SizedBox(width: 10),
-              Text('ZEEK NETWORK SENSOR CONFIGURATION', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+              Text(
+                'ZEEK NETWORK SENSOR CONFIGURATION',
+                style: CyberTextStyles.technical(color: titleColor, fontSize: 14, fontWeight: FontWeight.bold),
+              ),
             ],
           ),
-          Divider(color: const Color(0xFFFFE997).withOpacity(0.3)),
+          Divider(color: borderColor.withOpacity(0.35)),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('CAPTURE NETWORK INTERFACE', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white)),
+              Text('CAPTURE NETWORK INTERFACE', style: CyberTextStyles.technical(fontSize: 11, color: titleColor)),
               DropdownButton<String>(
                 value: _zeekInterface,
-                dropdownColor: const Color(0xFF0F0F14),
-                style: CyberTextStyles.technical(color: const Color(0xFFFFE997), fontSize: 11),
+                dropdownColor: isDarkMode ? const Color(0xFF0F0F14) : const Color(0xFFFAF9F6),
+                style: CyberTextStyles.technical(color: isDarkMode ? const Color(0xFFFFE997) : const Color(0xFF80A416), fontSize: 11, fontWeight: FontWeight.bold),
                 items: ['eth0 (All IoT Ingress)', 'eth1 (Industrial ICS)', 'wlan0 (Mesh Gateways)'].map((s) {
                   return DropdownMenuItem(value: s, child: Text(s));
                 }).toList(),
@@ -417,18 +443,23 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
           const SizedBox(height: 12),
           TextField(
             controller: _bpfFilterCtrl,
-            style: CyberTextStyles.techBody,
-            decoration: const InputDecoration(labelText: 'BERKELEY PACKET FILTER (BPF) STRING'),
+            style: TextStyle(color: titleColor, fontFamily: 'monospace', fontSize: 13),
+            decoration: InputDecoration(
+              labelText: 'BERKELEY PACKET FILTER (BPF) STRING',
+              labelStyle: TextStyle(color: isDarkMode ? const Color(0xFFFFE997) : const Color(0xFF80A416), fontSize: 12),
+              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2))),
+              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? const Color(0xFFFFE997) : const Color(0xFF80A416))),
+            ),
           ),
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('RING BUFFER SIZE', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white)),
+              Text('RING BUFFER SIZE', style: CyberTextStyles.technical(fontSize: 11, color: titleColor)),
               DropdownButton<String>(
                 value: _zeekBufferSize,
-                dropdownColor: const Color(0xFF0F0F14),
-                style: CyberTextStyles.technical(color: const Color(0xFFFFE997), fontSize: 11),
+                dropdownColor: isDarkMode ? const Color(0xFF0F0F14) : const Color(0xFFFAF9F6),
+                style: CyberTextStyles.technical(color: isDarkMode ? const Color(0xFFFFE997) : const Color(0xFF80A416), fontSize: 11, fontWeight: FontWeight.bold),
                 items: ['256 MB', '512 MB', '1024 MB', '2048 MB'].map((s) {
                   return DropdownMenuItem(value: s, child: Text(s));
                 }).toList(),
@@ -440,8 +471,8 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
           ),
           SwitchListTile(
             activeColor: const Color(0xFFFFE997),
-            title: Text('PROMISCUOUS PACKET CAPTURE', style: CyberTextStyles.technical(fontSize: 12, color: Colors.white)),
-            subtitle: Text('Inspect all lateral traffic across VLAN switches', style: CyberTextStyles.techMuted.copyWith(fontSize: 10)),
+            title: Text('PROMISCUOUS PACKET CAPTURE', style: CyberTextStyles.technical(fontSize: 12, color: titleColor)),
+            subtitle: Text('Inspect all lateral traffic across VLAN switches', style: CyberTextStyles.techMuted.copyWith(fontSize: 10, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
             value: _zeekPromiscuous,
             onChanged: (val) => setState(() => _zeekPromiscuous = val),
           ),
@@ -451,10 +482,13 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
   }
 
   // Sub-Page 2: Detection Thresholds
-  Widget _buildDetectionThresholdsSubPage() {
+  Widget _buildDetectionThresholdsSubPage(bool isDarkMode) {
+    final titleColor = isDarkMode ? Colors.white : const Color(0xFF0F172A);
+    final borderColor = isDarkMode ? const Color(0xFFA88AED) : const Color(0xFFCDD4B2);
+
     return CyberHudCard(
       tag: 'CFG-2',
-      borderColor: const Color(0xFFA88AED),
+      borderColor: borderColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -462,15 +496,15 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             children: [
               const Icon(Icons.tune_outlined, color: Color(0xFFA88AED), size: 22),
               const SizedBox(width: 10),
-              Text('DETECTION THRESHOLDS & GNN SENSITIVITY', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+              Text('DETECTION THRESHOLDS & GNN SENSITIVITY', style: CyberTextStyles.technical(color: titleColor, fontSize: 14, fontWeight: FontWeight.bold)),
             ],
           ),
-          Divider(color: const Color(0xFFA88AED).withOpacity(0.3)),
+          Divider(color: borderColor.withOpacity(0.35)),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('GNN THREAT SENSITIVITY CUTOFF', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white)),
+              Text('GNN THREAT SENSITIVITY CUTOFF', style: CyberTextStyles.technical(fontSize: 11, color: titleColor)),
               Text('${(_gnnSensitivityThreshold * 100).toInt()}% CONFIDENCE', style: CyberTextStyles.technical(fontSize: 11, color: const Color(0xFFA88AED), fontWeight: FontWeight.bold)),
             ],
           ),
@@ -479,14 +513,14 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             min: 0.50,
             max: 0.99,
             activeColor: const Color(0xFFA88AED),
-            inactiveColor: Colors.white24,
+            inactiveColor: isDarkMode ? Colors.white24 : const Color(0xFFE2E8F0),
             onChanged: (val) => setState(() => _gnnSensitivityThreshold = val),
           ),
           const SizedBox(height: 10),
           SwitchListTile(
             activeColor: const Color(0xFFA88AED),
-            title: Text('AUTO-QUARANTINE HIGH-RISK DEVICES', style: CyberTextStyles.technical(fontSize: 12, color: Colors.white)),
-            subtitle: Text('Instantly isolate target node when anomaly score crosses threshold', style: CyberTextStyles.techMuted.copyWith(fontSize: 10)),
+            title: Text('AUTO-QUARANTINE HIGH-RISK DEVICES', style: CyberTextStyles.technical(fontSize: 12, color: titleColor)),
+            subtitle: Text('Instantly isolate target node when anomaly score crosses threshold', style: CyberTextStyles.techMuted.copyWith(fontSize: 10, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
             value: _autoQuarantineEnabled,
             onChanged: (val) => setState(() => _autoQuarantineEnabled = val),
           ),
@@ -496,10 +530,13 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
   }
 
   // Sub-Page 3: Model & Retraining
-  Widget _buildModelRetrainingSubPage() {
+  Widget _buildModelRetrainingSubPage(bool isDarkMode) {
+    final titleColor = isDarkMode ? Colors.white : const Color(0xFF0F172A);
+    final borderColor = isDarkMode ? const Color(0xFFC4E320) : const Color(0xFFCDD4B2);
+
     return CyberHudCard(
       tag: 'CFG-3',
-      borderColor: const Color(0xFFC4E320),
+      borderColor: borderColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -507,15 +544,15 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             children: [
               const Icon(Icons.psychology_outlined, color: Color(0xFFC4E320), size: 22),
               const SizedBox(width: 10),
-              Text('PYTORCH GNN MODEL & CONTINUOUS RETRAINING', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+              Text('PYTORCH GNN MODEL & CONTINUOUS RETRAINING', style: CyberTextStyles.technical(color: titleColor, fontSize: 14, fontWeight: FontWeight.bold)),
             ],
           ),
-          Divider(color: const Color(0xFFC4E320).withOpacity(0.3)),
+          Divider(color: borderColor.withOpacity(0.35)),
           const SizedBox(height: 10),
           SwitchListTile(
             activeColor: const Color(0xFFC4E320),
-            title: Text('AUTO-RETRAIN ON FLOW BATCH', style: CyberTextStyles.technical(fontSize: 12, color: Colors.white)),
-            subtitle: Text('Retrain GNN graph weights automatically every $_retrainFlowBatchSize incoming network flows', style: CyberTextStyles.techMuted.copyWith(fontSize: 10)),
+            title: Text('AUTO-RETRAIN ON FLOW BATCH', style: CyberTextStyles.technical(fontSize: 12, color: titleColor)),
+            subtitle: Text('Retrain GNN graph weights automatically every $_retrainFlowBatchSize incoming network flows', style: CyberTextStyles.techMuted.copyWith(fontSize: 10, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
             value: _autoRetrainOnFlows,
             onChanged: (val) => setState(() => _autoRetrainOnFlows = val),
           ),
@@ -523,13 +560,15 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('MANUAL ON-DEMAND RETRAIN', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white)),
+              Text('MANUAL ON-DEMAND RETRAIN', style: CyberTextStyles.technical(fontSize: 11, color: titleColor)),
               ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC4E320)),
-                icon: const Icon(Icons.refresh, color: Colors.black, size: 16),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFFB8A9C1),
+                ),
+                icon: Icon(Icons.refresh, color: isDarkMode ? Colors.black : const Color(0xFF0F172A), size: 16),
                 label: Text(
                   _isRetrainingModel ? 'TRAINING...' : 'RETRAIN MODEL NOW',
-                  style: CyberTextStyles.technical(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
+                  style: CyberTextStyles.technical(color: isDarkMode ? Colors.black : const Color(0xFF0F172A), fontSize: 10, fontWeight: FontWeight.bold),
                 ),
                 onPressed: _isRetrainingModel ? null : _triggerModelRetrain,
               ),
@@ -537,7 +576,7 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
           ),
           if (_retrainStatus.isNotEmpty) ...[
             const SizedBox(height: 10),
-            Text(_retrainStatus, style: CyberTextStyles.technical(fontSize: 10, color: const Color(0xFFC4E320))),
+            Text(_retrainStatus, style: CyberTextStyles.technical(fontSize: 10, color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416))),
           ],
         ],
       ),
@@ -545,10 +584,13 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
   }
 
   // Sub-Page 4: OPA Connection
-  Widget _buildOpaSubPage() {
+  Widget _buildOpaSubPage(bool isDarkMode) {
+    final titleColor = isDarkMode ? Colors.white : const Color(0xFF0F172A);
+    final borderColor = isDarkMode ? const Color(0xFF80A416) : const Color(0xFFCDD4B2);
+
     return CyberHudCard(
       tag: 'CFG-4',
-      borderColor: const Color(0xFF80A416),
+      borderColor: borderColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -556,27 +598,37 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             children: [
               const Icon(Icons.shield_outlined, color: Color(0xFF80A416), size: 22),
               const SizedBox(width: 10),
-              Text('OPEN POLICY AGENT (OPA) & REGO ENFORCEMENT', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+              Text('OPEN POLICY AGENT (OPA) & REGO ENFORCEMENT', style: CyberTextStyles.technical(color: titleColor, fontSize: 14, fontWeight: FontWeight.bold)),
             ],
           ),
-          Divider(color: const Color(0xFF80A416).withOpacity(0.3)),
+          Divider(color: borderColor.withOpacity(0.35)),
           const SizedBox(height: 10),
           TextField(
             controller: _opaEndpointCtrl,
-            style: CyberTextStyles.techBody,
-            decoration: const InputDecoration(labelText: 'OPA ENGINE REST ENDPOINT'),
+            style: TextStyle(color: titleColor, fontFamily: 'monospace', fontSize: 12.5),
+            decoration: InputDecoration(
+              labelText: 'OPA ENGINE REST ENDPOINT',
+              labelStyle: TextStyle(color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF80A416), fontSize: 12),
+              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2))),
+              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF80A416))),
+            ),
           ),
           const SizedBox(height: 10),
           TextField(
             controller: _bundlePathCtrl,
-            style: CyberTextStyles.techBody,
-            decoration: const InputDecoration(labelText: 'REGO POLICY BUNDLE PATH'),
+            style: TextStyle(color: titleColor, fontFamily: 'monospace', fontSize: 12.5),
+            decoration: InputDecoration(
+              labelText: 'REGO POLICY BUNDLE PATH',
+              labelStyle: TextStyle(color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF80A416), fontSize: 12),
+              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2))),
+              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF80A416))),
+            ),
           ),
           const SizedBox(height: 12),
           SwitchListTile(
             activeColor: const Color(0xFF80A416),
-            title: Text('STRICT REGO DENY-BY-DEFAULT', style: CyberTextStyles.technical(fontSize: 12, color: Colors.white)),
-            subtitle: Text('Zero-Trust principle: drop all unspecified microsegments', style: CyberTextStyles.techMuted.copyWith(fontSize: 10)),
+            title: Text('STRICT REGO DENY-BY-DEFAULT', style: CyberTextStyles.technical(fontSize: 12, color: titleColor)),
+            subtitle: Text('Zero-Trust principle: drop all unspecified microsegments', style: CyberTextStyles.techMuted.copyWith(fontSize: 10, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
             value: _strictOpaEnforcement,
             onChanged: (val) => setState(() => _strictOpaEnforcement = val),
           ),
@@ -585,16 +637,18 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF80A416)),
-                icon: const Icon(Icons.health_and_safety, color: Colors.black, size: 16),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isDarkMode ? const Color(0xFF80A416) : const Color(0xFFB8A9C1),
+                ),
+                icon: Icon(Icons.health_and_safety, color: isDarkMode ? Colors.black : const Color(0xFF0F172A), size: 16),
                 label: Text(
                   _isTestingOpa ? 'TESTING...' : 'PING OPA SIDECAR',
-                  style: CyberTextStyles.technical(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
+                  style: CyberTextStyles.technical(color: isDarkMode ? Colors.black : const Color(0xFF0F172A), fontSize: 10, fontWeight: FontWeight.bold),
                 ),
                 onPressed: _isTestingOpa ? null : _testOpaConnection,
               ),
               if (_opaTestStatus.isNotEmpty)
-                Text(_opaTestStatus, style: CyberTextStyles.technical(fontSize: 10, color: const Color(0xFFC4E320))),
+                Text(_opaTestStatus, style: CyberTextStyles.technical(fontSize: 10, color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416))),
             ],
           ),
         ],
@@ -603,10 +657,13 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
   }
 
   // Sub-Page 5: Webhooks & Notifications
-  Widget _buildWebhooksSubPage() {
+  Widget _buildWebhooksSubPage(bool isDarkMode) {
+    final titleColor = isDarkMode ? Colors.white : const Color(0xFF0F172A);
+    final borderColor = isDarkMode ? const Color(0xFFB91C1D) : const Color(0xFFCDD4B2);
+
     return CyberHudCard(
       tag: 'CFG-5',
-      borderColor: const Color(0xFFB91C1D),
+      borderColor: borderColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -614,21 +671,31 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             children: [
               const Icon(Icons.notifications_active_outlined, color: Color(0xFFB91C1D), size: 22),
               const SizedBox(width: 10),
-              Text('NOTIFICATION & DISPATCH WEBHOOK CONFIGURATION', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+              Text('NOTIFICATION & DISPATCH WEBHOOK CONFIGURATION', style: CyberTextStyles.technical(color: titleColor, fontSize: 14, fontWeight: FontWeight.bold)),
             ],
           ),
-          Divider(color: const Color(0xFFB91C1D).withOpacity(0.3)),
+          Divider(color: borderColor.withOpacity(0.35)),
           const SizedBox(height: 10),
           TextField(
             controller: _webhookController,
-            style: CyberTextStyles.techBody,
-            decoration: const InputDecoration(labelText: 'INCIDENT ALERT WEBHOOK URL (SLACK / TEAMS)'),
+            style: TextStyle(color: titleColor, fontFamily: 'monospace', fontSize: 12),
+            decoration: InputDecoration(
+              labelText: 'INCIDENT ALERT WEBHOOK URL (SLACK / TEAMS)',
+              labelStyle: TextStyle(color: isDarkMode ? const Color(0xFFB91C1D) : const Color(0xFFB91C1D), fontSize: 12),
+              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2))),
+              focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFB91C1D))),
+            ),
           ),
           const SizedBox(height: 10),
           TextField(
             controller: _smtpHostCtrl,
-            style: CyberTextStyles.techBody,
-            decoration: const InputDecoration(labelText: 'ENCLAVE SMTP DISPATCH HOST'),
+            style: TextStyle(color: titleColor, fontFamily: 'monospace', fontSize: 12),
+            decoration: InputDecoration(
+              labelText: 'ENCLAVE SMTP DISPATCH HOST',
+              labelStyle: TextStyle(color: isDarkMode ? const Color(0xFFB91C1D) : const Color(0xFFB91C1D), fontSize: 12),
+              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2))),
+              focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFB91C1D))),
+            ),
           ),
           const SizedBox(height: 12),
           Row(
@@ -644,7 +711,7 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
                 onPressed: _isTestingWebhook ? null : _testWebhook,
               ),
               if (_webhookStatus.isNotEmpty)
-                Text(_webhookStatus, style: CyberTextStyles.technical(fontSize: 10, color: const Color(0xFFC4E320))),
+                Text(_webhookStatus, style: CyberTextStyles.technical(fontSize: 10, color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416))),
             ],
           ),
         ],
@@ -654,9 +721,12 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
 
   // Sub-Page 6: Appearance & Theme
   Widget _buildAppearanceSubPage(bool isDarkMode) {
+    final titleColor = isDarkMode ? Colors.white : const Color(0xFF0F172A);
+    final borderColor = isDarkMode ? const Color(0xFFC5C764) : const Color(0xFFCDD4B2);
+
     return CyberHudCard(
       tag: 'CFG-6',
-      borderColor: const Color(0xFFC5C764),
+      borderColor: borderColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -664,17 +734,17 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             children: [
               const Icon(Icons.palette_outlined, color: Color(0xFFC5C764), size: 22),
               const SizedBox(width: 10),
-              Text('APPEARANCE & CYBER THEME PREFERENCES', style: CyberTextStyles.technical(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+              Text('APPEARANCE & CYBER THEME PREFERENCES', style: CyberTextStyles.technical(color: titleColor, fontSize: 14, fontWeight: FontWeight.bold)),
             ],
           ),
-          Divider(color: const Color(0xFFC5C764).withOpacity(0.3)),
+          Divider(color: borderColor.withOpacity(0.35)),
           const SizedBox(height: 10),
           SwitchListTile(
             activeColor: const Color(0xFFC4E320),
-            title: Text('DARK CYBER THEME MODE', style: CyberTextStyles.technical(fontSize: 12, color: Colors.white)),
+            title: Text('DARK CYBER THEME MODE', style: CyberTextStyles.technical(fontSize: 12, color: titleColor)),
             subtitle: Text(
               isDarkMode ? 'OBSIDIAN TERMINAL DARK MODE ACTIVE' : 'PASTEL LAVENDER LIGHT MODE ACTIVE',
-              style: CyberTextStyles.techMuted.copyWith(fontSize: 10),
+              style: CyberTextStyles.techMuted.copyWith(fontSize: 10, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B)),
             ),
             value: isDarkMode,
             onChanged: (val) {
@@ -685,11 +755,11 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('TELEMETRY REFRESH RATE', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white)),
+              Text('TELEMETRY REFRESH RATE', style: CyberTextStyles.technical(fontSize: 11, color: titleColor)),
               DropdownButton<String>(
                 value: _telemetryRefreshInterval,
-                dropdownColor: const Color(0xFF0F0F14),
-                style: CyberTextStyles.technical(color: const Color(0xFFC4E320), fontSize: 11),
+                dropdownColor: isDarkMode ? const Color(0xFF0F0F14) : const Color(0xFFFAF9F6),
+                style: CyberTextStyles.technical(color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416), fontSize: 11, fontWeight: FontWeight.bold),
                 items: ['1 Second', '2 Seconds', '5 Seconds', '10 Seconds'].map((s) {
                   return DropdownMenuItem(value: s, child: Text(s));
                 }).toList(),

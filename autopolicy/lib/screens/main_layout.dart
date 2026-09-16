@@ -384,11 +384,11 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   color: isSelectedDirect
-                      ? (isDarkMode ? const Color(0xFFC4E320).withOpacity(0.20) : const Color(0xFF1E3A8A).withOpacity(0.12))
+                      ? (isDarkMode ? const Color(0xFFC4E320).withOpacity(0.20) : const Color(0xFFC4E320).withOpacity(0.35))
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                   border: isSelectedDirect
-                      ? Border.all(color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A), width: 1)
+                      ? Border.all(color: const Color(0xFF80A416), width: 1.2)
                       : null,
                 ),
                 child: Row(
@@ -397,8 +397,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                       catIcon,
                       size: 20,
                       color: (isSelectedDirect || hasSelectedChild)
-                          ? (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A))
-                          : (isDarkMode ? Colors.white70 : Colors.black87),
+                          ? (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416))
+                          : (isDarkMode ? Colors.white70 : const Color(0xFF475569)),
                     ),
                     if (!_isSidebarCollapsed) ...[
                       const SizedBox(width: 12),
@@ -409,8 +409,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                             fontSize: 14.0,
                             fontWeight: (isSelectedDirect || hasSelectedChild) ? FontWeight.bold : FontWeight.w600,
                             color: (isSelectedDirect || hasSelectedChild)
-                                ? (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A))
-                                : (isDarkMode ? Colors.white : Colors.black87),
+                                ? (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A))
+                                : (isDarkMode ? Colors.white : const Color(0xFF1E293B)),
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -461,11 +461,11 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? (isDarkMode ? const Color(0xFFC4E320).withOpacity(0.20) : const Color(0xFF1E3A8A).withOpacity(0.12))
+                              ? (isDarkMode ? const Color(0xFFC4E320).withOpacity(0.20) : const Color(0xFFC4E320).withOpacity(0.35))
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(20),
                           border: isSelected
-                              ? Border.all(color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A), width: 1)
+                              ? Border.all(color: const Color(0xFF80A416), width: 1.2)
                               : null,
                         ),
                         child: Row(
@@ -476,8 +476,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: isSelected
-                                    ? (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A))
-                                    : (isDarkMode ? Colors.white30 : Colors.black26),
+                                    ? (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416))
+                                    : (isDarkMode ? Colors.white30 : const Color(0xFF94A3B8)),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -487,8 +487,8 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                                 style: CyberTextStyles.technical(
                                   fontSize: 13.0,
                                   color: isSelected
-                                      ? (isDarkMode ? Colors.white : Colors.black87)
-                                      : (isDarkMode ? Colors.white60 : Colors.black54),
+                                      ? (isDarkMode ? Colors.white : const Color(0xFF0F172A))
+                                      : (isDarkMode ? Colors.white60 : const Color(0xFF475569)),
                                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -553,22 +553,10 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
         backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // Base background color or Midnight Indigo / Lavender-Blue gradient
+          // Base background color (Solid Feather White #FAF9F6 in Light Mode, Pure Black in Dark Mode)
           Container(
             decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF000000) : const Color(0xFFE5DEFF),
-              gradient: isDarkMode 
-                  ? null // Pure obsidian black for authentic cyber hacking terminal
-                  : const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFFDCD6FD), // Soft periwinkle lavender
-                        Color(0xFFFEE8DF), // Pastel peach-pink glow (matches the warm light)
-                        Color(0xFFD2E3FC), // Soft periwinkle sky blue
-                        Color(0xFFE5DEFF), // Soft warm lavender
-                      ],
-                    ),
+              color: isDarkMode ? const Color(0xFF000000) : const Color(0xFFFAF9F6),
             ),
           ),
 
@@ -581,20 +569,29 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                     children: [
                       // 1. TOP INTERACTIVE DASHBOARD TELEMETRY HUD BAR
                       Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isDarkMode 
-                            ? const Color(0xFF0F0F0F) 
-                            : Colors.white.withOpacity(0.15), // frosted light glass
-                        border: Border(
-                          bottom: BorderSide(
-                            color: isDarkMode 
-                                ? const Color(0xFF337418).withOpacity(0.45) 
-                                : const Color(0xFFD6D6F2).withOpacity(0.40), // thin soft lavender border
-                            width: 1,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: isDarkMode 
+                              ? const Color(0xFF0F0F0F) 
+                              : const Color(0xFFFAF9F6),
+                          border: Border(
+                            bottom: BorderSide(
+                              color: isDarkMode 
+                                  ? const Color(0xFF337418).withOpacity(0.45) 
+                                  : const Color(0xFF80A416).withOpacity(0.20),
+                              width: 1,
+                            ),
                           ),
+                          boxShadow: isDarkMode
+                              ? null
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.03),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
                         ),
-                      ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -605,14 +602,14 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                             IconButton(
                               icon: Icon(
                                 _isSidebarCollapsed ? Icons.menu_open : Icons.menu,
-                                color: isDarkMode ? CyberColors.neonCyan : const Color(0xFF1E3A8A),
+                                color: isDarkMode ? CyberColors.neonCyan : const Color(0xFF80A416),
                                 size: 18,
                               ),
                               onPressed: () => setState(() => _isSidebarCollapsed = !_isSidebarCollapsed),
                             ),
-                          Icon(
+                          const Icon(
                             Icons.shield,
-                            color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF1E3A8A), // Palette Olive Cyber Green shield
+                            color: Color(0xFF80A416),
                             size: 26,
                           ),
                           if (screenWidth > 450) ...[
@@ -622,7 +619,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                               style: CyberTextStyles.displayTitle(
                                 fontSize: 18.0,
                                 fontWeight: FontWeight.w900,
-                                color: isDarkMode ? Colors.white : const Color(0xFF1E3A8A), // Metallic white brand title
+                                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
                               ).copyWith(letterSpacing: 2.0),
                             ),
                           ],
@@ -682,6 +679,45 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                       // Clock & Active User Scopes
                       Row(
                         children: [
+                          // Theme Mode Switcher Pill (Dark / Light)
+                          InkWell(
+                            onTap: () {
+                              ref.read(themeModeProvider.notifier).state = !isDarkMode;
+                            },
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isDarkMode ? const Color(0xFF141428) : const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416),
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isDarkMode ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                                    size: 13,
+                                    color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416),
+                                  ),
+                                  const SizedBox(width: 5),
+                                  Text(
+                                    isDarkMode ? 'DARK' : 'LIGHT',
+                                    style: TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
                           // Developer Live Role Switcher Pill
                           _buildDevRoleSwitcher(context, activeRole, isDarkMode),
                           const SizedBox(width: 12),
@@ -690,7 +726,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                             Text(
                               _currentTimeString,
                               style: CyberTextStyles.technical(
-                                color: isDarkMode ? CyberColors.neonCyan : const Color(0xFF1E3A8A), 
+                                color: isDarkMode ? CyberColors.neonCyan : const Color(0xFF80A416), 
                                 fontSize: 13,
                               ),
                             ),
@@ -703,7 +739,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                               IconButton(
                                 icon: Icon(
                                   Icons.notifications_outlined, 
-                                  color: isDarkMode ? CyberColors.neonCyan : const Color(0xFF1E3A8A), 
+                                  color: isDarkMode ? CyberColors.neonCyan : const Color(0xFF80A416), 
                                   size: 20,
                                 ),
                                 onPressed: () {
@@ -746,15 +782,24 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                           decoration: BoxDecoration(
                             color: isDarkMode 
                                 ? const Color(0xFF0F0F0F) 
-                                : Colors.white.withOpacity(0.15), // frosted light glass
+                                : const Color(0xFFFAF9F6),
                             border: Border(
                               right: BorderSide(
                                 color: isDarkMode 
                                     ? const Color(0xFF337418).withOpacity(0.45) 
-                                    : const Color(0xFFD6D6F2).withOpacity(0.40), // thin warm purple border
+                                    : const Color(0xFF80A416).withOpacity(0.20),
                                 width: 1,
                               ),
                             ),
+                            boxShadow: isDarkMode
+                                ? null
+                                : [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.02),
+                                      blurRadius: 4,
+                                      offset: const Offset(1, 0),
+                                    ),
+                                  ],
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -787,7 +832,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
       bottomNavigationBar: isMobile
           ? Container(
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
+                color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
                 border: Border(
                   top: BorderSide(
                     color: isDarkMode 
@@ -817,7 +862,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                     onTap: (navIdx) {
                       ref.read(navigationTabProvider.notifier).state = mobileMenuItems[navIdx]['index'] as int;
                     },
-                    backgroundColor: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
+                    backgroundColor: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
                     selectedItemColor: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A),
                     unselectedItemColor: isDarkMode ? const Color(0xFF888888) : const Color(0xFF64748B),
                     selectedLabelStyle: CyberTextStyles.technical(fontSize: 9.0),
@@ -979,7 +1024,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
         decoration: BoxDecoration(
           border: Border(
             top: BorderSide(
-              color: isDarkMode ? const Color(0xFF337418).withOpacity(0.35) : const Color(0xFFD6D6F2).withOpacity(0.35),
+              color: isDarkMode ? const Color(0xFF337418).withOpacity(0.35) : const Color(0xFF80A416).withOpacity(0.20),
             ),
           ),
         ),
@@ -993,11 +1038,11 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                 children: [
                   CircleAvatar(
                     radius: 16,
-                    backgroundColor: isDarkMode ? const Color(0xFFC4E320).withOpacity(0.2) : const Color(0xFF1E3A8A).withOpacity(0.15),
+                    backgroundColor: isDarkMode ? const Color(0xFFC4E320).withOpacity(0.2) : const Color(0xFFC4E320).withOpacity(0.35),
                     child: Icon(
                       Icons.person,
                       size: 18,
-                      color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A),
+                      color: const Color(0xFF80A416),
                     ),
                   ),
                   Positioned(
@@ -1024,10 +1069,10 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF0A0A0A) : Colors.white.withOpacity(0.25),
+        color: isDarkMode ? const Color(0xFF0A0A0A) : Colors.white,
         border: Border(
           top: BorderSide(
-            color: isDarkMode ? const Color(0xFF337418).withOpacity(0.40) : const Color(0xFFD6D6F2).withOpacity(0.40),
+            color: isDarkMode ? const Color(0xFF337418).withOpacity(0.40) : const Color(0xFF80A416).withOpacity(0.20),
             width: 1,
           ),
         ),
@@ -1038,10 +1083,10 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF141414) : Colors.white.withOpacity(0.4),
+            color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.4) : const Color(0xFF1E3A8A).withOpacity(0.3),
+              color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.4) : const Color(0xFF80A416).withOpacity(0.25),
             ),
           ),
           child: Row(
@@ -1050,13 +1095,13 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                 children: [
                   CircleAvatar(
                     radius: 16,
-                    backgroundColor: isDarkMode ? const Color(0xFFC4E320).withOpacity(0.2) : const Color(0xFF1E3A8A).withOpacity(0.15),
+                    backgroundColor: isDarkMode ? const Color(0xFFC4E320).withOpacity(0.2) : const Color(0xFFC4E320).withOpacity(0.35),
                     child: Text(
                       username.isNotEmpty ? username.substring(0, 1).toUpperCase() : 'A',
                       style: CyberTextStyles.technical(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF1E3A8A),
+                        color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416),
                       ),
                     ),
                   ),
@@ -1086,7 +1131,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                       style: CyberTextStyles.technical(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black87,
+                        color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1096,15 +1141,15 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                            color: isDarkMode ? const Color(0xFF8B5CF6).withOpacity(0.2) : const Color(0xFFB1A9DA).withOpacity(0.35),
                             borderRadius: BorderRadius.circular(3),
                           ),
                           child: Text(
                             role.toUpperCase(),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 8.5,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFFA88AED),
+                              color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF5E7343),
                             ),
                           ),
                         ),
@@ -1116,7 +1161,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
               Icon(
                 Icons.unfold_more,
                 size: 16,
-                color: isDarkMode ? Colors.white54 : Colors.black45,
+                color: isDarkMode ? Colors.white54 : const Color(0xFF64748B),
               ),
             ],
           ),
@@ -1280,7 +1325,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDlgState) => AlertDialog(
-          backgroundColor: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
+          backgroundColor: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
             side: const BorderSide(color: Color(0xFF80A416), width: 1.5),
@@ -1289,7 +1334,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
             children: [
               const Icon(Icons.key, color: Color(0xFF80A416)),
               const SizedBox(width: 10),
-              Text('CHANGE OPERATOR ACCESS KEY', style: CyberTextStyles.heading3.copyWith(fontSize: 14)),
+              Text('CHANGE OPERATOR ACCESS KEY', style: CyberTextStyles.heading3For(isDarkMode).copyWith(fontSize: 14)),
             ],
           ),
           content: SizedBox(
@@ -1300,21 +1345,21 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                 TextField(
                   controller: curCtrl,
                   obscureText: obscure,
-                  style: CyberTextStyles.techBody,
+                  style: CyberTextStyles.techBodyFor(isDarkMode),
                   decoration: const InputDecoration(labelText: 'CURRENT ACCESS KEY'),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: newCtrl,
                   obscureText: obscure,
-                  style: CyberTextStyles.techBody,
+                  style: CyberTextStyles.techBodyFor(isDarkMode),
                   decoration: const InputDecoration(labelText: 'NEW ACCESS KEY (MIN 8 CHARS)'),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: cnfCtrl,
                   obscureText: obscure,
-                  style: CyberTextStyles.techBody,
+                  style: CyberTextStyles.techBodyFor(isDarkMode),
                   decoration: const InputDecoration(labelText: 'CONFIRM NEW ACCESS KEY'),
                 ),
                 const SizedBox(height: 10),
@@ -1333,7 +1378,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: Text('CANCEL', style: CyberTextStyles.technical(color: Colors.white54)),
+              child: Text('CANCEL', style: CyberTextStyles.technical(color: isDarkMode ? Colors.white54 : const Color(0xFF64748B))),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF80A416)),
@@ -1346,7 +1391,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                   ),
                 );
               },
-              child: Text('UPDATE ACCESS KEY', style: CyberTextStyles.technical(color: Colors.black, fontWeight: FontWeight.bold)),
+              child: Text('UPDATE ACCESS KEY', style: CyberTextStyles.technical(color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -1361,7 +1406,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
+        backgroundColor: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
           side: const BorderSide(color: Color(0xFF8B5CF6), width: 1.5),
@@ -1370,7 +1415,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
           children: [
             const Icon(Icons.edit, color: Color(0xFF8B5CF6)),
             const SizedBox(width: 10),
-            Text('EDIT OPERATOR IDENTITY', style: CyberTextStyles.heading3.copyWith(fontSize: 14)),
+            Text('EDIT OPERATOR IDENTITY', style: CyberTextStyles.heading3For(isDarkMode).copyWith(fontSize: 14)),
           ],
         ),
         content: SizedBox(

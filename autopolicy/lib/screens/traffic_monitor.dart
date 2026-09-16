@@ -88,19 +88,21 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
       '0030   00 12 34 56 00 00 00 00  01 03 03 07 10 20 00 00   ..4V......... ..',
     ].join('\n');
 
+    final modalBorder = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2);
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDarkMode ? const Color(0xFF0F0F14) : Colors.white,
+        backgroundColor: isDarkMode ? const Color(0xFF0F0F14) : const Color(0xFFFAF9F6),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: const BorderSide(color: Color(0xFF5DD62C), width: 1.5),
+          side: BorderSide(color: modalBorder, width: 1.5),
         ),
         title: Row(
           children: [
-            const Icon(Icons.data_object, color: Color(0xFF5DD62C)),
+            Icon(Icons.data_object, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A)),
             const SizedBox(width: 10),
-            Text('DEEP PACKET INSPECTION (HEX & DECODE)', style: CyberTextStyles.heading3),
+            Text('DEEP PACKET INSPECTION (HEX & DECODE)', style: CyberTextStyles.heading3For(isDarkMode)),
           ],
         ),
         content: SizedBox(
@@ -112,21 +114,21 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.4),
+                  color: isDarkMode ? Colors.black.withOpacity(0.4) : const Color(0xFFFAF9F6),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: Colors.white10),
+                  border: Border.all(color: modalBorder),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('SOURCE: ${packet.sourceName} -> DEST: ${packet.destName}',
-                        style: CyberTextStyles.technical(fontSize: 11, color: const Color(0xFF5DD62C))),
+                        style: CyberTextStyles.technical(fontSize: 11, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A))),
                     Text('PROTOCOL: ${packet.protocol} | PAYLOAD SIZE: ${packet.packetSize} Bytes',
-                        style: CyberTextStyles.technical(fontSize: 11, color: CyberColors.neonCyan)),
+                        style: CyberTextStyles.technical(fontSize: 11, color: isDarkMode ? CyberColors.neonCyan : const Color(0xFF2563EB))),
                     Text('STATUS: ${packet.isSuspicious ? "MALICIOUS / ANOMALY DETECTED" : "VERIFIED / NORMAL TRAFFIC"}',
                         style: CyberTextStyles.technical(
                             fontSize: 11,
-                            color: packet.isSuspicious ? CyberColors.alertRed : const Color(0xFF5DD62C))),
+                            color: packet.isSuspicious ? CyberColors.alertRed : (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF16A34A)))),
                   ],
                 ),
               ),
@@ -137,16 +139,16 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF07070A),
+                  color: isDarkMode ? const Color(0xFF07070A) : const Color(0xFFFAF9F6),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFF5DD62C).withOpacity(0.3)),
+                  border: Border.all(color: modalBorder),
                 ),
                 child: SelectableText(
                   hexDump,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'monospace',
                     fontSize: 11,
-                    color: Color(0xFF5DD62C),
+                    color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
                   ),
                 ),
               ),
@@ -155,7 +157,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
               const SizedBox(height: 4),
               Text(
                 '1. Extract 100-dim feature vector -> 2. Pass to Conformer DNN for multi-class attack classification -> 3. Correlate node topology in GNN -> 4. Generate Zero-Trust OPA policy if anomalous.',
-                style: CyberTextStyles.interface(fontSize: 11, color: isDarkMode ? Colors.white70 : Colors.black87),
+                style: CyberTextStyles.interface(fontSize: 11, color: isDarkMode ? Colors.white70 : const Color(0xFF334155)),
               ),
             ],
           ),
@@ -163,7 +165,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('CLOSE', style: CyberTextStyles.technical(color: const Color(0xFF5DD62C))),
+            child: Text('CLOSE', style: CyberTextStyles.technical(color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A), fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -207,7 +209,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                       children: [
                         Row(
                           children: [
-                            Text('LIVE TELEMETRY TRAFFIC', style: CyberTextStyles.heading2),
+                            Text('LIVE TELEMETRY TRAFFIC', style: CyberTextStyles.heading2For(isDarkMode)),
                             const SizedBox(width: 10),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -224,7 +226,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text('REAL-TIME WIRESHARK / ZEEK PACKET CAPTURE STREAM ENGINE', style: CyberTextStyles.techMuted),
+                        Text('REAL-TIME WIRESHARK / ZEEK PACKET CAPTURE STREAM ENGINE', style: CyberTextStyles.techMutedFor(isDarkMode)),
                       ],
                     ),
 
@@ -313,10 +315,10 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           margin: const EdgeInsets.only(right: 10),
                           decoration: BoxDecoration(
-                            color: isSelected ? const Color(0xFF5DD62C).withOpacity(0.22) : (isDarkMode ? const Color(0xFF141414) : Colors.white10),
+                            color: isSelected ? const Color(0xFF5DD62C).withOpacity(0.22) : (isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6)),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
-                              color: isSelected ? const Color(0xFF5DD62C) : (isDarkMode ? Colors.white24 : Colors.black26),
+                              color: isSelected ? const Color(0xFF5DD62C) : (isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
                               width: isSelected ? 1.5 : 1.0,
                             ),
                           ),
@@ -324,7 +326,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                             proto.toUpperCase(),
                             style: CyberTextStyles.technical(
                               fontSize: 12.5,
-                              color: isSelected ? const Color(0xFF5DD62C) : (isDarkMode ? Colors.white70 : Colors.black87),
+                              color: isSelected ? const Color(0xFF5DD62C) : (isDarkMode ? Colors.white70 : const Color(0xFF0F172A)),
                               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                             ),
                           ),
@@ -385,7 +387,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                   width: 480,
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: isDarkMode ? const Color(0xFF0F0F14) : Colors.white,
+                    color: isDarkMode ? const Color(0xFF0F0F14) : const Color(0xFFFAF9F6),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFF5DD62C), width: 2),
                     boxShadow: [
@@ -401,7 +403,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                     children: [
                       const Icon(Icons.cloud_upload_outlined, size: 48, color: Color(0xFF5DD62C)),
                       const SizedBox(height: 16),
-                      Text('INGESTING PACKET CAPTURE FILE', style: CyberTextStyles.heading3),
+                      Text('INGESTING PACKET CAPTURE FILE', style: CyberTextStyles.heading3For(isDarkMode)),
                       const SizedBox(height: 8),
                       Text(
                         _uploadStatusText,
@@ -432,13 +434,16 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
   }
 
   Widget _buildPacketTableContainer(List<dynamic> feed, bool isDarkMode) {
+    final headerColor = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A);
+    final borderColor = isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.40) : const Color(0xFFCDD4B2);
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
+        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: const Color(0xFF5DD62C).withOpacity(0.40),
+          color: borderColor,
           width: 1.0,
         ),
       ),
@@ -457,7 +462,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                     style: CyberTextStyles.technical(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF5DD62C),
+                      color: headerColor,
                     ),
                   ),
                 ),
@@ -468,13 +473,13 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                     style: CyberTextStyles.technical(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF5DD62C),
+                      color: headerColor,
                     ),
                   ),
                 ),
-                const SizedBox(
+                SizedBox(
                   width: 24,
-                  child: Center(child: Icon(Icons.compare_arrows, size: 14, color: Color(0xFF5DD62C))),
+                  child: Center(child: Icon(Icons.compare_arrows, size: 14, color: headerColor)),
                 ),
                 Expanded(
                   flex: 3,
@@ -483,7 +488,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                     style: CyberTextStyles.technical(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF5DD62C),
+                      color: headerColor,
                     ),
                   ),
                 ),
@@ -494,7 +499,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                     style: CyberTextStyles.technical(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF5DD62C),
+                      color: headerColor,
                     ),
                   ),
                 ),
@@ -505,7 +510,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                     style: CyberTextStyles.technical(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF5DD62C),
+                      color: headerColor,
                     ),
                   ),
                 ),
@@ -516,14 +521,14 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                     style: CyberTextStyles.technical(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF5DD62C),
+                      color: headerColor,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          Divider(color: const Color(0xFF5DD62C).withOpacity(0.35), height: 1),
+          Divider(color: borderColor, height: 1),
           const SizedBox(height: 4),
 
           // Scrolling Feed
@@ -532,7 +537,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                 ? Center(
                     child: Text(
                       'NO PACKETS REGISTERED MATCHING FILTER',
-                      style: CyberTextStyles.technical(fontSize: 12, color: Colors.white60),
+                      style: CyberTextStyles.technical(fontSize: 12, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B)),
                     ),
                   )
                 : ListView.builder(
@@ -545,13 +550,13 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
 
                       return InkWell(
                         onTap: () => _showHexInspectorModal(packet),
-                        hoverColor: const Color(0xFF5DD62C).withOpacity(0.08),
+                        hoverColor: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.08) : const Color(0xFFFAF9F6),
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
                           decoration: BoxDecoration(
                             border: Border(
                               bottom: BorderSide(
-                                color: isDarkMode ? Colors.white12 : Colors.black12,
+                                color: isDarkMode ? Colors.white12 : const Color(0xFFE2E8F0),
                                 width: 0.8,
                               ),
                             ),
@@ -568,7 +573,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                                     fontWeight: FontWeight.w600,
                                     color: isSecAlert
                                         ? CyberColors.alertRed
-                                        : (isDarkMode ? Colors.white70 : Colors.black87),
+                                        : (isDarkMode ? Colors.white70 : const Color(0xFF475569)),
                                   ),
                                 ),
                               ),
@@ -604,13 +609,13 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                                 ),
                               ),
                               // Direction Arrow
-                              const SizedBox(
+                              SizedBox(
                                 width: 24,
                                 child: Center(
                                   child: Icon(
                                     Icons.arrow_forward,
                                     size: 13,
-                                    color: Color(0xFF5DD62C),
+                                    color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
                                   ),
                                 ),
                               ),
@@ -638,11 +643,11 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(
-                                      color: (isSecAlert ? CyberColors.alertRed : const Color(0xFF5DD62C))
+                                      color: (isSecAlert ? CyberColors.alertRed : (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416)))
                                           .withOpacity(0.16),
                                       borderRadius: BorderRadius.circular(4),
                                       border: Border.all(
-                                        color: isSecAlert ? CyberColors.alertRed : const Color(0xFF5DD62C),
+                                        color: isSecAlert ? CyberColors.alertRed : (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416)),
                                         width: 1.0,
                                       ),
                                     ),
@@ -650,7 +655,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                                       packet.protocol.toUpperCase(),
                                       style: CyberTextStyles.technical(
                                         fontSize: 10.5,
-                                        color: isSecAlert ? CyberColors.alertRed : const Color(0xFF5DD62C),
+                                        color: isSecAlert ? CyberColors.alertRed : (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416)),
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -667,7 +672,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                                     fontWeight: FontWeight.w600,
                                     color: isSecAlert
                                         ? CyberColors.alertRed
-                                        : (isDarkMode ? Colors.white70 : Colors.black87),
+                                        : (isDarkMode ? Colors.white70 : const Color(0xFF475569)),
                                   ),
                                 ),
                               ),
@@ -676,13 +681,13 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                                 flex: 2,
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.code, size: 14, color: Color(0xFF5DD62C)),
+                                    Icon(Icons.code, size: 14, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A)),
                                     const SizedBox(width: 4),
                                     Text(
                                       'HEX DECODE',
                                       style: CyberTextStyles.technical(
                                         fontSize: 10,
-                                        color: const Color(0xFF5DD62C),
+                                        color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
                                         fontWeight: FontWeight.w800,
                                       ),
                                     ),
@@ -718,14 +723,16 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
     final double grpcPct = (grpcCount / total).clamp(0.0, 1.0);
 
     final double estBitrateKbps = (feed.length * 42.6).clamp(120.0, 9400.0);
+    final borderColor = isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.40) : const Color(0xFFCDD4B2);
+    final titleColor = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A);
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
+        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: const Color(0xFF5DD62C).withOpacity(0.40),
+          color: borderColor,
           width: 1.0,
         ),
       ),
@@ -741,12 +748,12 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(0xFF5DD62C),
+                      color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
                       boxShadow: [
                         BoxShadow(
-                          color: Color(0xFF5DD62C),
+                          color: (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416)).withOpacity(0.4),
                           blurRadius: 6,
                           spreadRadius: 1,
                         ),
@@ -759,7 +766,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                     style: CyberTextStyles.technical(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFF5DD62C),
+                      color: titleColor,
                     ).copyWith(letterSpacing: 1.1),
                   ),
                 ],
@@ -767,23 +774,23 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF5DD62C).withOpacity(0.12),
+                  color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.12) : const Color(0xFFFAF9F6),
                   borderRadius: BorderRadius.circular(3),
-                  border: Border.all(color: const Color(0xFF5DD62C), width: 0.8),
+                  border: Border.all(color: borderColor, width: 0.8),
                 ),
                 child: Text(
                   '10GbE TAP',
                   style: CyberTextStyles.technical(
                     fontSize: 9,
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF5DD62C),
+                    color: titleColor,
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Divider(color: const Color(0xFF5DD62C).withOpacity(0.35), height: 1),
+          Divider(color: borderColor, height: 1),
           const SizedBox(height: 12),
 
           // Bandwidth big rate
@@ -792,23 +799,23 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
             children: [
               Text(
                 '${(estBitrateKbps / 1024).toStringAsFixed(2)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Orbitron',
                   fontSize: 26,
                   fontWeight: FontWeight.w900,
-                  color: Colors.white,
+                  color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
                 ),
               ),
               const SizedBox(width: 6),
-              const Padding(
-                padding: EdgeInsets.only(bottom: 4),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
                   'MB/s',
                   style: TextStyle(
                     fontFamily: 'Orbitron',
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF5DD62C),
+                    color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
                   ),
                 ),
               ),
@@ -821,7 +828,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                     style: CyberTextStyles.technical(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w800,
-                      color: const Color(0xFFFFE997),
+                      color: isDarkMode ? const Color(0xFFFFE997) : const Color(0xFF0F172A),
                     ),
                   ),
                   Text(
@@ -829,7 +836,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                     style: CyberTextStyles.technical(
                       fontSize: 9.5,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF5DD62C),
+                      color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
                     ),
                   ),
                 ],
@@ -844,9 +851,9 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.black,
+              color: isDarkMode ? Colors.black : const Color(0xFFFAF9F6),
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: const Color(0xFF5DD62C).withOpacity(0.25)),
+              border: Border.all(color: borderColor),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -860,8 +867,8 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                   height: (val * 36).clamp(6.0, 38.0),
                   decoration: BoxDecoration(
                     color: val > 0.80
-                        ? const Color(0xFF5DD62C)
-                        : const Color(0xFF5DD62C).withOpacity(0.45),
+                        ? (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416))
+                        : (isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.45) : const Color(0xFFCDD4B2)),
                     borderRadius: BorderRadius.circular(1.5),
                   ),
                 );
@@ -876,7 +883,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
             style: CyberTextStyles.technical(
               fontSize: 10,
               fontWeight: FontWeight.w800,
-              color: Colors.white70,
+              color: isDarkMode ? Colors.white70 : const Color(0xFF0F172A),
             ).copyWith(letterSpacing: 1.0),
           ),
           const SizedBox(height: 8),
@@ -885,31 +892,31 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  _buildProtocolBandwidthRow('MQTT', mqttCount, mqttPct, const Color(0xFFFFEDA8)),
-                  _buildProtocolBandwidthRow('CoAP', coapCount, coapPct, const Color(0xFFC4E326)),
-                  _buildProtocolBandwidthRow('MODBUS', modbusCount, modbusPct, const Color(0xFFB1A9DA)),
-                  _buildProtocolBandwidthRow('DICOM', dicomCount, dicomPct, const Color(0xFF80A416)),
-                  _buildProtocolBandwidthRow('gRPC / HTTP', grpcCount, grpcPct, const Color(0xFF9D8DF1)),
+                  _buildProtocolBandwidthRow('MQTT', mqttCount, mqttPct, const Color(0xFFFFEDA8), isDarkMode),
+                  _buildProtocolBandwidthRow('CoAP', coapCount, coapPct, const Color(0xFFC4E326), isDarkMode),
+                  _buildProtocolBandwidthRow('MODBUS', modbusCount, modbusPct, const Color(0xFFB1A9DA), isDarkMode),
+                  _buildProtocolBandwidthRow('DICOM', dicomCount, dicomPct, const Color(0xFF80A416), isDarkMode),
+                  _buildProtocolBandwidthRow('gRPC / HTTP', grpcCount, grpcPct, const Color(0xFF9D8DF1), isDarkMode),
 
                   const SizedBox(height: 10),
-                  Divider(color: Colors.white12, height: 1),
+                  Divider(color: borderColor, height: 1),
                   const SizedBox(height: 10),
 
                   // Telemetry Sensors Box
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF141414),
+                      color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.white10),
+                      border: Border.all(color: borderColor),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _sensorMetricLine('SENSOR TAP', 'Zeek Cluster v6.2 (Active)'),
-                        _sensorMetricLine('PACKET LATENCY', '0.38 ms avg'),
-                        _sensorMetricLine('ENCRYPTION', 'TLS 1.3 / DTLS 1.2'),
-                        _sensorMetricLine('AI INGESTION', 'Conformer Multi-Class'),
+                        _sensorMetricLine('SENSOR TAP', 'Zeek Cluster v6.2 (Active)', isDarkMode),
+                        _sensorMetricLine('PACKET LATENCY', '0.38 ms avg', isDarkMode),
+                        _sensorMetricLine('ENCRYPTION', 'TLS 1.3 / DTLS 1.2', isDarkMode),
+                        _sensorMetricLine('AI INGESTION', 'Conformer Multi-Class', isDarkMode),
                       ],
                     ),
                   ),
@@ -922,8 +929,11 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
     );
   }
 
-  Widget _buildProtocolBandwidthRow(String name, int count, double pct, Color color) {
+  Widget _buildProtocolBandwidthRow(String name, int count, double pct, Color color, bool isDarkMode) {
     final int pctInt = (pct * 100).toInt();
+    // Use darker yellow in light mode for readability
+    final effectiveColor = (color == const Color(0xFFFFEDA8) && !isDarkMode) ? const Color(0xFFB45309) : color;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Column(
@@ -937,7 +947,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                 style: CyberTextStyles.technical(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: color,
+                  color: effectiveColor,
                 ),
               ),
               Text(
@@ -945,7 +955,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                 style: CyberTextStyles.technical(
                   fontSize: 10.5,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white70,
+                  color: isDarkMode ? Colors.white70 : const Color(0xFF475569),
                 ),
               ),
             ],
@@ -956,8 +966,8 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
             child: LinearProgressIndicator(
               value: pct,
               minHeight: 5,
-              backgroundColor: Colors.white10,
-              valueColor: AlwaysStoppedAnimation<Color>(color),
+              backgroundColor: isDarkMode ? Colors.white10 : const Color(0xFFE2E8F0),
+              valueColor: AlwaysStoppedAnimation<Color>(effectiveColor),
             ),
           ),
         ],
@@ -965,19 +975,19 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
     );
   }
 
-  Widget _sensorMetricLine(String label, String val) {
+  Widget _sensorMetricLine(String label, String val, bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: CyberTextStyles.technical(fontSize: 9.5, color: Colors.white54)),
+          Text(label, style: CyberTextStyles.technical(fontSize: 9.5, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B))),
           Text(
             val,
             style: CyberTextStyles.technical(
               fontSize: 10,
               fontWeight: FontWeight.bold,
-              color: const Color(0xFF5DD62C),
+              color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
             ),
           ),
         ],

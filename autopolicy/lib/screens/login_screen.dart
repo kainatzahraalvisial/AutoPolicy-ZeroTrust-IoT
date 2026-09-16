@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/cyber_button.dart';
 
+import '../providers/theme_provider.dart';
+
 // Alias for backward compatibility
 typedef LoginScreen = LoginPage;
 
@@ -12,10 +14,22 @@ class VrFrame extends StatelessWidget {
   final Widget child;
   final double maxWidth;
   final EdgeInsetsGeometry? padding;
-  const VrFrame({super.key, required this.child, this.maxWidth = 400, this.padding});
+  final bool isDarkMode;
+
+  const VrFrame({
+    super.key,
+    required this.child,
+    this.maxWidth = 400,
+    this.padding,
+    this.isDarkMode = true,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final frameBg = isDarkMode ? AP.bg : Colors.white;
+    final frameBorder = isDarkMode ? AP.lime : const Color(0xFF80A416);
+    final tabColor = isDarkMode ? AP.olive : const Color(0xFFC4E320);
+
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth + 28),
       child: Padding(
@@ -26,15 +40,15 @@ class VrFrame extends StatelessWidget {
             // Main border box
             Container(
               decoration: BoxDecoration(
-                color: AP.bg,
-                border: Border.all(color: AP.lime, width: 1.5),
+                color: frameBg,
+                border: Border.all(color: frameBorder, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: AP.lime.withOpacity(0.2),
+                    color: isDarkMode ? AP.lime.withOpacity(0.2) : const Color(0xFF80A416).withOpacity(0.18),
                     blurRadius: 20,
                   ),
                   BoxShadow(
-                    color: AP.olive.withOpacity(0.08),
+                    color: isDarkMode ? AP.olive.withOpacity(0.08) : const Color(0xFF80A416).withOpacity(0.06),
                     blurRadius: 50,
                   ),
                 ],
@@ -42,7 +56,7 @@ class VrFrame extends StatelessWidget {
               child: ClipPath(
                 clipper: VrFrameClipper(cut: 16),
                 child: Container(
-                  color: AP.bg,
+                  color: frameBg,
                   padding: padding ?? const EdgeInsets.fromLTRB(26, 28, 26, 20),
                   child: Stack(
                     children: [
@@ -51,7 +65,7 @@ class VrFrame extends StatelessWidget {
                         bottom: 0,
                         child: CustomPaint(
                           size: const Size(32, 7),
-                          painter: _StripePainter(),
+                          painter: _StripePainter(isDarkMode: isDarkMode),
                         ),
                       ),
                       child,
@@ -70,14 +84,14 @@ class VrFrame extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(width: 18, height: 1.5, color: AP.lime.withOpacity(0.6)),
+                    Container(width: 18, height: 1.5, color: frameBorder.withOpacity(0.6)),
                     const SizedBox(width: 4),
                     ClipPath(
                       clipper: _NotchClipper(),
-                      child: Container(width: 56, height: 8, color: AP.olive),
+                      child: Container(width: 56, height: 8, color: tabColor),
                     ),
                     const SizedBox(width: 4),
-                    Container(width: 18, height: 1.5, color: AP.lime.withOpacity(0.6)),
+                    Container(width: 18, height: 1.5, color: frameBorder.withOpacity(0.6)),
                   ],
                 ),
               ),
@@ -98,10 +112,10 @@ class VrFrame extends StatelessWidget {
                       Container(
                         width: 11,
                         height: 36,
-                        color: AP.olive,
+                        color: tabColor,
                         child: Align(
                           alignment: Alignment.centerRight,
-                          child: Container(width: 1.5, height: 36, color: AP.lime),
+                          child: Container(width: 1.5, height: 36, color: frameBorder),
                         ),
                       ),
                       Positioned(
@@ -114,7 +128,7 @@ class VrFrame extends StatelessWidget {
                               margin: EdgeInsets.only(bottom: i < 2 ? 6 : 0),
                               width: 10,
                               height: 2,
-                              color: AP.lime.withOpacity(0.75),
+                              color: frameBorder.withOpacity(0.75),
                             ),
                           ),
                         ),
@@ -140,10 +154,10 @@ class VrFrame extends StatelessWidget {
                       Container(
                         width: 11,
                         height: 36,
-                        color: AP.olive,
+                        color: tabColor,
                         child: Align(
                           alignment: Alignment.centerLeft,
-                          child: Container(width: 1.5, height: 36, color: AP.lime),
+                          child: Container(width: 1.5, height: 36, color: frameBorder),
                         ),
                       ),
                       Positioned(
@@ -156,7 +170,7 @@ class VrFrame extends StatelessWidget {
                               margin: EdgeInsets.only(bottom: i < 2 ? 6 : 0),
                               width: 10,
                               height: 2,
-                              color: AP.lime.withOpacity(0.75),
+                              color: frameBorder.withOpacity(0.75),
                             ),
                           ),
                         ),
@@ -189,10 +203,13 @@ class _NotchClipper extends CustomClipper<Path> {
 }
 
 class _StripePainter extends CustomPainter {
+  final bool isDarkMode;
+  _StripePainter({this.isDarkMode = true});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AP.olive.withOpacity(0.55)
+      ..color = (isDarkMode ? AP.olive : const Color(0xFF80A416)).withOpacity(0.55)
       ..strokeWidth = 2;
     for (double x = -size.height; x < size.width + size.height; x += 5) {
       canvas.drawLine(
@@ -210,7 +227,8 @@ class _StripePainter extends CustomPainter {
 // ── Field shell ──────────────────────────────────────────────
 class FieldShell extends StatelessWidget {
   final Widget child;
-  const FieldShell({super.key, required this.child});
+  final bool isDarkMode;
+  const FieldShell({super.key, required this.child, this.isDarkMode = true});
 
   @override
   Widget build(BuildContext context) {
@@ -218,8 +236,11 @@ class FieldShell extends StatelessWidget {
       clipper: FieldClipper(),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xE608120C), // Dark blackish shell background
-          border: Border.all(color: AP.olive.withOpacity(0.35)),
+          color: isDarkMode ? const Color(0xE608120C) : const Color(0xFFFAF9F6),
+          border: Border.all(
+            color: isDarkMode ? AP.olive.withOpacity(0.35) : const Color(0xFFCDD4B2),
+            width: 1.2,
+          ),
         ),
         child: child,
       ),
@@ -281,13 +302,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = ref.watch(themeModeProvider);
+    final brandTitleColor = isDarkMode ? AP.white : const Color(0xFF0F172A);
+    final textColor = isDarkMode ? AP.white : const Color(0xFF0F172A);
+    final subtextColor = isDarkMode ? const Color(0xFFD5E5D3) : const Color(0xFF64748B);
+    final labelColor = isDarkMode ? AP.lime : const Color(0xFF80A416);
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: isDarkMode ? Colors.black : const Color(0xFFFAF9F6),
       body: Stack(
         children: [
           // Grid
           Positioned.fill(
-            child: CustomPaint(painter: _GridPainter()),
+            child: CustomPaint(painter: _GridPainter(isDarkMode: isDarkMode)),
           ),
           // Nav
           Positioned(
@@ -300,24 +327,68 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     Row(
                       children: [
                         Container(
-                          width: 6, height: 6,
+                          width: 7, height: 7,
                           decoration: const BoxDecoration(
-                            color: AP.bright,
+                            color: Color(0xFFC4E320),
                             shape: BoxShape.circle,
-                            boxShadow: [BoxShadow(color: AP.bright, blurRadius: 10)],
+                            boxShadow: [BoxShadow(color: Color(0xFFC4E320), blurRadius: 10)],
                           ),
                         ),
                         const SizedBox(width: 9),
                         Text('AutoPolicy',
                           style: GoogleFonts.orbitron(
                             fontWeight: FontWeight.w900, fontSize: 14.5,
-                            letterSpacing: 3.2, color: AP.white,
+                            letterSpacing: 3.2, color: brandTitleColor,
                           ),
                         ),
                       ],
                     ),
                     const Spacer(),
+                    // Theme Switcher Live Pill
+                    InkWell(
+                      onTap: () => ref.read(themeModeProvider.notifier).state = !isDarkMode,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: isDarkMode ? const Color(0xFF141414) : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416),
+                            width: 1.0,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416)).withOpacity(0.15),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isDarkMode ? Icons.dark_mode_outlined : Icons.light_mode_outlined,
+                              size: 14,
+                              color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              isDarkMode ? 'DARK' : 'LIGHT',
+                              style: GoogleFonts.orbitron(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416),
+                                letterSpacing: 1.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
                     _BackToExploreButton(
+                      isDarkMode: isDarkMode,
                       onTap: () => Navigator.pushReplacementNamed(context, '/landing'),
                     ),
                   ],
@@ -332,13 +403,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               child: Form(
                 key: _formKey,
                 child: VrFrame(
+                  isDarkMode: isDarkMode,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       // Header
                       Text('SECURE ACCESS',
                         style: TextStyle(
-                          fontSize: 8.5, letterSpacing: 3.5, color: AP.lime,
+                          fontSize: 8.5, letterSpacing: 3.5, color: labelColor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -346,22 +418,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       Text('Sign In',
                         style: GoogleFonts.orbitron(
                           fontWeight: FontWeight.w900, fontSize: 24,
-                          letterSpacing: 0.6, color: AP.white,
+                          letterSpacing: 0.6, color: textColor,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text('Authenticate to the zero-trust console',
-                        style: GoogleFonts.spaceGrotesk(fontSize: 13.5, color: const Color(0xFFD5E5D3)),
+                        style: GoogleFonts.spaceGrotesk(fontSize: 13.5, color: subtextColor),
                       ),
                       const SizedBox(height: 22),
 
                       // Email
-                      _label('Email / Identity'),
+                      _label('Email / Identity', isDarkMode),
                       FieldShell(
+                        isDarkMode: isDarkMode,
                         child: TextFormField(
                           controller: _email,
-                          style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 14),
-                          decoration: _inputDeco('operator@network.io'),
+                          style: GoogleFonts.spaceGrotesk(
+                            color: isDarkMode ? AP.white : Colors.black, 
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          cursorColor: isDarkMode ? const Color(0xFFC4E320) : Colors.black,
+                          decoration: _inputDeco('operator@network.io', isDarkMode),
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
@@ -377,18 +455,26 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       const SizedBox(height: 14),
 
                       // Password
-                      _label('Access Key'),
+                      _label('Access Key', isDarkMode),
                       FieldShell(
+                        isDarkMode: isDarkMode,
                         child: TextFormField(
                           controller: _password,
                           obscureText: _obscure,
-                          style: GoogleFonts.spaceGrotesk(color: AP.white, fontSize: 14),
-                          decoration: _inputDeco('••••••••••••').copyWith(
+                          style: GoogleFonts.spaceGrotesk(
+                            color: isDarkMode ? AP.white : Colors.black, 
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          cursorColor: isDarkMode ? const Color(0xFFC4E320) : Colors.black,
+                          decoration: _inputDeco('••••••••••••', isDarkMode).copyWith(
                             suffixIcon: TextButton(
                               onPressed: () => setState(() => _obscure = !_obscure),
                               child: Text(_obscure ? 'SHOW' : 'HIDE',
                                 style: GoogleFonts.orbitron(
-                                  fontSize: 9, letterSpacing: 1.2, color: AP.muted,
+                                  fontSize: 9, letterSpacing: 1.2, 
+                                  color: isDarkMode ? AP.muted : const Color(0xFF0F172A),
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
@@ -414,19 +500,23 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             child: Checkbox(
                               value: _remember,
                               onChanged: (v) => setState(() => _remember = v ?? false),
-                              activeColor: AP.olive,
-                              side: BorderSide(color: AP.olive.withOpacity(0.45)),
+                              activeColor: const Color(0xFF80A416),
+                              side: BorderSide(
+                                color: isDarkMode ? AP.olive.withOpacity(0.45) : const Color(0xFFCDD4B2),
+                                width: 1.2,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 7),
                           Text('Stay authenticated',
-                            style: GoogleFonts.spaceGrotesk(fontSize: 12.5, color: AP.muted)),
+                            style: GoogleFonts.spaceGrotesk(fontSize: 12.5, color: isDarkMode ? AP.muted : const Color(0xFF1E293B))),
                           const Spacer(),
                           MouseRegion(
                             cursor: SystemMouseCursors.click,
                             child: Text('RESET KEY',
                               style: GoogleFonts.orbitron(
-                                fontSize: 9, letterSpacing: 1.4, color: AP.lime,
+                                fontSize: 9, letterSpacing: 1.4, color: isDarkMode ? labelColor : const Color(0xFF475569),
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
@@ -445,31 +535,33 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
                       CyberButton(
                         label: _isLoading ? 'Authenticating...' : 'Authenticate',
+                        isDarkMode: isDarkMode,
                         onTap: _isLoading ? null : _handleAuth,
                       ),
                       const SizedBox(height: 14),
-                      _orDivider(),
+                      _orDivider(isDarkMode),
                       const SizedBox(height: 12),
                       CyberButton(
                         label: 'Sign in with Google',
                         primary: false,
+                        isDarkMode: isDarkMode,
                         onTap: () {
                           Navigator.pushReplacementNamed(context, '/dashboard');
                         },
-                        leading: const Icon(Icons.g_mobiledata, size: 20, color: AP.lime),
+                        leading: Icon(Icons.g_mobiledata, size: 20, color: labelColor),
                       ),
                       const SizedBox(height: 16),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
-                          color: AP.olive.withOpacity(0.12),
-                          border: Border.all(color: AP.olive.withOpacity(0.35)),
+                          color: isDarkMode ? AP.olive.withOpacity(0.12) : const Color(0xFFC4E320).withOpacity(0.15),
+                          border: Border.all(color: isDarkMode ? AP.olive.withOpacity(0.35) : const Color(0xFF80A416).withOpacity(0.35)),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.shield_outlined, size: 14, color: AP.lime),
+                            Icon(Icons.shield_outlined, size: 14, color: labelColor),
                             const SizedBox(width: 8),
                             Flexible(
                               child: Text(
@@ -477,7 +569,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 style: GoogleFonts.orbitron(
                                   fontSize: 8.5,
                                   letterSpacing: 0.8,
-                                  color: const Color(0xFFD5E5D3),
+                                  color: isDarkMode ? const Color(0xFFD5E5D3) : const Color(0xFF0F172A),
                                   fontWeight: FontWeight.bold,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -487,27 +579,27 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      Divider(color: AP.olive.withOpacity(0.18), height: 1),
+                      Divider(color: isDarkMode ? AP.olive.withOpacity(0.18) : const Color(0xFF80A416).withOpacity(0.20), height: 1),
                       const SizedBox(height: 10),
                       Row(
                         children: [
                           Container(
                             width: 5, height: 5,
                             decoration: const BoxDecoration(
-                              color: AP.bright, shape: BoxShape.circle,
-                              boxShadow: [BoxShadow(color: AP.bright, blurRadius: 6)],
+                              color: Color(0xFFC4E320), shape: BoxShape.circle,
+                              boxShadow: [BoxShadow(color: Color(0xFFC4E320), blurRadius: 6)],
                             ),
                           ),
                           const SizedBox(width: 6),
                           Text('CHANNEL SECURE',
                             style: GoogleFonts.orbitron(
-                              fontSize: 7.5, letterSpacing: 1.6, color: AP.bright,
+                              fontSize: 7.5, letterSpacing: 1.6, color: isDarkMode ? AP.bright : const Color(0xFF80A416),
                             ),
                           ),
                           const Spacer(),
                           Text('TLS 1.3 · BUILD 1.0',
                             style: GoogleFonts.orbitron(
-                              fontSize: 7.5, letterSpacing: 1.4, color: AP.muted,
+                              fontSize: 7.5, letterSpacing: 1.4, color: isDarkMode ? AP.muted : const Color(0xFF64748B),
                             ),
                           ),
                         ],
@@ -523,48 +615,58 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     );
   }
 
-  Widget _label(String t) => Padding(
+  Widget _label(String t, bool isDarkMode) => Padding(
     padding: const EdgeInsets.only(bottom: 6),
     child: Align(
       alignment: Alignment.centerLeft,
       child: Text(t.toUpperCase(),
         style: GoogleFonts.orbitron(
           fontSize: 8.5, fontWeight: FontWeight.w700,
-          letterSpacing: 2.2, color: AP.lime,
+          letterSpacing: 2.2, color: isDarkMode ? AP.lime : const Color(0xFF0F172A),
         ),
       ),
     ),
   );
 
-  InputDecoration _inputDeco(String hint) => InputDecoration(
+  InputDecoration _inputDeco(String hint, bool isDarkMode) => InputDecoration(
     hintText: hint,
-    hintStyle: TextStyle(color: AP.muted.withOpacity(0.65), fontSize: 13.5),
+    hintStyle: TextStyle(
+      color: isDarkMode ? AP.muted.withOpacity(0.65) : const Color(0xFF64748B), 
+      fontSize: 13.5,
+    ),
+    filled: true,
+    fillColor: isDarkMode ? const Color(0xE608120C) : const Color(0xFFFAF9F6), // Feather White fill
     border: InputBorder.none,
+    enabledBorder: InputBorder.none,
+    focusedBorder: InputBorder.none,
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     isDense: true,
   );
 
-  Widget _orDivider() => Row(
+  Widget _orDivider(bool isDarkMode) => Row(
     children: [
-      Expanded(child: Divider(color: AP.olive.withOpacity(0.3))),
+      Expanded(child: Divider(color: isDarkMode ? AP.olive.withOpacity(0.3) : const Color(0xFF80A416).withOpacity(0.25))),
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10),
         child: Text('OR',
           style: GoogleFonts.orbitron(
-            fontSize: 7.5, letterSpacing: 2.2, color: AP.muted,
+            fontSize: 7.5, letterSpacing: 2.2, color: isDarkMode ? AP.muted : const Color(0xFF64748B),
           ),
         ),
       ),
-      Expanded(child: Divider(color: AP.olive.withOpacity(0.3))),
+      Expanded(child: Divider(color: isDarkMode ? AP.olive.withOpacity(0.3) : const Color(0xFF80A416).withOpacity(0.25))),
     ],
   );
 }
 
 class _GridPainter extends CustomPainter {
+  final bool isDarkMode;
+  _GridPainter({this.isDarkMode = true});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AP.lime.withOpacity(0.14) // Distinct, visible grid squares
+      ..color = (isDarkMode ? AP.lime.withOpacity(0.14) : const Color(0xFF80A416).withOpacity(0.08))
       ..strokeWidth = 1.0;
     const step = 48.0;
     for (double x = 0; x < size.width; x += step) {
@@ -581,7 +683,8 @@ class _GridPainter extends CustomPainter {
 
 class _BackToExploreButton extends StatefulWidget {
   final VoidCallback onTap;
-  const _BackToExploreButton({required this.onTap});
+  final bool isDarkMode;
+  const _BackToExploreButton({required this.onTap, this.isDarkMode = true});
 
   @override
   State<_BackToExploreButton> createState() => _BackToExploreButtonState();
@@ -592,6 +695,9 @@ class _BackToExploreButtonState extends State<_BackToExploreButton> {
 
   @override
   Widget build(BuildContext context) {
+    final normalColor = widget.isDarkMode ? AP.lime : const Color(0xFF80A416);
+    final hoverColor = widget.isDarkMode ? AP.bright : const Color(0xFFC4E320);
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _isHovered = true),
@@ -604,11 +710,11 @@ class _BackToExploreButtonState extends State<_BackToExploreButton> {
             fontSize: 9.5,
             letterSpacing: 1.8,
             fontWeight: _isHovered ? FontWeight.w800 : FontWeight.w500,
-            color: _isHovered ? AP.bright : AP.lime,
+            color: _isHovered ? hoverColor : normalColor,
             shadows: _isHovered
                 ? [
                     BoxShadow(
-                      color: AP.bright.withOpacity(0.7),
+                      color: hoverColor.withOpacity(0.7),
                       blurRadius: 10,
                     )
                   ]

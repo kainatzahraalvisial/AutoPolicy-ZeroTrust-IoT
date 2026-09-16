@@ -108,10 +108,22 @@ class VrFrame extends StatelessWidget {
   final Widget child;
   final double maxWidth;
   final EdgeInsetsGeometry? padding;
-  const VrFrame({super.key, required this.child, this.maxWidth = 400, this.padding});
+  final bool isDarkMode;
+
+  const VrFrame({
+    super.key,
+    required this.child,
+    this.maxWidth = 400,
+    this.padding,
+    this.isDarkMode = true,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final frameBg = isDarkMode ? AP.bg : Colors.white;
+    final frameBorder = isDarkMode ? AP.lime : const Color(0xFFCDD4B2);
+    final tabColor = isDarkMode ? AP.olive : const Color(0xFFD4C9D8);
+
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth + 28),
       child: Padding(
@@ -121,15 +133,15 @@ class VrFrame extends StatelessWidget {
           children: [
             Container(
               decoration: BoxDecoration(
-                color: AP.bg,
-                border: Border.all(color: AP.lime, width: 1.5),
+                color: frameBg,
+                border: Border.all(color: frameBorder, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: AP.lime.withOpacity(0.2),
+                    color: isDarkMode ? AP.lime.withOpacity(0.2) : const Color(0xFFCDD4B2).withOpacity(0.25),
                     blurRadius: 20,
                   ),
                   BoxShadow(
-                    color: AP.olive.withOpacity(0.08),
+                    color: isDarkMode ? AP.olive.withOpacity(0.08) : const Color(0xFFD4C9D8).withOpacity(0.15),
                     blurRadius: 50,
                   ),
                 ],
@@ -137,7 +149,7 @@ class VrFrame extends StatelessWidget {
               child: ClipPath(
                 clipper: VrFrameClipper(cut: 16),
                 child: Container(
-                  color: AP.bg,
+                  color: frameBg,
                   padding: padding ?? const EdgeInsets.fromLTRB(26, 28, 26, 20),
                   child: Stack(
                     children: [
@@ -163,14 +175,14 @@ class VrFrame extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(width: 18, height: 1.5, color: AP.lime.withOpacity(0.6)),
+                    Container(width: 18, height: 1.5, color: frameBorder.withOpacity(0.6)),
                     const SizedBox(width: 4),
                     ClipPath(
                       clipper: _NotchClipper(),
-                      child: Container(width: 56, height: 8, color: AP.olive),
+                      child: Container(width: 56, height: 8, color: tabColor),
                     ),
                     const SizedBox(width: 4),
-                    Container(width: 18, height: 1.5, color: AP.lime.withOpacity(0.6)),
+                    Container(width: 18, height: 1.5, color: frameBorder.withOpacity(0.6)),
                   ],
                 ),
               ),
@@ -189,10 +201,10 @@ class VrFrame extends StatelessWidget {
                       Container(
                         width: 11,
                         height: 36,
-                        color: AP.olive,
+                        color: tabColor,
                         child: Align(
                           alignment: Alignment.centerRight,
-                          child: Container(width: 1.5, height: 36, color: AP.lime),
+                          child: Container(width: 1.5, height: 36, color: frameBorder),
                         ),
                       ),
                       Positioned(
@@ -205,7 +217,7 @@ class VrFrame extends StatelessWidget {
                               margin: EdgeInsets.only(bottom: i < 2 ? 6 : 0),
                               width: 10,
                               height: 2,
-                              color: AP.lime.withOpacity(0.75),
+                              color: frameBorder.withOpacity(0.75),
                             ),
                           ),
                         ),
@@ -229,10 +241,10 @@ class VrFrame extends StatelessWidget {
                       Container(
                         width: 11,
                         height: 36,
-                        color: AP.olive,
+                        color: tabColor,
                         child: Align(
                           alignment: Alignment.centerLeft,
-                          child: Container(width: 1.5, height: 36, color: AP.lime),
+                          child: Container(width: 1.5, height: 36, color: frameBorder),
                         ),
                       ),
                       Positioned(
@@ -245,7 +257,7 @@ class VrFrame extends StatelessWidget {
                               margin: EdgeInsets.only(bottom: i < 2 ? 6 : 0),
                               width: 10,
                               height: 2,
-                              color: AP.lime.withOpacity(0.75),
+                              color: frameBorder.withOpacity(0.75),
                             ),
                           ),
                         ),
@@ -265,7 +277,8 @@ class VrFrame extends StatelessWidget {
 // ── Field shell ──────────────────────────────────────────────
 class FieldShell extends StatelessWidget {
   final Widget child;
-  const FieldShell({super.key, required this.child});
+  final bool isDarkMode;
+  const FieldShell({super.key, required this.child, this.isDarkMode = true});
 
   @override
   Widget build(BuildContext context) {
@@ -273,8 +286,11 @@ class FieldShell extends StatelessWidget {
       clipper: FieldClipper(),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xE608120C),
-          border: Border.all(color: AP.olive.withOpacity(0.35)),
+          color: isDarkMode ? const Color(0xE608120C) : const Color(0xFFFAF9F6), // Feather White box fill
+          border: Border.all(
+            color: isDarkMode ? AP.olive.withOpacity(0.35) : const Color(0xFFCDD4B2), // Sage outline from new palette
+            width: 1.2,
+          ),
         ),
         child: child,
       ),
@@ -288,6 +304,7 @@ class CyberButton extends StatefulWidget {
   final VoidCallback? onTap;
   final bool primary;
   final Widget? leading;
+  final bool isDarkMode;
 
   const CyberButton({
     super.key,
@@ -295,6 +312,7 @@ class CyberButton extends StatefulWidget {
     this.onTap,
     this.primary = true,
     this.leading,
+    this.isDarkMode = true,
   });
 
   @override
@@ -306,6 +324,20 @@ class _CyberButtonState extends State<CyberButton> {
 
   @override
   Widget build(BuildContext context) {
+    // Darker lavender from user's new palette for authentication button
+    final primaryColor = widget.isDarkMode
+        ? (hover ? const Color(0xFFC4E320) : const Color(0xFF80A416))
+        : (hover ? const Color(0xFFA695B0) : const Color(0xFFB8A9C1));
+    final primaryTextColor = widget.isDarkMode
+        ? Colors.black
+        : const Color(0xFF0F172A); // Black text
+    final secondaryBg = widget.isDarkMode
+        ? (hover ? AP.olive.withOpacity(0.12) : const Color(0xE608120C))
+        : (hover ? const Color(0xFFD4C9D8).withOpacity(0.35) : const Color(0xFFFAF9F6)); // Feather white
+    final secondaryTextColor = widget.isDarkMode
+        ? (hover ? AP.bright : AP.lime)
+        : const Color(0xFF0F172A); // Black text
+
     return MouseRegion(
       onEnter: (_) => setState(() => hover = true),
       onExit: (_) => setState(() => hover = false),
@@ -321,22 +353,20 @@ class _CyberButtonState extends State<CyberButton> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 20),
               decoration: BoxDecoration(
-                color: widget.primary
-                    ? (hover ? AP.bright : AP.olive)
-                    : (hover
-                        ? AP.olive.withOpacity(0.12)
-                        : const Color(0xE608120C)),
+                color: widget.primary ? primaryColor : secondaryBg,
                 border: widget.primary
-                    ? null
+                    ? (widget.isDarkMode ? null : Border.all(color: const Color(0xFF9E8DA7), width: 1.2))
                     : Border.all(
-                        color: hover ? AP.lime : AP.olive.withOpacity(0.35),
+                        color: hover 
+                            ? const Color(0xFFB8A9C1) 
+                            : (widget.isDarkMode ? AP.olive.withOpacity(0.35) : const Color(0xFFCDD4B2)),
+                        width: 1.2,
                       ),
                 boxShadow: widget.primary
                     ? [
                         BoxShadow(
-                          color: (hover ? AP.bright : AP.olive)
-                              .withOpacity(hover ? 0.65 : 0.4),
-                          blurRadius: hover ? 28 : 18,
+                          color: primaryColor.withOpacity(hover ? 0.50 : 0.30),
+                          blurRadius: hover ? 24 : 14,
                         ),
                       ]
                     : null,
@@ -346,17 +376,15 @@ class _CyberButtonState extends State<CyberButton> {
                 children: [
                   if (widget.leading != null) ...[
                     widget.leading!,
-                    const SizedBox(width: 9),
+                    const SizedBox(width: 10),
                   ],
                   Text(
                     widget.label.toUpperCase(),
                     style: GoogleFonts.orbitron(
-                      fontSize: widget.primary ? 11 : 9.5,
+                      color: widget.primary ? primaryTextColor : secondaryTextColor,
+                      fontSize: 12,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: 1.6,
-                      color: widget.primary
-                          ? Colors.black
-                          : (hover ? AP.bright : AP.lime),
+                      letterSpacing: 2.0,
                     ),
                   ),
                 ],

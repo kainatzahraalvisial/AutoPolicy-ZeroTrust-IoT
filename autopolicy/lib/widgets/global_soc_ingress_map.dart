@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/theme_provider.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
 
@@ -27,15 +29,15 @@ class IngressNode {
   });
 }
 
-class GlobalSocIngressMap extends StatefulWidget {
+class GlobalSocIngressMap extends ConsumerStatefulWidget {
   final double height;
   const GlobalSocIngressMap({super.key, this.height = 380});
 
   @override
-  State<GlobalSocIngressMap> createState() => _GlobalSocIngressMapState();
+  ConsumerState<GlobalSocIngressMap> createState() => _GlobalSocIngressMapState();
 }
 
-class _GlobalSocIngressMapState extends State<GlobalSocIngressMap> with SingleTickerProviderStateMixin {
+class _GlobalSocIngressMapState extends ConsumerState<GlobalSocIngressMap> with SingleTickerProviderStateMixin {
   late final AnimationController _animCtrl;
   String _selectedNodeId = 'eu-central';
 
@@ -116,18 +118,22 @@ class _GlobalSocIngressMapState extends State<GlobalSocIngressMap> with SingleTi
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = ref.watch(themeModeProvider);
     final selectedNode = nodes.firstWhere((n) => n.id == _selectedNodeId, orElse: () => nodes[2]);
 
     return SizedBox(
       height: widget.height,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF050A07),
+          color: isDarkMode ? const Color(0xFF050A07) : Colors.white,
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: const Color(0xFF5DD62C).withOpacity(0.55), width: 1.2),
+          border: Border.all(
+            color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.55) : const Color(0xFFCDD4B2),
+            width: 1.2,
+          ),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF5DD62C).withOpacity(0.12),
+              color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.12) : Colors.black.withOpacity(0.04),
               blurRadius: 16,
             ),
           ],
@@ -139,7 +145,7 @@ class _GlobalSocIngressMapState extends State<GlobalSocIngressMap> with SingleTi
             // ── 1. MAP TITLE & TELEMETRY HEADER ──────────────────────────
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              color: const Color(0xFF0B140E),
+              color: isDarkMode ? const Color(0xFF0B140E) : const Color(0xFFFAF9F6),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -149,11 +155,14 @@ class _GlobalSocIngressMapState extends State<GlobalSocIngressMap> with SingleTi
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Color(0xFF5DD62C),
+                            color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
                             boxShadow: [
-                              BoxShadow(color: Color(0xFF5DD62C), blurRadius: 6),
+                              BoxShadow(
+                                color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
+                                blurRadius: 6,
+                              ),
                             ],
                           ),
                         ),
@@ -162,7 +171,7 @@ class _GlobalSocIngressMapState extends State<GlobalSocIngressMap> with SingleTi
                           child: Text(
                             'GLOBAL MARKET / SOC INGRESS MAP',
                             style: CyberTextStyles.technical(
-                              color: const Color(0xFF5DD62C),
+                              color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
@@ -173,7 +182,10 @@ class _GlobalSocIngressMapState extends State<GlobalSocIngressMap> with SingleTi
                         Flexible(
                           child: Text(
                             'TOTAL INGRESS: 74.8 Gbps',
-                            style: CyberTextStyles.technical(color: const Color(0xFFEDF5EB), fontSize: 10.5),
+                            style: CyberTextStyles.technical(
+                              color: isDarkMode ? const Color(0xFFEDF5EB) : const Color(0xFF0F172A),
+                              fontSize: 10.5,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -203,7 +215,7 @@ class _GlobalSocIngressMapState extends State<GlobalSocIngressMap> with SingleTi
               ),
             ),
 
-            const Divider(height: 1, color: Color(0xFF1E3A1A)),
+            Divider(height: 1, color: isDarkMode ? const Color(0xFF1E3A1A) : const Color(0xFFCDD4B2)),
 
             // ── 2. MATRIX DOT MAP CANVAS WITH GLOWING NODES (NO ICONS) ────
             Expanded(
@@ -219,6 +231,7 @@ class _GlobalSocIngressMapState extends State<GlobalSocIngressMap> with SingleTi
                           nodes: nodes,
                           selectedId: _selectedNodeId,
                           corePos: coreHubPos,
+                          isDarkMode: isDarkMode,
                         ),
                       );
                     },
@@ -239,10 +252,17 @@ class _GlobalSocIngressMapState extends State<GlobalSocIngressMap> with SingleTi
                             child: Tooltip(
                               message: 'CENTRAL ZERO-TRUST POLICY CORE HUB\nRole: OPA Rego Engine & GNN Evaluator\nStatus: Active Microsegmentation',
                               padding: const EdgeInsets.all(8),
-                              textStyle: const TextStyle(color: Color(0xFFEDF5EB), fontSize: 10.5, fontWeight: FontWeight.bold),
+                              textStyle: TextStyle(
+                                color: isDarkMode ? const Color(0xFFEDF5EB) : const Color(0xFF0F172A),
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold,
+                              ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0F0F0F),
-                                border: Border.all(color: const Color(0xFF5DD62C), width: 1.2),
+                                color: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
+                                border: Border.all(
+                                  color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2),
+                                  width: 1.2,
+                                ),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: AnimatedBuilder(
@@ -293,9 +313,13 @@ class _GlobalSocIngressMapState extends State<GlobalSocIngressMap> with SingleTi
                               child: Tooltip(
                                 message: '${node.name}\nPROTOCOL: ${node.activeProtocol}\nINGRESS: ${node.ingressGbps} Gbps (${(node.packetRate / 1000).toStringAsFixed(1)}k pkts/s)\nLATENCY: ${node.latencyMs} ms',
                                 padding: const EdgeInsets.all(8),
-                                textStyle: const TextStyle(color: Color(0xFFEDF5EB), fontSize: 10.5, fontWeight: FontWeight.bold),
+                                textStyle: TextStyle(
+                                  color: isDarkMode ? const Color(0xFFEDF5EB) : const Color(0xFF0F172A),
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF0F0F0F),
+                                  color: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
                                   border: Border.all(color: nodeColor, width: 1.2),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
@@ -357,12 +381,12 @@ class _GlobalSocIngressMapState extends State<GlobalSocIngressMap> with SingleTi
               ),
             ),
 
-            const Divider(height: 1, color: Color(0xFF1E3A1A)),
+            Divider(height: 1, color: isDarkMode ? const Color(0xFF1E3A1A) : const Color(0xFFCDD4B2)),
 
             // ── 3. INTEGRATED BOTTOM TELEMETRY READOUT (INSIDE MAP CARD) ───
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              color: const Color(0xFF071109),
+              color: isDarkMode ? const Color(0xFF071109) : const Color(0xFFFAF9F6),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -374,10 +398,10 @@ class _GlobalSocIngressMapState extends State<GlobalSocIngressMap> with SingleTi
                           height: 8,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: selectedNode.isUnderAttack ? CyberColors.alertRed : const Color(0xFF5DD62C),
+                            color: selectedNode.isUnderAttack ? CyberColors.alertRed : (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416)),
                             boxShadow: [
                               BoxShadow(
-                                color: selectedNode.isUnderAttack ? CyberColors.alertRed : const Color(0xFF5DD62C),
+                                color: selectedNode.isUnderAttack ? CyberColors.alertRed : (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416)),
                                 blurRadius: 6,
                               ),
                             ],
@@ -388,7 +412,7 @@ class _GlobalSocIngressMapState extends State<GlobalSocIngressMap> with SingleTi
                           child: Text(
                             selectedNode.name,
                             style: CyberTextStyles.technical(
-                              color: selectedNode.isUnderAttack ? CyberColors.alertRed : Colors.white,
+                              color: selectedNode.isUnderAttack ? CyberColors.alertRed : (isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                             ),
@@ -399,7 +423,10 @@ class _GlobalSocIngressMapState extends State<GlobalSocIngressMap> with SingleTi
                         Flexible(
                           child: Text(
                             'PROTOCOL: ${selectedNode.activeProtocol} | LATENCY: ${selectedNode.latencyMs}ms',
-                            style: CyberTextStyles.techMuted.copyWith(fontSize: 9.5),
+                            style: CyberTextStyles.techMuted.copyWith(
+                              fontSize: 9.5,
+                              color: isDarkMode ? Colors.white54 : const Color(0xFF64748B),
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -411,12 +438,20 @@ class _GlobalSocIngressMapState extends State<GlobalSocIngressMap> with SingleTi
                     children: [
                       Text(
                         '${selectedNode.ingressGbps} Gbps',
-                        style: CyberTextStyles.technical(color: const Color(0xFF5DD62C), fontSize: 12, fontWeight: FontWeight.w900),
+                        style: CyberTextStyles.technical(
+                          color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Text(
                         '${(selectedNode.packetRate / 1000).toStringAsFixed(1)}k /s',
-                        style: CyberTextStyles.technical(color: const Color(0xFFC5C764), fontSize: 12, fontWeight: FontWeight.w900),
+                        style: CyberTextStyles.technical(
+                          color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF64748B),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ],
                   ),
@@ -439,12 +474,14 @@ class _MatrixMapCanvasPainter extends CustomPainter {
   final List<IngressNode> nodes;
   final String selectedId;
   final Offset corePos;
+  final bool isDarkMode;
 
   _MatrixMapCanvasPainter({
     required this.progress,
     required this.nodes,
     required this.selectedId,
     required this.corePos,
+    required this.isDarkMode,
   });
 
   @override
@@ -454,7 +491,7 @@ class _MatrixMapCanvasPainter extends CustomPainter {
 
     // 1. Tactical Matrix Dot Grid Background
     final gridDotPaint = Paint()
-      ..color = const Color(0xFF337418).withOpacity(0.20)
+      ..color = isDarkMode ? const Color(0xFF337418).withOpacity(0.20) : const Color(0xFFCDD4B2).withOpacity(0.40)
       ..style = PaintingStyle.fill;
 
     for (double x = 12; x < w; x += 18) {
@@ -465,11 +502,11 @@ class _MatrixMapCanvasPainter extends CustomPainter {
 
     // 2. Continents Dotted Matrix Outline (Matching Image 3)
     final mapDotPaint = Paint()
-      ..color = const Color(0xFF5DD62C).withOpacity(0.45)
+      ..color = isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.45) : const Color(0xFF80A416).withOpacity(0.50)
       ..style = PaintingStyle.fill;
 
     final brightMapDotPaint = Paint()
-      ..color = const Color(0xFF5DD62C).withOpacity(0.75)
+      ..color = isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.75) : const Color(0xFF80A416).withOpacity(0.85)
       ..style = PaintingStyle.fill;
 
     final List<Offset> continentDots = [

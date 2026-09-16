@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/policy.dart';
 import '../providers/security_provider.dart';
-import '../theme/colors.dart';
+import '../providers/theme_provider.dart';
 import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
-import '../widgets/glass_container.dart';
 import '../widgets/cyber_stat_card.dart';
 
 class PolicyDeployment extends ConsumerWidget {
@@ -14,6 +14,7 @@ class PolicyDeployment extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final securityState = ref.watch(securityProvider);
+    final isDarkMode = ref.watch(themeModeProvider);
     final deployedPolicies = securityState.policies
         .where((p) => p.status == PolicyStatus.deployed)
         .toList();
@@ -30,9 +31,17 @@ class PolicyDeployment extends ConsumerWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('OPA POLICY PIPELINE STATUS', style: CyberTextStyles.heading2),
+                Text(
+                  'OPA POLICY PIPELINE STATUS',
+                  style: CyberTextStyles.heading2.copyWith(
+                    color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text('REAL-TIME EDGE AGENT DEPLOYMENT STACK LOGS', style: CyberTextStyles.techMuted),
+                Text(
+                  'REAL-TIME EDGE AGENT DEPLOYMENT STACK LOGS',
+                  style: CyberTextStyles.techMutedFor(isDarkMode),
+                ),
               ],
             ),
             const SizedBox(height: 14),
@@ -84,7 +93,7 @@ class PolicyDeployment extends ConsumerWidget {
             const SizedBox(height: 16),
 
             // Pipeline Stage Visualizer
-            _buildPipelineVisualizer(context),
+            _buildPipelineVisualizer(context, isDarkMode),
             const SizedBox(height: 16),
 
             // Split views
@@ -92,9 +101,9 @@ class PolicyDeployment extends ConsumerWidget {
               child: ResponsiveLayout(
                 mobile: Column(
                   children: [
-                    Expanded(child: _buildDeployedPoliciesCard(deployedPolicies)),
+                    Expanded(child: _buildDeployedPoliciesCard(deployedPolicies, isDarkMode)),
                     const SizedBox(height: 16),
-                    Expanded(child: _buildOpaLogsCard(opaLogs)),
+                    Expanded(child: _buildOpaLogsCard(opaLogs, isDarkMode)),
                   ],
                 ),
                 desktop: Row(
@@ -102,13 +111,13 @@ class PolicyDeployment extends ConsumerWidget {
                     // Deployed Policies Directory list
                     Expanded(
                       flex: 4,
-                      child: _buildDeployedPoliciesCard(deployedPolicies),
+                      child: _buildDeployedPoliciesCard(deployedPolicies, isDarkMode),
                     ),
                     const SizedBox(width: 16),
                     // Live OPA Compiler Logs Feed
                     Expanded(
                       flex: 5,
-                      child: _buildOpaLogsCard(opaLogs),
+                      child: _buildOpaLogsCard(opaLogs, isDarkMode),
                     ),
                   ],
                 ),
@@ -120,7 +129,7 @@ class PolicyDeployment extends ConsumerWidget {
     );
   }
 
-  Widget _buildPipelineVisualizer(BuildContext context) {
+  Widget _buildPipelineVisualizer(BuildContext context, bool isDarkMode) {
     final bool isMobile = Responsive.isMobile(context);
     final stages = [
       {'label': 'AI GEN', 'icon': Icons.psychology},
@@ -130,14 +139,38 @@ class PolicyDeployment extends ConsumerWidget {
       {'label': 'ENFORCE', 'icon': Icons.shield},
     ];
 
-    return GlassContainer(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      borderColor: CyberColors.neonCyan,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.40) : const Color(0xFFCDD4B2),
+          width: 1.0,
+        ),
+        boxShadow: isDarkMode
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('OPA RULES BUNDLE ENFORCEMENT PATHWAY', style: CyberTextStyles.technical(color: Colors.white, fontSize: 11)),
-          const Divider(color: CyberColors.borderNeonCyan),
+          Text(
+            'OPA RULES BUNDLE ENFORCEMENT PATHWAY',
+            style: CyberTextStyles.technical(
+              color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ).copyWith(letterSpacing: 1.1),
+          ),
+          const SizedBox(height: 8),
+          Divider(color: isDarkMode ? const Color(0xFF222222) : const Color(0xFFE2E8F0), height: 1),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -153,18 +186,29 @@ class PolicyDeployment extends ConsumerWidget {
                       child: Column(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(9),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: CyberColors.panelBg,
-                              border: Border.all(color: CyberColors.neonCyan),
+                              color: isDarkMode ? const Color(0xFF142416) : const Color(0xFFEBECCC),
+                              border: Border.all(
+                                color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
+                                width: 1.5,
+                              ),
                             ),
-                            child: Icon(stage['icon'] as IconData, color: CyberColors.neonGreen, size: 16),
+                            child: Icon(
+                              stage['icon'] as IconData,
+                              color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
+                              size: 16,
+                            ),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             stage['label'] as String,
-                            style: CyberTextStyles.technical(fontSize: 8.5, color: Colors.white),
+                            style: CyberTextStyles.technical(
+                              fontSize: 9.5,
+                              color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
@@ -172,8 +216,8 @@ class PolicyDeployment extends ConsumerWidget {
                     if (!isLast && !isMobile)
                       Container(
                         width: 24,
-                        height: 1,
-                        color: CyberColors.neonCyan.withOpacity(0.4),
+                        height: 1.5,
+                        color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.4) : const Color(0xFFCDD4B2),
                       ),
                   ],
                 ),
@@ -185,47 +229,99 @@ class PolicyDeployment extends ConsumerWidget {
     );
   }
 
-  Widget _buildDeployedPoliciesCard(List<SecurityPolicy> policies) {
-    return GlassContainer(
-      borderColor: CyberColors.neonGreen,
+  Widget _buildDeployedPoliciesCard(List<SecurityPolicy> policies, bool isDarkMode) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.40) : const Color(0xFFCDD4B2),
+          width: 1.0,
+        ),
+        boxShadow: isDarkMode
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ENFORCED ACTIVE POLICIES', style: CyberTextStyles.technical(color: Colors.white, fontSize: 11)),
-          const Divider(color: CyberColors.borderNeonCyan),
+          Row(
+            children: [
+              Icon(Icons.verified, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416), size: 15),
+              const SizedBox(width: 6),
+              Text(
+                'ENFORCED ACTIVE POLICIES',
+                style: CyberTextStyles.technical(
+                  color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ).copyWith(letterSpacing: 1.1),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
+          Divider(color: isDarkMode ? const Color(0xFF222222) : const Color(0xFFE2E8F0), height: 1),
+          const SizedBox(height: 10),
           Expanded(
             child: policies.isEmpty
-                ? Center(child: Text('NO ACTIVE ENFORCED POLICIES', style: CyberTextStyles.techMuted))
+                ? Center(
+                    child: Text(
+                      'NO ACTIVE ENFORCED POLICIES',
+                      style: CyberTextStyles.technical(
+                        color: isDarkMode ? Colors.white38 : const Color(0xFF64748B),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )
                 : ListView.builder(
                     itemCount: policies.length,
                     itemBuilder: (context, idx) {
                       final policy = policies[idx];
                       final timeStr = '${policy.timestamp.hour.toString().padLeft(2, '0')}:${policy.timestamp.minute.toString().padLeft(2, '0')}:${policy.timestamp.second.toString().padLeft(2, '0')}';
 
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: GlassContainer(
-                          padding: const EdgeInsets.all(10),
-                          borderRadius: 6.0,
-                          borderColor: CyberColors.neonGreen,
-                          showHUDCorners: false,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.3) : const Color(0xFFCDD4B2),
+                            width: 1.0,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     policy.deviceName.toUpperCase(),
-                                    style: CyberTextStyles.technical(fontSize: 11.0, color: Colors.white, fontWeight: FontWeight.bold),
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 12.0,
+                                      color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     'TARGET: ${policy.deviceId} | IP: ${policy.rawJsonPolicy.contains('ip_address') ? '10.128.4.X' : 'LOCAL'}',
-                                    style: CyberTextStyles.interface(fontSize: 10, color: CyberColors.textMuted),
+                                    style: GoogleFonts.spaceGrotesk(
+                                      fontSize: 10,
+                                      color: isDarkMode ? Colors.white60 : const Color(0xFF64748B),
+                                    ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
@@ -237,26 +333,35 @@ class PolicyDeployment extends ConsumerWidget {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: CyberColors.neonGreen.withOpacity(0.1),
+                                    color: isDarkMode
+                                        ? const Color(0xFF5DD62C).withOpacity(0.15)
+                                        : const Color(0xFF15803D).withOpacity(0.12),
                                     borderRadius: BorderRadius.circular(2),
+                                    border: Border.all(
+                                      color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF15803D),
+                                      width: 0.8,
+                                    ),
                                   ),
                                   child: Text(
                                     'ACTIVE',
-                                    style: CyberTextStyles.technical(color: CyberColors.neonGreen, fontSize: 8),
+                                    style: CyberTextStyles.technical(
+                                      color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF15803D),
+                                      fontSize: 8.5,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   timeStr,
-                                  style: CyberTextStyles.techMuted.copyWith(fontSize: 8.0),
+                                  style: CyberTextStyles.techMutedFor(isDarkMode).copyWith(fontSize: 8.5),
                                 ),
                               ],
                             ),
                           ],
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
                   ),
           ),
         ],
@@ -264,29 +369,77 @@ class PolicyDeployment extends ConsumerWidget {
     );
   }
 
-  Widget _buildOpaLogsCard(List<dynamic> logs) {
-    return GlassContainer(
-      borderColor: CyberColors.neonGreen,
+  Widget _buildOpaLogsCard(List<dynamic> logs, bool isDarkMode) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.40) : const Color(0xFFCDD4B2),
+          width: 1.0,
+        ),
+        boxShadow: isDarkMode
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('OPA EDGE RULES COMPILER LOGS', style: CyberTextStyles.technical(color: Colors.white, fontSize: 11)),
-          const Divider(color: CyberColors.borderNeonGreen),
+          Row(
+            children: [
+              Icon(Icons.terminal, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416), size: 15),
+              const SizedBox(width: 6),
+              Text(
+                'OPA EDGE RULES COMPILER LOGS',
+                style: CyberTextStyles.technical(
+                  color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ).copyWith(letterSpacing: 1.1),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
+          Divider(color: isDarkMode ? const Color(0xFF222222) : const Color(0xFFE2E8F0), height: 1),
+          const SizedBox(height: 10),
           Expanded(
             child: logs.isEmpty
-                ? Center(child: Text('LOG FEED IS EMPTY', style: CyberTextStyles.techMuted))
+                ? Center(
+                    child: Text(
+                      'LOG FEED IS EMPTY',
+                      style: CyberTextStyles.technical(
+                        color: isDarkMode ? Colors.white38 : const Color(0xFF64748B),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )
                 : ListView.builder(
                     itemCount: logs.length,
                     itemBuilder: (context, idx) {
                       final log = logs[idx];
                       final isError = log.level == 'ERROR';
                       final timeStr = '${log.timestamp.hour.toString().padLeft(2, '0')}:${log.timestamp.minute.toString().padLeft(2, '0')}:${log.timestamp.second.toString().padLeft(2, '0')}';
+                      final Color levelColor = isError
+                          ? const Color(0xFFDF2531)
+                          : (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF15803D));
 
                       return Container(
                         padding: const EdgeInsets.symmetric(vertical: 6),
-                        decoration: const BoxDecoration(
-                          border: Border(bottom: BorderSide(color: Colors.white12)),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: isDarkMode ? const Color(0xFF181818) : const Color(0xFFF1F5F9),
+                              width: 1,
+                            ),
+                          ),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,14 +447,18 @@ class PolicyDeployment extends ConsumerWidget {
                             // Timestamp
                             Text(
                               '[$timeStr]',
-                              style: CyberTextStyles.techMuted.copyWith(fontSize: 10),
+                              style: GoogleFonts.spaceGrotesk(
+                                fontSize: 10,
+                                color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF80A416),
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                             const SizedBox(width: 8),
                             // Level
                             Text(
                               '${log.level}:',
                               style: CyberTextStyles.technical(
-                                color: isError ? CyberColors.alertRed : CyberColors.neonGreen,
+                                color: levelColor,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -311,9 +468,10 @@ class PolicyDeployment extends ConsumerWidget {
                             Expanded(
                               child: Text(
                                 log.message.toUpperCase(),
-                                style: CyberTextStyles.technical(
-                                  color: Colors.white,
-                                  fontSize: 10,
+                                style: GoogleFonts.inter(
+                                  color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                             ),

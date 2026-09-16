@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../providers/security_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/navigation_provider.dart';
+import '../providers/theme_provider.dart';
 import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
 import '../widgets/cyber_radial_donut_chart.dart';
@@ -103,6 +104,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = ref.watch(themeModeProvider);
     final securityState = ref.watch(securityProvider);
     final authSession = ref.watch(authProvider);
     final String activeRole = authSession?.role ?? 'Admin';
@@ -140,9 +142,23 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F0F0F),
-                border: Border.all(color: const Color(0xFF5DD62C).withOpacity(0.40), width: 1.0),
+                color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+                border: Border.all(
+                  color: isDarkMode 
+                      ? const Color(0xFF5DD62C).withOpacity(0.40) 
+                      : const Color(0xFF80A416).withOpacity(0.25), 
+                  width: 1.0,
+                ),
                 borderRadius: BorderRadius.circular(4),
+                boxShadow: isDarkMode
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -159,7 +175,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                               style: CyberTextStyles.displayTitle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w900,
-                                color: const Color(0xFF5DD62C),
+                                color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
                               ).copyWith(letterSpacing: 1.8),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -170,7 +186,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                                   headerRoleLabel,
                                   style: CyberTextStyles.technical(
                                     fontSize: 10,
-                                    color: const Color(0xFF8B5CF6),
+                                    color: isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF5E7343),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -179,7 +195,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                                   'SYSTEM STATUS: ZERO-TRUST ENFORCING',
                                   style: CyberTextStyles.technical(
                                     fontSize: 10,
-                                    color: const Color(0xFFC5C764),
+                                    color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF80A416),
                                   ),
                                 ),
                               ],
@@ -321,9 +337,21 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F0F0F),
-                border: Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.45), width: 1.0),
+                color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+                border: Border.all(
+                  color: isDarkMode ? const Color(0xFF8B5CF6).withOpacity(0.45) : const Color(0xFF80A416).withOpacity(0.25), 
+                  width: 1.0,
+                ),
                 borderRadius: BorderRadius.circular(4),
+                boxShadow: isDarkMode
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,7 +363,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                         'PIPELINE STATUS: Zeek IDS Capture → PyTorch GNN Inference → OPA Rego Microsegmentation Active.',
                         style: CyberTextStyles.technical(
                           fontSize: 10,
-                          color: const Color(0xFF5DD62C),
+                          color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF08652C),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -343,7 +371,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                         '99.4% HEALTH NOMINAL',
                         style: CyberTextStyles.technical(
                           fontSize: 10,
-                          color: const Color(0xFF8B5CF6),
+                          color: isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF80A416),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -352,11 +380,11 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                   const SizedBox(height: 6),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(2),
-                    child: const LinearProgressIndicator(
+                    child: LinearProgressIndicator(
                       value: 0.994,
                       minHeight: 4,
-                      backgroundColor: Color(0xFF202020),
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF8B5CF6)),
+                      backgroundColor: isDarkMode ? const Color(0xFF202020) : const Color(0xFFF1F5F9),
+                      valueColor: AlwaysStoppedAnimation<Color>(isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF80A416)),
                     ),
                   ),
                 ],
@@ -561,12 +589,26 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
 
   // ── RECENT ALERTS TABLE (LAST 5) ──────────────────────────────────────────
   Widget _buildRecentAlertsTable() {
+    final isDarkMode = ref.watch(themeModeProvider);
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
-        border: Border.all(color: const Color(0xFFDF2531).withOpacity(0.35), width: 1.0),
+        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFFDF2531).withOpacity(0.35) : const Color(0xFFDF2531).withOpacity(0.25), 
+          width: 1.0,
+        ),
         borderRadius: BorderRadius.circular(4),
+        boxShadow: isDarkMode
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -594,7 +636,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                   'ALL ANOMALIES FEED →',
                   style: CyberTextStyles.technical(
                     fontSize: 9,
-                    color: const Color(0xFF8B5CF6),
+                    color: isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF80A416),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -602,29 +644,36 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
             ],
           ),
           const SizedBox(height: 10),
-          const Divider(color: Color(0xFF222222), height: 1),
+          Divider(color: isDarkMode ? const Color(0xFF222222) : const Color(0xFFE2E8F0), height: 1),
           const SizedBox(height: 6),
 
           // Table Header
           Row(
             children: [
-              Expanded(flex: 2, child: Text('TIMESTAMP', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70))),
-              Expanded(flex: 3, child: Text('DEVICE ASSET', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70))),
-              Expanded(flex: 4, child: Text('ATTACK VECTOR', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70))),
-              Expanded(flex: 2, child: Text('SEVERITY', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70))),
-              Expanded(flex: 2, child: Text('ACTION', textAlign: TextAlign.right, style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70))),
+              Expanded(flex: 2, child: Text('TIMESTAMP', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white70 : const Color(0xFF64748B)))),
+              Expanded(flex: 3, child: Text('DEVICE ASSET', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white70 : const Color(0xFF64748B)))),
+              Expanded(flex: 4, child: Text('ATTACK VECTOR', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white70 : const Color(0xFF64748B)))),
+              Expanded(flex: 2, child: Text('SEVERITY', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white70 : const Color(0xFF64748B)))),
+              Expanded(flex: 2, child: Text('ACTION', textAlign: TextAlign.right, style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white70 : const Color(0xFF64748B)))),
             ],
           ),
           const SizedBox(height: 6),
-          const Divider(color: Color(0xFF222222), height: 1),
+          Divider(color: isDarkMode ? const Color(0xFF222222) : const Color(0xFFE2E8F0), height: 1),
 
           // Table Rows
           ..._recentAlerts.map((alert) {
-            final Color sevColor = alert['color'] as Color;
+            Color sevColor = alert['color'] as Color;
+            if (!isDarkMode) {
+              if (alert['severity'] == 'MEDIUM' || sevColor == const Color(0xFFFFE997)) {
+                sevColor = const Color(0xFFB45309); // High contrast amber for light mode
+              } else if (alert['severity'] == 'HIGH' || sevColor == const Color(0xFFFF9900)) {
+                sevColor = const Color(0xFFC2410C); // High contrast deep orange for light mode
+              }
+            }
             return Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFF181818), width: 1)),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: isDarkMode ? const Color(0xFF181818) : const Color(0xFFF1F5F9), width: 1)),
               ),
               child: Row(
                 children: [
@@ -632,7 +681,11 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                     flex: 2,
                     child: Text(
                       alert['time'] as String,
-                      style: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFFC5C764)),
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 12, 
+                        fontWeight: FontWeight.w600, 
+                        color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF80A416),
+                      ),
                     ),
                   ),
                   Expanded(
@@ -642,12 +695,19 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                       children: [
                         Text(
                           alert['device'] as String,
-                          style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w700, color: Colors.white),
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5, 
+                            fontWeight: FontWeight.w700, 
+                            color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           alert['ip'] as String,
-                          style: GoogleFonts.spaceGrotesk(fontSize: 11, color: Colors.white60),
+                          style: GoogleFonts.spaceGrotesk(
+                            fontSize: 11, 
+                            color: isDarkMode ? Colors.white60 : const Color(0xFF64748B),
+                          ),
                         ),
                       ],
                     ),
@@ -656,7 +716,11 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                     flex: 4,
                     child: Text(
                       alert['attack'] as String,
-                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500, color: Colors.white),
+                      style: GoogleFonts.inter(
+                        fontSize: 12, 
+                        fontWeight: FontWeight.w500, 
+                        color: isDarkMode ? Colors.white : const Color(0xFF1E293B),
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -687,16 +751,19 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF8B5CF6).withOpacity(0.20),
+                            color: isDarkMode ? const Color(0xFF8B5CF6).withOpacity(0.20) : const Color(0xFFB1A9DA).withOpacity(0.30),
                             borderRadius: BorderRadius.circular(3),
-                            border: Border.all(color: const Color(0xFFA88AED), width: 1.0),
+                            border: Border.all(
+                              color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF80A416), 
+                              width: 1.0,
+                            ),
                           ),
                           child: Text(
                             'TRIAGE',
                             style: CyberTextStyles.technical(
                               fontSize: 10.5,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFFA88AED),
+                              color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF5E7343),
                             ),
                           ),
                         ),
@@ -714,12 +781,26 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
 
   // ── POLICY STATUS SUMMARY CARD ────────────────────────────────────────────
   Widget _buildPolicyStatusSummaryCard() {
+    final isDarkMode = ref.watch(themeModeProvider);
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
-        border: Border.all(color: const Color(0xFFC4E320).withOpacity(0.35), width: 1.0),
+        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFFC4E320).withOpacity(0.35) : const Color(0xFF80A416).withOpacity(0.25), 
+          width: 1.0,
+        ),
         borderRadius: BorderRadius.circular(4),
+        boxShadow: isDarkMode
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -729,14 +810,14 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.shield_outlined, color: Color(0xFFC4E320), size: 16),
+                  const Icon(Icons.shield_outlined, color: Color(0xFF80A416), size: 16),
                   const SizedBox(width: 8),
                   Text(
                     'POLICY STATUS BREAKDOWN',
                     style: CyberTextStyles.technical(
                       fontSize: 11.5,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFFC4E320),
+                      color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A),
                     ),
                   ),
                 ],
@@ -747,7 +828,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                   'REVIEW ALL →',
                   style: CyberTextStyles.technical(
                     fontSize: 9,
-                    color: const Color(0xFF8B5CF6),
+                    color: isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF80A416),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -756,13 +837,13 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           ),
           const SizedBox(height: 12),
 
-          _buildPolicyStatusRow('1. PENDING APPROVAL', '24 Policies', const Color(0xFFFFE997), 0.15),
+          _buildPolicyStatusRow('1. PENDING APPROVAL', '24 Policies', const Color(0xFFFFE997), 0.15, isDarkMode),
           const SizedBox(height: 8),
-          _buildPolicyStatusRow('2. APPROVED BY ADMIN', '20 Policies', const Color(0xFF8B5CF6), 0.12),
+          _buildPolicyStatusRow('2. APPROVED BY ADMIN', '20 Policies', const Color(0xFF8B5CF6), 0.12, isDarkMode),
           const SizedBox(height: 8),
-          _buildPolicyStatusRow('3. DEPLOYED IN OPA', '298 Policies', const Color(0xFF5DD62C), 0.85),
+          _buildPolicyStatusRow('3. DEPLOYED IN OPA', '298 Policies', const Color(0xFF5DD62C), 0.85, isDarkMode),
           const SizedBox(height: 8),
-          _buildPolicyStatusRow('4. REJECTED / AUDITED', '8 Policies', const Color(0xFFDF2531), 0.05),
+          _buildPolicyStatusRow('4. REJECTED / AUDITED', '8 Policies', const Color(0xFFDF2531), 0.05, isDarkMode),
 
           const SizedBox(height: 12),
           InkWell(
@@ -771,8 +852,8 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFFC4E320).withOpacity(0.12),
-                border: Border.all(color: const Color(0xFFC4E320), width: 1.0),
+                color: isDarkMode ? const Color(0xFFC4E320).withOpacity(0.12) : const Color(0xFFC4E320).withOpacity(0.25),
+                border: Border.all(color: const Color(0xFF80A416), width: 1.0),
                 borderRadius: BorderRadius.circular(3),
               ),
               child: Center(
@@ -781,7 +862,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                   style: CyberTextStyles.technical(
                     fontSize: 9.5,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFFC4E320),
+                    color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF5E7343),
                   ),
                 ),
               ),
@@ -792,14 +873,14 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
     );
   }
 
-  Widget _buildPolicyStatusRow(String label, String count, Color color, double progress) {
+  Widget _buildPolicyStatusRow(String label, String count, Color color, double progress, bool isDarkMode) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.white)),
+            Text(label, style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: isDarkMode ? Colors.white : const Color(0xFF1E293B))),
             Text(count, style: GoogleFonts.spaceGrotesk(fontSize: 12.5, fontWeight: FontWeight.bold, color: color)),
           ],
         ),
@@ -809,7 +890,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 4,
-            backgroundColor: const Color(0xFF222222),
+            backgroundColor: isDarkMode ? const Color(0xFF222222) : const Color(0xFFF1F5F9),
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ),
@@ -819,12 +900,23 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
 
   // ── SYSTEM COMPONENT HEALTH PANEL ─────────────────────────────────────────
   Widget _buildSystemComponentHealthPanel() {
+    final isDarkMode = ref.watch(themeModeProvider);
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
+        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         border: Border.all(color: const Color(0xFF80A416).withOpacity(0.35), width: 1.0),
         borderRadius: BorderRadius.circular(4),
+        boxShadow: isDarkMode
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -841,7 +933,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                     style: CyberTextStyles.technical(
                       fontSize: 12.5,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF80A416),
+                      color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A),
                     ),
                   ),
                 ],
@@ -850,29 +942,29 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                 'ALL NOMINAL',
                 style: CyberTextStyles.technical(
                   fontSize: 10.5,
-                  color: const Color(0xFF5DD62C),
+                  color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF08652C),
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          _healthRowItem('Zeek Network Sensor', '1.4k pkts/s · 1.2ms latency', const Color(0xFF5DD62C)),
-          _healthRowItem('PyTorch GNN Embeddings', '64-dim · 4.8ms inference', const Color(0xFF8B5CF6)),
-          _healthRowItem('Open Policy Agent (OPA)', '298 Active Microsegments', const Color(0xFFC4E320)),
-          _healthRowItem('RBAC Zero-Trust Enclave', '100% Policy Sync', const Color(0xFFFFE997)),
+          _healthRowItem('Zeek Network Sensor', '1.4k pkts/s · 1.2ms latency', const Color(0xFF5DD62C), isDarkMode),
+          _healthRowItem('PyTorch GNN Embeddings', '64-dim · 4.8ms inference', const Color(0xFF8B5CF6), isDarkMode),
+          _healthRowItem('Open Policy Agent (OPA)', '298 Active Microsegments', const Color(0xFFC4E320), isDarkMode),
+          _healthRowItem('RBAC Zero-Trust Enclave', '100% Policy Sync', const Color(0xFFFFE997), isDarkMode),
         ],
       ),
     );
   }
 
-  Widget _healthRowItem(String title, String val, Color color) {
+  Widget _healthRowItem(String title, String val, Color color, bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w500, color: Colors.white70)),
+          Text(title, style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w500, color: isDarkMode ? Colors.white70 : const Color(0xFF334155))),
           Text(val, style: GoogleFonts.spaceGrotesk(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
         ],
       ),
@@ -917,13 +1009,27 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
 
   // ── LIVE SYSTEM LOG PANEL (BOTTOM) ────────────────────────────────────────
   Widget _buildSystemLogPanel({required double height}) {
+    final isDarkMode = ref.watch(themeModeProvider);
+
     return Container(
       height: height,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
-        border: Border.all(color: const Color(0xFF5DD62C).withOpacity(0.35), width: 1.0),
+        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+        border: Border.all(
+          color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.35) : const Color(0xFF80A416).withOpacity(0.25), 
+          width: 1.0,
+        ),
         borderRadius: BorderRadius.circular(4),
+        boxShadow: isDarkMode
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -936,7 +1042,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                 style: CyberTextStyles.technical(
                   fontSize: 11.5,
                   fontWeight: FontWeight.bold,
-                  color: const Color(0xFF5DD62C),
+                  color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
                 ),
               ),
               InkWell(
@@ -945,7 +1051,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                   'VIEW INCIDENTS →',
                   style: CyberTextStyles.technical(
                     fontSize: 10,
-                    color: const Color(0xFFA88AED),
+                    color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF80A416),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -964,7 +1070,9 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                     style: GoogleFonts.spaceGrotesk(
                       fontSize: 11,
                       fontWeight: idx == 0 ? FontWeight.w700 : FontWeight.w500,
-                      color: idx == 0 ? const Color(0xFF5DD62C) : Colors.white60,
+                      color: idx == 0 
+                          ? (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF08652C)) 
+                          : (isDarkMode ? Colors.white60 : const Color(0xFF64748B)),
                     ),
                   ),
                 );

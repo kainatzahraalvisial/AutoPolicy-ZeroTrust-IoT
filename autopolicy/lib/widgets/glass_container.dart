@@ -40,6 +40,11 @@ class _GlassContainerState extends ConsumerState<GlassContainer> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(themeModeProvider);
+    final effectiveBorderColor = isDarkMode
+        ? widget.borderColor
+        : (widget.borderColor == CyberColors.borderNeonCyan || widget.borderColor == CyberColors.neonGreen
+            ? const Color(0xFFCDD4B2)
+            : widget.borderColor);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -50,9 +55,9 @@ class _GlassContainerState extends ConsumerState<GlassContainer> {
         height: widget.height,
         child: CustomPaint(
           painter: _ChamferedPanelPainter(
-            borderColor: _isHovered ? widget.borderColor : widget.borderColor.withOpacity(0.65),
+            borderColor: _isHovered ? effectiveBorderColor : effectiveBorderColor.withOpacity(isDarkMode ? 0.65 : 0.85),
             borderWidth: widget.borderWidth,
-            backgroundColor: isDarkMode ? const Color(0xFF0A0A0E) : const Color(0xFF12141C),
+            backgroundColor: isDarkMode ? const Color(0xFF0A0A0E) : Colors.white,
             chamferSize: widget.borderRadius,
             showCorners: widget.showHUDCorners,
           ),

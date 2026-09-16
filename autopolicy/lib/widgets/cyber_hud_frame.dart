@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/theme_provider.dart';
+
 enum CyberFrameDesign {
   hazardStripes,   // Bottom-right chamfer with diagonal hazard warning stripes (///)
   topTabWedge,     // Glowing top tab + chamfered bottom-left corner with accent wedge
@@ -14,7 +17,7 @@ enum CyberFrameDesign {
   tacticalArmorNotch, // Exact Figure Card Frame from media_1788769893400.png: Armor tab notch, top-right slashes, bottom-left chevrons
 }
 
-class CyberHudFrame extends StatefulWidget {
+class CyberHudFrame extends ConsumerStatefulWidget {
   final Widget child;
   final CyberFrameDesign design;
   final Color baseBorderColor;
@@ -43,15 +46,28 @@ class CyberHudFrame extends StatefulWidget {
   });
 
   @override
-  State<CyberHudFrame> createState() => _CyberHudFrameState();
+  ConsumerState<CyberHudFrame> createState() => _CyberHudFrameState();
 }
 
-class _CyberHudFrameState extends State<CyberHudFrame> {
+class _CyberHudFrameState extends ConsumerState<CyberHudFrame> {
   bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
-    final activeBorderColor = _isHovered ? widget.hoverBorderColor : widget.baseBorderColor;
+    final isDarkMode = ref.watch(themeModeProvider);
+    final activeBorderColor = isDarkMode
+        ? (_isHovered ? widget.hoverBorderColor : widget.baseBorderColor)
+        : (_isHovered ? widget.hoverBorderColor : const Color(0xFFCDD4B2));
+    final isRedAlert = widget.surfaceColor == const Color(0xFF810100) ||
+        widget.surfaceColor == const Color(0xFFDF2531) ||
+        widget.surfaceColor == const Color(0xFFB91C1D);
+    final effectiveSurface = isDarkMode
+        ? widget.surfaceColor
+        : (isRedAlert
+            ? widget.surfaceColor
+            : (widget.surfaceColor.computeLuminance() < 0.25
+                ? const Color(0xFFFAF9F6)
+                : widget.surfaceColor));
 
     return MouseRegion(
       cursor: widget.onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
@@ -73,20 +89,20 @@ class _CyberHudFrameState extends State<CyberHudFrame> {
             boxShadow: _isHovered
                 ? [
                     BoxShadow(
-                      color: widget.hoverBorderColor.withOpacity( 0.22),
+                      color: widget.hoverBorderColor.withOpacity(isDarkMode ? 0.22 : 0.15),
                       blurRadius: 22,
                       spreadRadius: 1,
                       offset: const Offset(0, 6),
                     ),
                     BoxShadow(
-                      color: Colors.black.withOpacity( 0.85),
+                      color: isDarkMode ? Colors.black.withOpacity(0.85) : const Color(0xFF80A416).withOpacity(0.08),
                       blurRadius: 18,
                       offset: const Offset(0, 10),
                     ),
                   ]
                 : [
                     BoxShadow(
-                      color: Colors.black.withOpacity( 0.50),
+                      color: isDarkMode ? Colors.black.withOpacity(0.50) : const Color(0xFF80A416).withOpacity(0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
@@ -96,7 +112,7 @@ class _CyberHudFrameState extends State<CyberHudFrame> {
             painter: _CyberHudFramePainter(
               design: widget.design,
               borderColor: activeBorderColor,
-              surfaceColor: widget.surfaceColor,
+              surfaceColor: effectiveSurface,
               isHovered: _isHovered,
               showGrid: widget.showGrid,
             ),

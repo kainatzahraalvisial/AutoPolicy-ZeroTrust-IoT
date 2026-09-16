@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/theme_provider.dart';
 import '../theme/text_styles.dart';
 
-class CyberTrafficLineChart extends StatelessWidget {
+class CyberTrafficLineChart extends ConsumerWidget {
   final double height;
   final VoidCallback? onViewDetails;
 
@@ -12,14 +14,29 @@ class CyberTrafficLineChart extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDarkMode = ref.watch(themeModeProvider);
+    final accentColor = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416);
+
     return Container(
       height: height,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
-        border: Border.all(color: const Color(0xFF5DD62C).withOpacity(0.35), width: 1.0),
+        color: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
+        border: Border.all(
+          color: accentColor.withOpacity(0.35), 
+          width: 1.0,
+        ),
         borderRadius: BorderRadius.circular(4),
+        boxShadow: isDarkMode
+            ? null
+            : [
+                BoxShadow(
+                  color: const Color(0xFF80A416).withOpacity(0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,11 +50,11 @@ class CyberTrafficLineChart extends StatelessWidget {
                   Container(
                     width: 7,
                     height: 7,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF5DD62C),
+                    decoration: BoxDecoration(
+                      color: accentColor,
                       shape: BoxShape.circle,
                       boxShadow: [
-                        BoxShadow(color: Color(0xFF5DD62C), blurRadius: 6),
+                        BoxShadow(color: accentColor, blurRadius: 6),
                       ],
                     ),
                   ),
@@ -47,21 +64,21 @@ class CyberTrafficLineChart extends StatelessWidget {
                     style: CyberTextStyles.technical(
                       fontSize: 11.5,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF5DD62C),
+                      color: accentColor,
                     ),
                   ),
                   const SizedBox(width: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF5DD62C).withOpacity(0.12),
+                      color: accentColor.withOpacity(0.12),
                       borderRadius: BorderRadius.circular(3),
                     ),
                     child: Text(
                       'LIVE · 1,420 PKTS/S',
                       style: CyberTextStyles.technical(
                         fontSize: 9,
-                        color: const Color(0xFF5DD62C),
+                        color: accentColor,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -70,7 +87,7 @@ class CyberTrafficLineChart extends StatelessWidget {
               ),
               Row(
                 children: [
-                  _buildLegendPill('NORMAL INGRESS', const Color(0xFF5DD62C)),
+                  _buildLegendPill('NORMAL INGRESS', accentColor),
                   const SizedBox(width: 8),
                   _buildLegendPill('ANOMALY SPIKES', const Color(0xFFDF2531)),
                   if (onViewDetails != null) ...[
@@ -81,7 +98,7 @@ class CyberTrafficLineChart extends StatelessWidget {
                         'FULL IDS →',
                         style: CyberTextStyles.technical(
                           fontSize: 9,
-                          color: const Color(0xFF8B5CF6),
+                          color: isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF9D8DF1),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -97,7 +114,7 @@ class CyberTrafficLineChart extends StatelessWidget {
           Expanded(
             child: CustomPaint(
               size: Size.infinite,
-              painter: _TrafficLineChartPainter(),
+              painter: _TrafficLineChartPainter(isDarkMode: isDarkMode),
             ),
           ),
           const SizedBox(height: 6),
@@ -106,11 +123,11 @@ class CyberTrafficLineChart extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('-60 min', style: CyberTextStyles.techMuted.copyWith(fontSize: 8.5)),
-              Text('-45 min', style: CyberTextStyles.techMuted.copyWith(fontSize: 8.5)),
-              Text('-30 min', style: CyberTextStyles.techMuted.copyWith(fontSize: 8.5)),
-              Text('-15 min', style: CyberTextStyles.techMuted.copyWith(fontSize: 8.5)),
-              Text('NOW', style: CyberTextStyles.technical(fontSize: 8.5, color: const Color(0xFF5DD62C), fontWeight: FontWeight.bold)),
+              Text('-60 min', style: TextStyle(fontFamily: 'monospace', fontSize: 8.5, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
+              Text('-45 min', style: TextStyle(fontFamily: 'monospace', fontSize: 8.5, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
+              Text('-30 min', style: TextStyle(fontFamily: 'monospace', fontSize: 8.5, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
+              Text('-15 min', style: TextStyle(fontFamily: 'monospace', fontSize: 8.5, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
+              Text('NOW', style: CyberTextStyles.technical(fontSize: 8.5, color: accentColor, fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -133,7 +150,11 @@ class CyberTrafficLineChart extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: CyberTextStyles.techMuted.copyWith(fontSize: 8.5, color: color),
+          style: CyberTextStyles.technical(
+            fontSize: 8,
+            color: color,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
@@ -141,6 +162,9 @@ class CyberTrafficLineChart extends StatelessWidget {
 }
 
 class _TrafficLineChartPainter extends CustomPainter {
+  final bool isDarkMode;
+  _TrafficLineChartPainter({this.isDarkMode = true});
+
   @override
   void paint(Canvas canvas, Size size) {
     final double w = size.width;
@@ -148,7 +172,7 @@ class _TrafficLineChartPainter extends CustomPainter {
 
     // Background horizontal grid lines
     final gridPaint = Paint()
-      ..color = const Color(0xFF252525)
+      ..color = isDarkMode ? const Color(0xFF252525) : const Color(0xFFE2E8F0)
       ..strokeWidth = 1.0;
 
     const int gridRows = 4;

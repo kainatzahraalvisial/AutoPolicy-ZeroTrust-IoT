@@ -338,6 +338,11 @@ class SecurityNotifier extends StateNotifier<SecurityState> {
     _pushNotification('SIMULATION INJECTED: $attackType on ${target.name}!', 'threat');
   }
 
+  // Record device simulation test vector
+  void recordDeviceSimulationTest(String deviceId, String attackType) {
+    manualAttackTrigger(deviceId, attackType);
+  }
+
   // Acknowledges active security anomaly alert
   void acknowledgeAnomaly(String anomalyId) {
     state = state.copyWith(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../providers/theme_provider.dart';
 import '../theme/colors.dart';
 import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
@@ -27,76 +28,70 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
   final List<Map<String, String>> _operatorsList = [
     {
       'name': 'Kainat Alvi',
-      'email': 'kainat.alvi@autopolicy.internal',
+      'email': 'kainat.alvi@zerotrust.internal',
       'role': 'Admin',
       'status': 'ACTIVE',
-      'lastLogin': 'Today, 09:42 UTC',
+      'lastLogin': '10 mins ago',
       'ip': '192.168.1.105',
     },
     {
-      'name': 'Ava Chen',
-      'email': 'a.chen@autopolicy.internal',
+      'name': 'Alex Chen',
+      'email': 'a.chen@zerotrust.internal',
       'role': 'Security Engineer',
       'status': 'ACTIVE',
-      'lastLogin': 'Today, 08:15 UTC',
+      'lastLogin': '1 hour ago',
       'ip': '10.128.4.155',
     },
     {
       'name': 'Marcus Vance',
-      'email': 'm.vance@autopolicy.internal',
-      'role': 'Manager',
+      'email': 'm.vance@zerotrust.internal',
+      'role': 'Compliance Manager',
       'status': 'ACTIVE',
-      'lastLogin': 'Yesterday, 18:30 UTC',
+      'lastLogin': '3 hours ago',
       'ip': '10.128.8.21',
     },
     {
-      'name': 'Elena Rostova',
-      'email': 'e.rostova@autopolicy.internal',
+      'name': 'Siti Nurhaliza',
+      'email': 's.nurhaliza@zerotrust.internal',
       'role': 'Security Engineer',
       'status': 'ACTIVE',
-      'lastLogin': 'Sep 10, 14:22 UTC',
-      'ip': '10.128.4.190',
+      'lastLogin': 'Yesterday',
+      'ip': '192.168.2.14',
     },
     {
       'name': 'David Kim',
-      'email': 'd.kim@autopolicy.internal',
-      'role': 'Admin',
+      'email': 'd.kim@zerotrust.internal',
+      'role': 'Incident Response Lead',
       'status': 'ACTIVE',
-      'lastLogin': 'Sep 09, 11:05 UTC',
-      'ip': '192.168.1.112',
+      'lastLogin': '2 days ago',
+      'ip': '10.128.1.99',
     },
     {
-      'name': 'Dev Audit Temp',
-      'email': 'audit.temp@autopolicy.internal',
-      'role': 'Manager',
+      'name': 'Elena Rostova',
+      'email': 'e.rostova@zerotrust.internal',
+      'role': 'Auditor',
       'status': 'REVOKED',
-      'lastLogin': 'Aug 28, 16:00 UTC',
-      'ip': '192.168.1.84',
+      'lastLogin': '14 days ago',
+      'ip': '172.16.0.4',
     },
   ];
 
   // Permissions Matrix Definition (Rows = Permissions, Columns = Roles)
   final List<Map<String, dynamic>> _permissionsMatrix = [
     {
-      'permission': 'GNN Graph & Telemetry Inspection',
+      'permission': 'View Real-Time Telemetry & Threat Dashboard',
       'admin': true,
       'engineer': true,
       'manager': true,
     },
     {
-      'permission': 'Manual & Automated Policy Generation',
+      'permission': 'Approve & Deploy OPA Microsegmentation Rego',
       'admin': true,
       'engineer': true,
       'manager': false,
     },
     {
-      'permission': 'OPA Rego Policy Deployment to Sidecars',
-      'admin': true,
-      'engineer': true,
-      'manager': false,
-    },
-    {
-      'permission': 'Physical IoT Device Quarantine Operations',
+      'permission': 'Manually Quarantine / Sever Compromised IoT Asset',
       'admin': true,
       'engineer': true,
       'manager': false,
@@ -152,6 +147,7 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
   }
 
   void _showAddUserModal() {
+    final isDarkMode = ref.read(themeModeProvider);
     final nameCtrl = TextEditingController();
     final emailCtrl = TextEditingController();
     final deptCtrl = TextEditingController(text: 'SOC Incident Response');
@@ -178,12 +174,12 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
             constraints: const BoxConstraints(maxHeight: 700),
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              color: const Color(0xFF0F0F0F),
+              color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: const Color(0xFF80A416), width: 1.5),
+              border: Border.all(color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFFCDD4B2), width: 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF80A416).withOpacity(0.2),
+                  color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.2) : Colors.black.withOpacity(0.08),
                   blurRadius: 20,
                 ),
               ],
@@ -198,26 +194,32 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.person_add_outlined, color: Color(0xFF80A416), size: 22),
+                          Icon(Icons.person_add_outlined, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A), size: 22),
                           const SizedBox(width: 10),
                           Text(
                             'PROVISION NEW OPERATOR',
-                            style: CyberTextStyles.heading2.copyWith(fontSize: 15, color: const Color(0xFF80A416)),
+                            style: CyberTextStyles.heading2.copyWith(
+                              fontSize: 15,
+                              color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A),
+                            ),
                           ),
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+                        icon: Icon(Icons.close, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B), size: 20),
                         onPressed: () => Navigator.of(ctx).pop(),
                       ),
                     ],
                   ),
                   Text(
                     'ZERO-TRUST IDENTITY PROVISIONING · STRICT RBAC ENFORCED',
-                    style: CyberTextStyles.techMuted.copyWith(fontSize: 9),
+                    style: CyberTextStyles.techMuted.copyWith(
+                      fontSize: 9,
+                      color: isDarkMode ? Colors.white54 : const Color(0xFF64748B),
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  const Divider(color: Color(0xFF252525)),
+                  Divider(color: isDarkMode ? const Color(0xFF252525) : const Color(0xFFCDD4B2)),
                   const SizedBox(height: 10),
 
                   if (errorText != null) ...[
@@ -263,21 +265,21 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('SYSTEM ROLE', style: CyberTextStyles.techMuted.copyWith(fontSize: 10)),
+                            Text('SYSTEM ROLE', style: CyberTextStyles.techMuted.copyWith(fontSize: 10, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B))),
                             const SizedBox(height: 4),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF161616),
+                                color: isDarkMode ? const Color(0xFF161616) : const Color(0xFFFAF9F6),
                                 borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: Colors.white24),
+                                border: Border.all(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
                                   value: selectedRole,
                                   isExpanded: true,
-                                  dropdownColor: const Color(0xFF161616),
-                                  style: CyberTextStyles.techBody,
+                                  dropdownColor: isDarkMode ? const Color(0xFF161616) : Colors.white,
+                                  style: CyberTextStyles.techBody.copyWith(color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                                   items: ['Administrator', 'Security Engineer', 'Manager'].map((r) {
                                     return DropdownMenuItem(value: r, child: Text(r));
                                   }).toList(),
@@ -294,7 +296,7 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                       Expanded(
                         child: TextField(
                           controller: deptCtrl,
-                          style: CyberTextStyles.techBody,
+                          style: CyberTextStyles.techBody.copyWith(color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                           decoration: const InputDecoration(labelText: 'DEPARTMENT / UNIT'),
                         ),
                       ),
@@ -308,11 +310,11 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                         child: TextField(
                           controller: passCtrl,
                           obscureText: obscurePass,
-                          style: CyberTextStyles.techBody,
+                          style: CyberTextStyles.techBody.copyWith(color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                           decoration: InputDecoration(
                             labelText: 'TEMPORARY PASSWORD',
                             suffixIcon: IconButton(
-                              icon: Icon(obscurePass ? Icons.visibility_off : Icons.visibility, size: 16, color: Colors.white54),
+                              icon: Icon(obscurePass ? Icons.visibility_off : Icons.visibility, size: 16, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B)),
                               onPressed: () => setDlgState(() => obscurePass = !obscurePass),
                             ),
                           ),
@@ -323,7 +325,7 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                         child: TextField(
                           controller: cnfPassCtrl,
                           obscureText: obscurePass,
-                          style: CyberTextStyles.techBody,
+                          style: CyberTextStyles.techBody.copyWith(color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                           decoration: const InputDecoration(labelText: 'CONFIRM PASSWORD'),
                         ),
                       ),
@@ -334,7 +336,7 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                   CheckboxListTile(
                     value: sendInvite,
                     onChanged: (v) => setDlgState(() => sendInvite = v ?? true),
-                    title: Text('Send invitation email with setup instructions', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white)),
+                    title: Text('Send invitation email with setup instructions', style: CyberTextStyles.technical(fontSize: 11, color: isDarkMode ? Colors.white : const Color(0xFF0F172A))),
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: EdgeInsets.zero,
                     dense: true,
@@ -342,7 +344,7 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                   CheckboxListTile(
                     value: forcePasswordChange,
                     onChanged: (v) => setDlgState(() => forcePasswordChange = v ?? true),
-                    title: Text('Require password change on first login', style: CyberTextStyles.technical(fontSize: 11, color: Colors.white)),
+                    title: Text('Require password change on first login', style: CyberTextStyles.technical(fontSize: 11, color: isDarkMode ? Colors.white : const Color(0xFF0F172A))),
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: EdgeInsets.zero,
                     dense: true,
@@ -353,9 +355,9 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                     onTap: () => setDlgState(() => showAdvanced = !showAdvanced),
                     child: Row(
                       children: [
-                        Icon(showAdvanced ? Icons.expand_less : Icons.expand_more, size: 18, color: const Color(0xFF80A416)),
+                        Icon(showAdvanced ? Icons.expand_less : Icons.expand_more, size: 18, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A)),
                         const SizedBox(width: 4),
-                        Text('ADVANCED SECURITY SETTINGS', style: CyberTextStyles.technical(fontSize: 10, color: const Color(0xFF80A416), fontWeight: FontWeight.bold)),
+                        Text('ADVANCED SECURITY SETTINGS', style: CyberTextStyles.technical(fontSize: 10, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A), fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -365,21 +367,21 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF141414),
+                        color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.white12),
+                        border: Border.all(color: isDarkMode ? Colors.white12 : const Color(0xFFCDD4B2)),
                       ),
                       child: Column(
                         children: [
                           TextField(
                             controller: ipCtrl,
-                            style: CyberTextStyles.techBody,
+                            style: CyberTextStyles.techBody.copyWith(color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                             decoration: const InputDecoration(labelText: 'ALLOWED SOURCE IP RANGE (CIDR)'),
                           ),
                           const SizedBox(height: 8),
                           TextField(
                             controller: notesCtrl,
-                            style: CyberTextStyles.techBody,
+                            style: CyberTextStyles.techBody.copyWith(color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                             decoration: const InputDecoration(labelText: 'OPERATOR JUSTIFICATION NOTES'),
                           ),
                         ],
@@ -393,11 +395,14 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                     children: [
                       TextButton(
                         onPressed: () => Navigator.of(ctx).pop(),
-                        child: Text('CANCEL', style: CyberTextStyles.technical(color: Colors.white54)),
+                        child: Text('CANCEL', style: CyberTextStyles.technical(color: isDarkMode ? Colors.white54 : const Color(0xFF64748B))),
                       ),
                       const SizedBox(width: 10),
                       ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF80A416)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDarkMode ? const Color(0xFF80A416) : const Color(0xFFB8A9C1),
+                          foregroundColor: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                        ),
                         onPressed: () {
                           if (nameCtrl.text.trim().isEmpty) {
                             setDlgState(() => errorText = 'Operator Name is required');
@@ -430,14 +435,14 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                           Navigator.of(ctx).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              backgroundColor: const Color(0xFF112211),
-                              content: Text('Operator ${nameCtrl.text.trim()} provisioned successfully.', style: const TextStyle(color: Color(0xFF5DD62C))),
+                              backgroundColor: isDarkMode ? const Color(0xFF112211) : const Color(0xFFFAF9F6),
+                              content: Text('Operator ${nameCtrl.text.trim()} provisioned successfully.', style: TextStyle(color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A))),
                             ),
                           );
                         },
                         child: Text(
                           'PROVISION OPERATOR',
-                          style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                         ),
                       ),
                     ],
@@ -467,6 +472,8 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = ref.watch(themeModeProvider);
+
     // Filter active operators
     final filteredOperators = _operatorsList.where((op) {
       if (_roleFilter != 'All Roles' && op['role'] != _roleFilter) {
@@ -492,15 +499,15 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Page Header
-            _buildPageHeader(),
+            _buildPageHeader(isDarkMode),
             const SizedBox(height: 16),
 
             // SECTION 1: Active Operators (Primary Focus Table)
-            _buildActiveOperatorsSection(filteredOperators),
+            _buildActiveOperatorsSection(filteredOperators, isDarkMode),
             const SizedBox(height: 20),
 
             // SECTION 2: Secondary Content (Two Clean Tabs)
-            _buildSecondaryTabsSection(),
+            _buildSecondaryTabsSection(isDarkMode),
           ],
         ),
       ),
@@ -508,7 +515,7 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
   }
 
   // ── PAGE HEADER ────────────────────────────────────────────────────────────
-  Widget _buildPageHeader() {
+  Widget _buildPageHeader(bool isDarkMode) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -520,7 +527,7 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
               style: CyberTextStyles.displayTitle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
-                color: const Color(0xFF5DD62C),
+                color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
               ).copyWith(letterSpacing: 2.0),
             ),
             const SizedBox(height: 3),
@@ -528,7 +535,7 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
               'Manage operators, roles and access permissions',
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: Colors.white70,
+                color: isDarkMode ? Colors.white70 : const Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -536,15 +543,19 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
         ),
         ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF80A416),
-            foregroundColor: Colors.white,
+            backgroundColor: isDarkMode ? const Color(0xFF80A416) : const Color(0xFFB8A9C1),
+            foregroundColor: isDarkMode ? Colors.white : const Color(0xFF0F172A),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
           ),
-          icon: const Icon(Icons.add, size: 18),
+          icon: Icon(Icons.add, size: 18, color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
           label: Text(
             '+ PROVISION NEW OPERATOR',
-            style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+            style: CyberTextStyles.technical(
+              fontSize: 11.5,
+              fontWeight: FontWeight.bold,
+              color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+            ),
           ),
           onPressed: _showAddUserModal,
         ),
@@ -553,14 +564,14 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
   }
 
   // ── SECTION 1: ACTIVE OPERATORS (PRIMARY FOCUS TABLE) ──────────────────────
-  Widget _buildActiveOperatorsSection(List<Map<String, String>> operators) {
+  Widget _buildActiveOperatorsSection(List<Map<String, String>> operators, bool isDarkMode) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
+        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFF80A416).withOpacity(0.4)),
+        border: Border.all(color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.4) : const Color(0xFFCDD4B2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -571,22 +582,30 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
             children: [
               Row(
                 children: [
-                  const Icon(Icons.people_alt_outlined, color: Color(0xFF80A416), size: 20),
+                  Icon(Icons.people_alt_outlined, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A), size: 20),
                   const SizedBox(width: 8),
                   Text(
                     'ACTIVE OPERATORS',
-                    style: CyberTextStyles.technical(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: CyberTextStyles.technical(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                    ),
                   ),
                   const SizedBox(width: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF80A416).withOpacity(0.2),
+                      color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.2) : const Color(0xFFEBECCC),
                       borderRadius: BorderRadius.circular(3),
                     ),
                     child: Text(
                       '${operators.length} REGISTERED',
-                      style: CyberTextStyles.technical(fontSize: 10, color: const Color(0xFF80A416), fontWeight: FontWeight.bold),
+                      style: CyberTextStyles.technical(
+                        fontSize: 10,
+                        color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -598,15 +617,15 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF161616),
+                      color: isDarkMode ? const Color(0xFF161616) : const Color(0xFFFAF9F6),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: Colors.white24),
+                      border: Border.all(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _roleFilter,
-                        dropdownColor: const Color(0xFF161616),
-                        style: GoogleFonts.inter(fontSize: 12, color: Colors.white),
+                        dropdownColor: isDarkMode ? const Color(0xFF161616) : Colors.white,
+                        style: GoogleFonts.inter(fontSize: 12, color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                         items: ['All Roles', 'Admin', 'Engineer', 'Manager'].map((r) {
                           return DropdownMenuItem(value: r, child: Text(r));
                         }).toList(),
@@ -622,17 +641,24 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                     width: 220,
                     child: TextField(
                       controller: _searchCtrl,
-                      style: GoogleFonts.inter(fontSize: 12.5, color: Colors.white),
+                      style: GoogleFonts.inter(fontSize: 12.5, color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                       onChanged: (v) => setState(() => _searchQuery = v.trim()),
                       decoration: InputDecoration(
                         hintText: 'Search operators...',
-                        hintStyle: const TextStyle(fontSize: 12, color: Colors.white38),
-                        prefixIcon: const Icon(Icons.search, size: 16, color: Color(0xFF80A416)),
+                        hintStyle: TextStyle(fontSize: 12, color: isDarkMode ? Colors.white38 : const Color(0xFF94A3B8)),
+                        prefixIcon: Icon(Icons.search, size: 16, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A)),
                         isDense: true,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         filled: true,
-                        fillColor: const Color(0xFF161616),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(4), borderSide: const BorderSide(color: Colors.white24)),
+                        fillColor: isDarkMode ? const Color(0xFF161616) : const Color(0xFFFAF9F6),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(4),
+                          borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+                        ),
                       ),
                     ),
                   ),
@@ -646,27 +672,27 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              color: const Color(0xFF070707),
+              color: isDarkMode ? const Color(0xFF070707) : Colors.white,
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: const Color(0xFF222222)),
+              border: Border.all(color: isDarkMode ? const Color(0xFF222222) : const Color(0xFFCDD4B2)),
             ),
             child: Column(
               children: [
                 // Table Header Row
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF121212),
-                    border: Border(bottom: BorderSide(color: Color(0xFF252525), width: 1)),
+                  decoration: BoxDecoration(
+                    color: isDarkMode ? const Color(0xFF121212) : const Color(0xFFFAF9F6),
+                    border: Border(bottom: BorderSide(color: isDarkMode ? const Color(0xFF252525) : const Color(0xFFCDD4B2), width: 1)),
                   ),
                   child: Row(
                     children: [
-                      Expanded(flex: 3, child: Text('NAME', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF80A416)))),
-                      Expanded(flex: 4, child: Text('EMAIL', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF80A416)))),
-                      Expanded(flex: 3, child: Text('ROLE', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF80A416)))),
-                      Expanded(flex: 2, child: Text('STATUS', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF80A416)))),
-                      Expanded(flex: 3, child: Text('LAST LOGIN', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF80A416)))),
-                      Expanded(flex: 3, child: Text('ACTIONS', textAlign: TextAlign.right, style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF80A416)))),
+                      Expanded(flex: 3, child: Text('NAME', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A)))),
+                      Expanded(flex: 4, child: Text('EMAIL', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A)))),
+                      Expanded(flex: 3, child: Text('ROLE', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A)))),
+                      Expanded(flex: 2, child: Text('STATUS', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A)))),
+                      Expanded(flex: 3, child: Text('LAST LOGIN', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A)))),
+                      Expanded(flex: 3, child: Text('ACTIONS', textAlign: TextAlign.right, style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A)))),
                     ],
                   ),
                 ),
@@ -676,7 +702,7 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                   Padding(
                     padding: const EdgeInsets.all(28.0),
                     child: Center(
-                      child: Text('NO OPERATORS MATCH SEARCH / FILTER', style: GoogleFonts.inter(fontSize: 13, color: Colors.white38)),
+                      child: Text('NO OPERATORS MATCH SEARCH / FILTER', style: GoogleFonts.inter(fontSize: 13, color: isDarkMode ? Colors.white38 : const Color(0xFF94A3B8))),
                     ),
                   )
                 else
@@ -686,13 +712,13 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
 
                     return Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      decoration: const BoxDecoration(
-                        border: Border(bottom: BorderSide(color: Color(0xFF161616), width: 1)),
+                      decoration: BoxDecoration(
+                        border: Border(bottom: BorderSide(color: isDarkMode ? const Color(0xFF161616) : const Color(0xFFCDD4B2), width: 1)),
                       ),
                       child: Row(
                         children: [
-                          Expanded(flex: 3, child: Text(op['name']!, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white))),
-                          Expanded(flex: 4, child: Text(op['email']!, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: Colors.white70))),
+                          Expanded(flex: 3, child: Text(op['name']!, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: isDarkMode ? Colors.white : const Color(0xFF0F172A)))),
+                          Expanded(flex: 4, child: Text(op['email']!, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: isDarkMode ? Colors.white70 : const Color(0xFF334155)))),
                           Expanded(
                             flex: 3,
                             child: Align(
@@ -729,7 +755,7 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                               ),
                             ),
                           ),
-                          Expanded(flex: 3, child: Text(op['lastLogin']!, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: Colors.white54))),
+                          Expanded(flex: 3, child: Text(op['lastLogin']!, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B)))),
                           // Actions column: Edit • Reset Password • Revoke
                           Expanded(
                             flex: 3,
@@ -738,19 +764,19 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                               children: [
                                 InkWell(
                                   onTap: () => _handleOperatorAction('Edit Profile', op),
-                                  child: Text('Edit', style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF5DD62C), fontWeight: FontWeight.w600)),
+                                  child: Text('Edit', style: GoogleFonts.inter(fontSize: 12, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416), fontWeight: FontWeight.w600)),
                                 ),
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 6),
-                                  child: Text('•', style: TextStyle(color: Colors.white30)),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                                  child: Text('•', style: TextStyle(color: isDarkMode ? Colors.white30 : const Color(0xFFCBD5E1))),
                                 ),
                                 InkWell(
                                   onTap: () => _handleOperatorAction('Reset Password', op),
-                                  child: Text('Reset', style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFFFE997), fontWeight: FontWeight.w600)),
+                                  child: Text('Reset', style: GoogleFonts.inter(fontSize: 12, color: isDarkMode ? const Color(0xFFFFE997) : const Color(0xFFD97706), fontWeight: FontWeight.w600)),
                                 ),
-                                const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 6),
-                                  child: Text('•', style: TextStyle(color: Colors.white30)),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                                  child: Text('•', style: TextStyle(color: isDarkMode ? Colors.white30 : const Color(0xFFCBD5E1))),
                                 ),
                                 InkWell(
                                   onTap: () => _handleOperatorAction('Revoke', op),
@@ -772,28 +798,28 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
   }
 
   // ── SECTION 2: SECONDARY CONTENT (TWO CLEAN TABS) ─────────────────────────
-  Widget _buildSecondaryTabsSection() {
+  Widget _buildSecondaryTabsSection(bool isDarkMode) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFF0F0F0F),
+        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFF252525)),
+        border: Border.all(color: isDarkMode ? const Color(0xFF252525) : const Color(0xFFCDD4B2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Tab Bar Header
           Container(
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFF252525), width: 1)),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: isDarkMode ? const Color(0xFF252525) : const Color(0xFFCDD4B2), width: 1)),
             ),
             child: TabBar(
               controller: _tabController,
               isScrollable: true,
-              indicatorColor: const Color(0xFF80A416),
-              labelColor: const Color(0xFF80A416),
-              unselectedLabelColor: Colors.white54,
+              indicatorColor: isDarkMode ? const Color(0xFF80A416) : const Color(0xFFB8A9C1),
+              labelColor: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A),
+              unselectedLabelColor: isDarkMode ? Colors.white54 : const Color(0xFF64748B),
               labelStyle: CyberTextStyles.technical(fontSize: 12, fontWeight: FontWeight.bold),
               tabs: const [
                 Tab(text: 'TAB 1 – PERMISSIONS MATRIX'),
@@ -808,8 +834,8 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildPermissionsMatrixTab(),
-                _buildSessionAuditLogTab(),
+                _buildPermissionsMatrixTab(isDarkMode),
+                _buildSessionAuditLogTab(isDarkMode),
               ],
             ),
           ),
@@ -819,7 +845,7 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
   }
 
   // Tab 1: Permissions Matrix (Checkmark Table)
-  Widget _buildPermissionsMatrixTab() {
+  Widget _buildPermissionsMatrixTab(bool isDarkMode) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -827,18 +853,18 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
         children: [
           Row(
             children: [
-              Expanded(flex: 5, child: Text('PERMISSION ENTITLEMENT', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF80A416)))),
-              Expanded(flex: 2, child: Center(child: Text('ADMIN', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)))),
-              Expanded(flex: 2, child: Center(child: Text('SECURITY ENGINEER', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)))),
-              Expanded(flex: 2, child: Center(child: Text('MANAGER', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)))),
+              Expanded(flex: 5, child: Text('PERMISSION ENTITLEMENT', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A)))),
+              Expanded(flex: 2, child: Center(child: Text('ADMIN', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : const Color(0xFF0F172A))))),
+              Expanded(flex: 2, child: Center(child: Text('SECURITY ENGINEER', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : const Color(0xFF0F172A))))),
+              Expanded(flex: 2, child: Center(child: Text('MANAGER', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : const Color(0xFF0F172A))))),
             ],
           ),
-          const Divider(color: Color(0xFF252525), height: 16),
+          Divider(color: isDarkMode ? const Color(0xFF252525) : const Color(0xFFCDD4B2), height: 16),
           ..._permissionsMatrix.map((item) {
             return Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFF161616))),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: isDarkMode ? const Color(0xFF161616) : const Color(0xFFCDD4B2))),
               ),
               child: Row(
                 children: [
@@ -846,7 +872,11 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                     flex: 5,
                     child: Text(
                       item['permission'] as String,
-                      style: GoogleFonts.inter(fontSize: 12.5, color: Colors.white, fontWeight: FontWeight.w500),
+                      style: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                   Expanded(
@@ -854,7 +884,7 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                     child: Center(
                       child: item['admin'] == true
                           ? const Icon(Icons.check_circle, size: 16, color: Color(0xFF5DD62C))
-                          : const Icon(Icons.remove, size: 14, color: Colors.white24),
+                          : Icon(Icons.remove, size: 14, color: isDarkMode ? Colors.white24 : const Color(0xFFCBD5E1)),
                     ),
                   ),
                   Expanded(
@@ -862,7 +892,7 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                     child: Center(
                       child: item['engineer'] == true
                           ? const Icon(Icons.check_circle, size: 16, color: Color(0xFF5DD62C))
-                          : const Icon(Icons.remove, size: 14, color: Colors.white24),
+                          : Icon(Icons.remove, size: 14, color: isDarkMode ? Colors.white24 : const Color(0xFFCBD5E1)),
                     ),
                   ),
                   Expanded(
@@ -870,7 +900,7 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                     child: Center(
                       child: item['manager'] == true
                           ? const Icon(Icons.check_circle, size: 16, color: Color(0xFF5DD62C))
-                          : const Icon(Icons.remove, size: 14, color: Colors.white24),
+                          : Icon(Icons.remove, size: 14, color: isDarkMode ? Colors.white24 : const Color(0xFFCBD5E1)),
                     ),
                   ),
                 ],
@@ -883,23 +913,23 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
   }
 
   // Tab 2: Session & Audit Log (Full-Width Table)
-  Widget _buildSessionAuditLogTab() {
+  Widget _buildSessionAuditLogTab(bool isDarkMode) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFF252525))),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: isDarkMode ? const Color(0xFF252525) : const Color(0xFFCDD4B2))),
             ),
             child: Row(
               children: [
-                Expanded(flex: 3, child: Text('TIMESTAMP', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF80A416)))),
-                Expanded(flex: 3, child: Text('USER', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF80A416)))),
-                Expanded(flex: 5, child: Text('ACTION', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF80A416)))),
-                Expanded(flex: 3, child: Text('IP ADDRESS', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF80A416)))),
-                Expanded(flex: 2, child: Text('STATUS', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFF80A416)))),
+                Expanded(flex: 3, child: Text('TIMESTAMP', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A)))),
+                Expanded(flex: 3, child: Text('USER', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A)))),
+                Expanded(flex: 5, child: Text('ACTION', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A)))),
+                Expanded(flex: 3, child: Text('IP ADDRESS', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A)))),
+                Expanded(flex: 2, child: Text('STATUS', style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A)))),
               ],
             ),
           ),
@@ -907,14 +937,14 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
             final bool isOk = item['status'] == 'SUCCESS';
             return Container(
               padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFF161616))),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: isDarkMode ? const Color(0xFF161616) : const Color(0xFFCDD4B2))),
               ),
               child: Row(
                 children: [
-                  Expanded(flex: 3, child: Text(item['time']!, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: const Color(0xFFC5C764)))),
-                  Expanded(flex: 3, child: Text(item['user']!, style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: Colors.white))),
-                  Expanded(flex: 5, child: Text(item['action']!, style: GoogleFonts.inter(fontSize: 12.5, color: Colors.white70))),
+                  Expanded(flex: 3, child: Text(item['time']!, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF80A416)))),
+                  Expanded(flex: 3, child: Text(item['user']!, style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: isDarkMode ? Colors.white : const Color(0xFF0F172A)))),
+                  Expanded(flex: 5, child: Text(item['action']!, style: GoogleFonts.inter(fontSize: 12.5, color: isDarkMode ? Colors.white70 : const Color(0xFF334155)))),
                   Expanded(flex: 3, child: Text(item['ip']!, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: const Color(0xFFA88AED)))),
                   Expanded(
                     flex: 2,

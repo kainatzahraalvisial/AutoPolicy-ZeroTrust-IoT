@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/navigation_provider.dart';
+import '../providers/theme_provider.dart';
 import '../theme/text_styles.dart';
 
 class CyberRadialDonutChart extends ConsumerWidget {
@@ -10,12 +11,14 @@ class CyberRadialDonutChart extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDarkMode = ref.watch(themeModeProvider);
+
     final List<Map<String, dynamic>> categories = [
       {'name': 'DDoS SURGE', 'pct': 48, 'color': const Color(0xFF80A416)},
       {'name': 'PORT SCAN', 'pct': 22, 'color': const Color(0xFF08652C)},
-      {'name': 'ANOMALY', 'pct': 12, 'color': const Color(0xFFAD9F3C)},
-      {'name': 'REGO BLOCK', 'pct': 9, 'color': const Color(0xFFC5C764)},
-      {'name': 'OTHER', 'pct': 9, 'color': const Color(0xFF5E7343)},
+      {'name': 'ANOMALY', 'pct': 12, 'color': isDarkMode ? const Color(0xFFAD9F3C) : const Color(0xFFB1A9DA)},
+      {'name': 'REGO BLOCK', 'pct': 9, 'color': isDarkMode ? const Color(0xFFC5C764) : const Color(0xFFC4E320)},
+      {'name': 'OTHER', 'pct': 9, 'color': isDarkMode ? const Color(0xFF5E7343) : const Color(0xFF94A3B8)},
     ];
 
     return InkWell(
@@ -25,9 +28,23 @@ class CyberRadialDonutChart extends ConsumerWidget {
         height: height,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFF08120C),
-          border: Border.all(color: const Color(0xFF80A416).withOpacity(0.40), width: 1.0),
+          color: isDarkMode ? const Color(0xFF08120C) : Colors.white,
+          border: Border.all(
+            color: isDarkMode 
+                ? const Color(0xFF80A416).withOpacity(0.40) 
+                : const Color(0xFF80A416).withOpacity(0.25), 
+            width: 1.0,
+          ),
           borderRadius: BorderRadius.circular(4),
+          boxShadow: isDarkMode
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,7 +57,7 @@ class CyberRadialDonutChart extends ConsumerWidget {
                   style: CyberTextStyles.technical(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFFC5C764),
+                    color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF0F172A),
                   ),
                 ),
                 Text(
@@ -65,7 +82,7 @@ class CyberRadialDonutChart extends ConsumerWidget {
                       children: [
                         CustomPaint(
                           size: const Size(105, 105),
-                          painter: _DonutChartPainter(categories: categories),
+                          painter: _DonutChartPainter(categories: categories, isDarkMode: isDarkMode),
                         ),
                         Column(
                           mainAxisSize: MainAxisSize.min,
@@ -75,14 +92,14 @@ class CyberRadialDonutChart extends ConsumerWidget {
                               style: CyberTextStyles.displayTitle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,
-                                color: const Color(0xFFAD9F3C),
+                                color: isDarkMode ? const Color(0xFFAD9F3C) : const Color(0xFF80A416),
                               ),
                             ),
                             Text(
                               'ACTIVE',
                               style: CyberTextStyles.technical(
                                 fontSize: 8,
-                                color: const Color(0xFF5E7343),
+                                color: isDarkMode ? const Color(0xFF5E7343) : const Color(0xFF64748B),
                               ),
                             ),
                           ],
@@ -116,7 +133,7 @@ class CyberRadialDonutChart extends ConsumerWidget {
                                   cat['name'] as String,
                                   style: CyberTextStyles.technical(
                                     fontSize: 9.5,
-                                    color: const Color(0xFFC5C764),
+                                    color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF1E293B),
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -126,7 +143,7 @@ class CyberRadialDonutChart extends ConsumerWidget {
                                 style: CyberTextStyles.technical(
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.bold,
-                                  color: const Color(0xFFAD9F3C),
+                                  color: isDarkMode ? const Color(0xFFAD9F3C) : const Color(0xFF80A416),
                                 ),
                               ),
                             ],
@@ -147,8 +164,9 @@ class CyberRadialDonutChart extends ConsumerWidget {
 
 class _DonutChartPainter extends CustomPainter {
   final List<Map<String, dynamic>> categories;
+  final bool isDarkMode;
 
-  _DonutChartPainter({required this.categories});
+  _DonutChartPainter({required this.categories, this.isDarkMode = true});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -158,7 +176,7 @@ class _DonutChartPainter extends CustomPainter {
     double startAngle = -math.pi / 2;
 
     final Paint bgPaint = Paint()
-      ..color = const Color(0xFF032820).withOpacity(0.5)
+      ..color = isDarkMode ? const Color(0xFF032820).withOpacity(0.5) : const Color(0xFFE2E8F0)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth;
     canvas.drawCircle(center, radius - (strokeWidth / 2), bgPaint);
