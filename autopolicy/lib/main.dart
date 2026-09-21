@@ -6,6 +6,7 @@ import 'screens/landing_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/main_layout.dart';
+import 'providers/theme_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,15 +17,17 @@ void main() {
   );
 }
 
-class AutoPolicyApp extends StatelessWidget {
+class AutoPolicyApp extends ConsumerWidget {
   const AutoPolicyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDarkMode = ref.watch(themeModeProvider);
+
     return MaterialApp(
       title: 'AutoPolicy — Zero Trust IoT Security',
       debugShowCheckedModeBanner: false,
-      theme: CyberTheme.darkTheme,
+      theme: isDarkMode ? CyberTheme.darkTheme : CyberTheme.lightTheme,
       initialRoute: '/',
       onGenerateRoute: (settings) {
         Widget page;

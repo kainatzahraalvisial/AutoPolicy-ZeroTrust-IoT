@@ -94,18 +94,17 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
                     title: 'TOTAL FLEET NODES',
                     value: '${devices.length}',
                     sub: 'Active IoT Gateways',
-                    borderColor: const Color(0xFFFFE997), // 1. Yellow (#FFE997)
+                    borderColor: const Color(0xFFFFF9E1), // 1. #FFF9E1 (H17)
                     tag: 'H17',
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: CyberStatCard(
-                    title: 'ISOLATED NODES',
-                    value: '${devices.where((d) => d.status == DeviceStatus.isolated).length}',
-                    sub: 'Zero-Trust Quarantine',
-                    borderColor: const Color(0xFFA88AED), // 2. Indigo Purple (#A88AED)
-                    isAlert: devices.any((d) => d.status == DeviceStatus.isolated),
+                    title: 'HEALTHY GATEWAYS',
+                    value: '${devices.where((d) => d.status == DeviceStatus.safe).length}',
+                    sub: 'Clean Traffic Stream',
+                    borderColor: const Color(0xFFEBECCC), // 2. #EBECCC (H18)
                     tag: 'H18',
                   ),
                 ),
@@ -115,17 +114,18 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
                     title: 'HIGH-RISK SENSORS',
                     value: '${devices.where((d) => d.status == DeviceStatus.warning).length}',
                     sub: 'Under Inspection',
-                    borderColor: const Color(0xFFC4E320), // 3. Bright Light Green (#C4E320)
+                    borderColor: const Color(0xFFCDD4B2), // 3. #CDD4B2 (H19)
                     tag: 'H19',
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: CyberStatCard(
-                    title: 'HEALTHY GATEWAYS',
-                    value: '${devices.where((d) => d.status == DeviceStatus.safe).length}',
-                    sub: 'Clean Traffic Stream',
-                    borderColor: const Color(0xFF80A416), // 4. Olive Green (#80A416)
+                    title: 'ISOLATED NODES',
+                    value: '${devices.where((d) => d.status == DeviceStatus.isolated).length}',
+                    sub: 'Zero-Trust Quarantine',
+                    borderColor: const Color(0xFFD82734), // Threat Card #D82734 at end
+                    isAlert: devices.any((d) => d.status == DeviceStatus.isolated),
                     tag: 'H20',
                   ),
                 ),

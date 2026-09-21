@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../providers/theme_provider.dart';
 
 /// Reusable Opaque Cyber Stat/Number Card matching user swatches & HUD frame design
 /// Features:
@@ -8,7 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 /// - Top-Right solid chamfer cut polygon badge
 /// - Bottom-Left '<<<' technical chevron indicator marks
 /// - Segmented bottom status tick bar
-class CyberStatCard extends StatelessWidget {
+class CyberStatCard extends ConsumerWidget {
   final String title;
   final String value;
   final String sub;
@@ -32,63 +34,151 @@ class CyberStatCard extends StatelessWidget {
     this.isAlert = false,
   });
 
-  Color get _solidBgColor {
+  Color _resolveSolidBgColor(bool isDarkMode) {
     if (backgroundColor != null) return backgroundColor!;
     final int val = borderColor.value;
-    // 6 Exact Swatch Colors from user image in exact sequence:
-    if (val == const Color(0xFFFFEDA8).value || val == const Color(0xFFFFE997).value || val == const Color(0xFFC5C764).value || val == const Color(0xFFFDFDC9).value) {
-      return const Color(0xFFFFEDA8); // 1. #FFEDA8 (Pale Cream Yellow)
-    } else if (val == const Color(0xFFC4E326).value || val == const Color(0xFFC4E320).value || val == const Color(0xFF5DD62C).value) {
-      return const Color(0xFFC4E326); // 2. #C4E326 (Bright Neon Lime-Green)
-    } else if (val == const Color(0xFFB1A9DA).value || val == const Color(0xFFA88AED).value) {
-      return const Color(0xFFB1A9DA); // 3. #B1A9DA (Pastel Lavender)
-    } else if (val == const Color(0xFF80A416).value || val == const Color(0xFF337418).value) {
-      return const Color(0xFF80A416); // 4. #80A416 (Olive Green)
-    } else if (val == const Color(0xFF9D8DF1).value || val == const Color(0xFF9D4EDD).value) {
-      return const Color(0xFF9D8DF1); // 5. #9D8DF1 (Vibrant Light Purple)
-    } else if (val == const Color(0xFF810100).value || val == const Color(0xFFB91C1D).value || val == const Color(0xFFDF2531).value) {
-      return const Color(0xFF810100); // 6. #810100 (Deep Crimson Red)
+
+    // Threat Card / Alert is ALWAYS Red #D82734 at the end
+    if (isAlert ||
+        val == const Color(0xFFD82734).value ||
+        val == const Color(0xFF810100).value ||
+        val == const Color(0xFFB91C1D).value ||
+        val == const Color(0xFFDF2531).value ||
+        tag == 'H22' ||
+        tag == 'E06' ||
+        tag == 'M06' ||
+        tag == 'L04') {
+      return const Color(0xFFD82734);
     }
-    return borderColor;
+
+    if (!isDarkMode) {
+      // Light Theme 5-Swatch Sequence from user image:
+      // 1. #FFF9E1 (H17)
+      if (val == const Color(0xFFFFF9E1).value ||
+          val == const Color(0xFFFFEDA8).value ||
+          val == const Color(0xFFFFE997).value ||
+          val == const Color(0xFFC5C764).value ||
+          val == const Color(0xFFFDFDC9).value ||
+          tag == 'H17' || tag == 'E01' || tag == 'M01' || tag == 'L01') {
+        return const Color(0xFFFFF9E1);
+      }
+      // 2. #EBECCC (H18)
+      if (val == const Color(0xFFEBECCC).value ||
+          val == const Color(0xFFC4E326).value ||
+          val == const Color(0xFFC4E320).value ||
+          val == const Color(0xFF5DD62C).value ||
+          tag == 'H18' || tag == 'E02' || tag == 'M02' || tag == 'L02') {
+        return const Color(0xFFEBECCC);
+      }
+      // 3. #CDD4B2 (H19) or Clay #DCA278
+      if (val == const Color(0xFFCDD4B2).value ||
+          val == const Color(0xFFDCA278).value ||
+          val == const Color(0xFFB1A9DA).value ||
+          val == const Color(0xFFA88AED).value ||
+          tag == 'H19' || tag == 'E03' || tag == 'M03' || tag == 'L03') {
+        if (val == const Color(0xFFDCA278).value || tag == 'L03') {
+          return const Color(0xFFDCA278);
+        }
+        return const Color(0xFFCDD4B2);
+      }
+      // 4. #D4C9D8 (H20)
+      if (val == const Color(0xFFD4C9D8).value ||
+          val == const Color(0xFF80A416).value ||
+          val == const Color(0xFF337418).value ||
+          tag == 'H20' || tag == 'E04' || tag == 'M04') {
+        return const Color(0xFFD4C9D8);
+      }
+      // 5. #B8A9C1 (H21)
+      if (val == const Color(0xFFB8A9C1).value ||
+          val == const Color(0xFF9D8DF1).value ||
+          val == const Color(0xFF9D4EDD).value ||
+          tag == 'H21' || tag == 'E05' || tag == 'M05') {
+        return const Color(0xFFB8A9C1);
+      }
+      return borderColor;
+    } else {
+      // Dark Theme Sequence
+      if (val == const Color(0xFFFFF9E1).value ||
+          val == const Color(0xFFFFEDA8).value ||
+          val == const Color(0xFFFFE997).value ||
+          val == const Color(0xFFC5C764).value ||
+          val == const Color(0xFFFDFDC9).value ||
+          tag == 'H17' || tag == 'E01' || tag == 'M01' || tag == 'L01') {
+        return const Color(0xFFFFEDA8);
+      } else if (val == const Color(0xFFEBECCC).value ||
+          val == const Color(0xFFC4E326).value ||
+          val == const Color(0xFFC4E320).value ||
+          val == const Color(0xFF5DD62C).value ||
+          tag == 'H18' || tag == 'E02' || tag == 'M02' || tag == 'L02') {
+        return const Color(0xFFC4E326);
+      } else if (val == const Color(0xFFCDD4B2).value ||
+          val == const Color(0xFFDCA278).value ||
+          val == const Color(0xFFB1A9DA).value ||
+          val == const Color(0xFFA88AED).value ||
+          tag == 'H19' || tag == 'E03' || tag == 'M03' || tag == 'L03') {
+        return const Color(0xFFB1A9DA);
+      } else if (val == const Color(0xFFD4C9D8).value ||
+          val == const Color(0xFF80A416).value ||
+          val == const Color(0xFF337418).value ||
+          tag == 'H20' || tag == 'E04' || tag == 'M04') {
+        return const Color(0xFF80A416);
+      } else if (val == const Color(0xFFB8A9C1).value ||
+          val == const Color(0xFF9D8DF1).value ||
+          val == const Color(0xFF9D4EDD).value ||
+          tag == 'H21' || tag == 'E05' || tag == 'M05') {
+        return const Color(0xFF9D8DF1);
+      }
+      return borderColor;
+    }
   }
 
-  bool get _isLightSolidFill {
-    final int val = _solidBgColor.value;
-    if (val == const Color(0xFFFFEDA8).value ||
+  bool _isLightSolidFill(Color bg) {
+    final int val = bg.value;
+    if (val == const Color(0xFFFFF9E1).value ||
+        val == const Color(0xFFEBECCC).value ||
+        val == const Color(0xFFCDD4B2).value ||
+        val == const Color(0xFFD4C9D8).value ||
+        val == const Color(0xFFB8A9C1).value ||
+        val == const Color(0xFFFFEDA8).value ||
         val == const Color(0xFFC4E326).value ||
         val == const Color(0xFFB1A9DA).value ||
         val == const Color(0xFF9D8DF1).value) {
-      return true; // Light swatches need dark, crisp typography
+      return true;
     }
-    return _solidBgColor.computeLuminance() > 0.40;
+    return bg.computeLuminance() > 0.38;
   }
 
-  bool get _isRedThreatCard {
-    final int val = _solidBgColor.value;
-    return isAlert || val == const Color(0xFF810100).value || val == const Color(0xFFB91C1D).value;
-  }
-
-  bool get _isSolidFill {
-    return true;
+  bool _isRedThreatCard(Color bg) {
+    final int val = bg.value;
+    return isAlert ||
+        val == const Color(0xFFD82734).value ||
+        val == const Color(0xFF810100).value ||
+        val == const Color(0xFFB91C1D).value ||
+        tag == 'H22';
   }
 
   @override
-  Widget build(BuildContext context) {
-    final Color titleColor = _isLightSolidFill ? const Color(0xFF0A0A0E) : const Color(0xFFFFFFFF);
-    final Color valueColor = _isRedThreatCard
-        ? const Color(0xFFFFEA00) // Bright Yellowish color for threat amount on red cards
-        : (_isLightSolidFill ? const Color(0xFF050A07) : const Color(0xFFFFFFFF));
-    final Color subColor = _isRedThreatCard
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDarkMode = ref.watch(themeModeProvider);
+    final Color solidBg = _resolveSolidBgColor(isDarkMode);
+    final bool isLight = _isLightSolidFill(solidBg);
+    final bool isRedThreat = _isRedThreatCard(solidBg);
+
+    final Color titleColor = isLight ? const Color(0xFF0A0A0E) : const Color(0xFFFFFFFF);
+    final Color valueColor = isRedThreat
+        ? const Color(0xFFFFEA00) // High-contrast bright yellow on red threat card
+        : (isLight ? const Color(0xFF050A07) : const Color(0xFFFFFFFF));
+    final Color subColor = isRedThreat
         ? const Color(0xFFFFD54F)
-        : (_isLightSolidFill ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0));
-    final Color accentColor = _isLightSolidFill ? const Color(0xFF050A07) : const Color(0xFFFFFFFF);
+        : (isLight ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0));
+    final Color accentColor = isLight ? const Color(0xFF050A07) : const Color(0xFFFFFFFF);
 
     Widget cardContent = CustomPaint(
       painter: _OpaqueStatCardPainter(
         borderColor: borderColor,
-        solidBackgroundColor: _solidBgColor,
-        isSolidFill: _isSolidFill,
-        isLightSolidFill: _isLightSolidFill,
+        solidBackgroundColor: solidBg,
+        isSolidFill: true,
+        isLightSolidFill: isLight,
       ),
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 20, 16, 8),
@@ -135,7 +225,7 @@ class CyberStatCard extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                     color: valueColor,
                     letterSpacing: 0.5,
-                    shadows: _isRedThreatCard
+                    shadows: isRedThreat
                         ? [
                             BoxShadow(
                               color: const Color(0xFFFFEA00).withOpacity(0.5),
@@ -214,7 +304,7 @@ class _OpaqueStatCardPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final double w = size.width;
     final double h = size.height;
-    final double c = 14.0; // Corner chamfer size
+    const double c = 14.0; // Corner chamfer size
 
     // Dark cyber stroke - NEVER white boundary!
     final Color strokeColor = isLightSolidFill

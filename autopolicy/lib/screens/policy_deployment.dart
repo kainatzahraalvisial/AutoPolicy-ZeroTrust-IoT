@@ -54,7 +54,7 @@ class PolicyDeployment extends ConsumerWidget {
                     title: 'DEPLOYED BUNDLES',
                     value: '${deployedPolicies.length}',
                     sub: 'Active Rego Rules',
-                    borderColor: const Color(0xFFFFE997), // 1. Yellow (#FFE997)
+                    borderColor: const Color(0xFFFFF9E1), // 1. #FFF9E1 (H17)
                     tag: 'H17',
                   ),
                 ),
@@ -64,7 +64,7 @@ class PolicyDeployment extends ConsumerWidget {
                     title: 'ENVOY SIDECARS',
                     value: '12',
                     sub: 'Edge Enforcement Gateways',
-                    borderColor: const Color(0xFFA88AED), // 2. Indigo Purple (#A88AED)
+                    borderColor: const Color(0xFFEBECCC), // 2. #EBECCC (H18)
                     tag: 'H18',
                   ),
                 ),
@@ -74,7 +74,7 @@ class PolicyDeployment extends ConsumerWidget {
                     title: 'PIPELINE HEALTH',
                     value: '100%',
                     sub: 'Sync Channel Active',
-                    borderColor: const Color(0xFFC4E320), // 3. Bright Light Green (#C4E320)
+                    borderColor: const Color(0xFFCDD4B2), // 3. #CDD4B2 (H19)
                     tag: 'H19',
                   ),
                 ),
@@ -84,7 +84,7 @@ class PolicyDeployment extends ConsumerWidget {
                     title: 'EVAL LATENCY',
                     value: '0.8ms',
                     sub: 'Sub-Millisecond Speed',
-                    borderColor: const Color(0xFF80A416), // 4. Olive Green (#80A416)
+                    borderColor: const Color(0xFFD4C9D8), // 4. #D4C9D8 (H20)
                     tag: 'H20',
                   ),
                 ),

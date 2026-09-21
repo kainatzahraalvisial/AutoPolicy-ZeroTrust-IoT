@@ -288,17 +288,17 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                 // Protocol distribution summary panels (Chamfered HUD cards in exact 6 swatch order)
                 Row(
                   children: [
-                    _buildProtocolMetricCard('MQTT (IoT Telemetry)', mqttCount, const Color(0xFFFFEDA8), isDarkMode, 'H17'),
+                    _buildProtocolMetricCard('MQTT (IoT Telemetry)', mqttCount, const Color(0xFFFFF9E1), isDarkMode, 'H17'),
                     const SizedBox(width: 8),
-                    _buildProtocolMetricCard('CoAP (Constrained Devices)', coapCount, const Color(0xFFC4E326), isDarkMode, 'H18'),
+                    _buildProtocolMetricCard('CoAP (Constrained Devices)', coapCount, const Color(0xFFEBECCC), isDarkMode, 'H18'),
                     const SizedBox(width: 8),
-                    _buildProtocolMetricCard('MODBUS (SCADA Industrial)', modbusCount, const Color(0xFFB1A9DA), isDarkMode, 'H19'),
+                    _buildProtocolMetricCard('MODBUS (SCADA Industrial)', modbusCount, const Color(0xFFCDD4B2), isDarkMode, 'H19'),
                     const SizedBox(width: 8),
-                    _buildProtocolMetricCard('DICOM (Medical Imaging)', dicomCount, const Color(0xFF80A416), isDarkMode, 'H20'),
+                    _buildProtocolMetricCard('DICOM (Medical Imaging)', dicomCount, const Color(0xFFD4C9D8), isDarkMode, 'H20'),
                     const SizedBox(width: 8),
-                    _buildProtocolMetricCard('gRPC / HTTP (API Services)', grpcCount, const Color(0xFF9D8DF1), isDarkMode, 'H21'),
+                    _buildProtocolMetricCard('gRPC / HTTP (API Services)', grpcCount, const Color(0xFFB8A9C1), isDarkMode, 'H21'),
                     const SizedBox(width: 8),
-                    _buildProtocolMetricCard('OPC-UA (Industrial Control)', opcuaCount > 0 ? opcuaCount : 84, const Color(0xFF810100), isDarkMode, 'H22'),
+                    _buildProtocolMetricCard('OPC-UA (Industrial Control)', opcuaCount > 0 ? opcuaCount : 84, const Color(0xFFD82734), isDarkMode, 'H22'),
                   ],
                 ),
                 const SizedBox(height: 16),

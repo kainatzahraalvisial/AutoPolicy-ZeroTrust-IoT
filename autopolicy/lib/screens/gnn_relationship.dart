@@ -661,7 +661,18 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
 
   Widget _buildLayoutBtn(String label, GraphLayoutMode mode, IconData icon, [bool isDarkMode = true]) {
     final bool isSelected = _layoutMode == mode;
-    final Color activeColor = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416);
+    
+    // Light mode: purple shade from palette (#D4C9D8 fill with #7C3AED purple border)
+    // Dark mode: cyber electric purple (#8B5CF6)
+    final Color selectedBg = isDarkMode ? const Color(0xFF8B5CF6).withOpacity(0.32) : const Color(0xFFD4C9D8);
+    final Color unselectedBg = isDarkMode ? const Color(0xFF141414) : const Color(0xFFF1F3EA);
+    
+    final Color selectedBorder = isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF7C3AED);
+    final Color unselectedBorder = isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2);
+    
+    final Color selectedText = isDarkMode ? const Color(0xFFDDD6FE) : const Color(0xFF0F172A);
+    final Color unselectedText = isDarkMode ? Colors.white70 : const Color(0xFF475569);
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -672,26 +683,37 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: isSelected
-              ? activeColor.withOpacity(isDarkMode ? 0.20 : 0.15)
-              : (isDarkMode ? Colors.transparent : const Color(0xFFFAF9F6)),
-          borderRadius: BorderRadius.circular(3),
+          color: isSelected ? selectedBg : unselectedBg,
+          borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: isSelected ? activeColor : (isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
-            width: isSelected ? 1.5 : 1.0,
+            color: isSelected ? selectedBorder : unselectedBorder,
+            width: isSelected ? 1.4 : 1.0,
           ),
+          boxShadow: isSelected && !isDarkMode
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF7C3AED).withOpacity(0.15),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 13, color: isSelected ? activeColor : (isDarkMode ? Colors.white70 : const Color(0xFF475569))),
+            Icon(
+              icon,
+              size: 13,
+              color: isSelected ? selectedText : unselectedText,
+            ),
             const SizedBox(width: 5),
             Text(
               label,
               style: CyberTextStyles.technical(
                 fontSize: 10.5,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                color: isSelected ? activeColor : (isDarkMode ? Colors.white70 : const Color(0xFF475569)),
+                color: isSelected ? selectedText : unselectedText,
               ),
             ),
           ],
@@ -702,28 +724,58 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
 
   Widget _buildFilterBtn(String label, GraphFilter filter, {Color? color, bool isDarkMode = true}) {
     final bool isSelected = _filterMode == filter;
-    final Color activeColor = color ?? (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416));
+
+    Color selectedBg;
+    Color selectedBorder;
+    Color selectedText;
+
+    if (filter == GraphFilter.criticalOnly) {
+      selectedBg = isDarkMode ? const Color(0xFFDF2531).withOpacity(0.32) : const Color(0xFFD82734);
+      selectedBorder = isDarkMode ? const Color(0xFFDF2531) : const Color(0xFF810100);
+      selectedText = Colors.white;
+    } else if (filter == GraphFilter.warningOnly) {
+      selectedBg = isDarkMode ? const Color(0xFFFF9F43).withOpacity(0.32) : const Color(0xFFDCA278);
+      selectedBorder = isDarkMode ? const Color(0xFFFF9F43) : const Color(0xFFB45309);
+      selectedText = isDarkMode ? const Color(0xFFFF9F43) : const Color(0xFF0F172A);
+    } else {
+      // Lateral Paths Only & All filter:
+      // Green shade from light palette (#DDE69E fill, #80A416 border, #0F172A text)
+      selectedBg = isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.30) : const Color(0xFFDDE69E);
+      selectedBorder = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416);
+      selectedText = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A);
+    }
+
+    final Color unselectedBg = isDarkMode ? const Color(0xFF141414) : const Color(0xFFF1F3EA);
+    final Color unselectedBorder = isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2);
+    final Color unselectedText = isDarkMode ? Colors.white70 : const Color(0xFF475569);
 
     return GestureDetector(
       onTap: () => setState(() => _filterMode = filter),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: isSelected
-              ? activeColor.withOpacity(isDarkMode ? 0.20 : 0.15)
-              : (isDarkMode ? Colors.transparent : const Color(0xFFFAF9F6)),
-          borderRadius: BorderRadius.circular(3),
+          color: isSelected ? selectedBg : unselectedBg,
+          borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: isSelected ? activeColor : (isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
-            width: isSelected ? 1.5 : 1.0,
+            color: isSelected ? selectedBorder : unselectedBorder,
+            width: isSelected ? 1.4 : 1.0,
           ),
+          boxShadow: isSelected && !isDarkMode
+              ? [
+                  BoxShadow(
+                    color: selectedBorder.withOpacity(0.15),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           label,
           style: CyberTextStyles.technical(
             fontSize: 10.5,
             fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-            color: isSelected ? activeColor : (isDarkMode ? Colors.white70 : const Color(0xFF475569)),
+            color: isSelected ? selectedText : unselectedText,
           ),
         ),
       ),

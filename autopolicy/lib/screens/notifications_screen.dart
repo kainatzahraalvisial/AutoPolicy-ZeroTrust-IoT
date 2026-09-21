@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../providers/security_provider.dart';
 import '../providers/theme_provider.dart';
-import '../theme/colors.dart';
 import '../theme/text_styles.dart';
-import '../widgets/glass_container.dart';
-import '../widgets/neon_button.dart';
-import '../widgets/cyber_hud_card.dart';
+import '../widgets/cyber_stat_card.dart';
 
 /// Incident & System Notifications Dedicated Full-Page View
 class NotificationsScreen extends ConsumerStatefulWidget {
@@ -18,6 +16,7 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   String _selectedFilter = 'ALL';
+  int? _hoveredNotificationIdx;
 
   @override
   Widget build(BuildContext context) {
@@ -49,188 +48,271 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   children: [
                     Text(
                       'SYSTEM INCIDENT & SECURITY NOTIFICATIONS',
-                      style: CyberTextStyles.heading2.copyWith(
-                        color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
-                      ),
+                      style: CyberTextStyles.displayTitle(
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.w900,
+                        color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                      ).copyWith(letterSpacing: 1.5),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'REAL-TIME LOG STREAM, THREAT DETECTIONS & DEPLOYMENT INCIDENTS',
-                      style: CyberTextStyles.techMuted.copyWith(
-                        color: isDarkMode ? Colors.white54 : const Color(0xFF64748B),
+                      style: GoogleFonts.inter(
+                        fontSize: 12.0,
+                        color: isDarkMode ? Colors.white60 : const Color(0xFF64748B),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
-                Row(
-                  children: [
-                    NeonButton(
-                      text: 'CLEAR ALL LOGS',
-                      onPressed: () {
-                        ref.read(securityProvider.notifier).clearNotifications();
-                      },
-                      icon: Icons.cleaning_services_outlined,
-                      color: CyberColors.alertRed,
-                    ),
-                  ],
+                ElevatedButton.icon(
+                  onPressed: () {
+                    ref.read(securityProvider.notifier).clearNotifications();
+                  },
+                  icon: const Icon(Icons.cleaning_services_outlined, size: 16),
+                  label: Text(
+                    'CLEAR ALL LOGS',
+                    style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD82734),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    elevation: 0,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
 
-            // Top Stat Row for Alert Metrics
+            // Top Stat Row for Alert Metrics (HUD Frames & Color Order Aligned)
             Row(
               children: [
                 Expanded(
-                  child: _buildMetricCard('TOTAL LOG ENTRIES', '${notifications.length}', const Color(0xFFFFE997), 'H17', isDarkMode),
+                  child: CyberStatCard(
+                    title: 'TOTAL LOG ENTRIES',
+                    value: '${notifications.length}',
+                    sub: 'System & Sensor Events',
+                    icon: Icons.receipt_long_outlined,
+                    borderColor: const Color(0xFFFFF9E1),
+                    tag: 'L01',
+                    onTap: () => setState(() => _selectedFilter = 'ALL'),
+                  ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: _buildMetricCard('CRITICAL THREATS', '${notifications.where((n) => n.type == 'threat').length}', const Color(0xFFB91C1D), 'H18', isDarkMode),
+                  child: CyberStatCard(
+                    title: 'REGO DEPLOYMENTS',
+                    value: '${notifications.where((n) => n.type == 'deploy').length}',
+                    sub: 'OPA Active Enforcements',
+                    icon: Icons.rocket_launch_outlined,
+                    borderColor: const Color(0xFFEBECCC),
+                    tag: 'L02',
+                    onTap: () => setState(() => _selectedFilter = 'DEPLOY'),
+                  ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: _buildMetricCard('WARNING ALERTS', '${notifications.where((n) => n.type == 'warning').length}', const Color(0xFFA88AED), 'H19', isDarkMode),
+                  child: CyberStatCard(
+                    title: 'WARNING ALERTS',
+                    value: '${notifications.where((n) => n.type == 'warning').length}',
+                    sub: 'Triaged Anomaly Warnings',
+                    icon: Icons.warning_amber_outlined,
+                    borderColor: const Color(0xFFDCA278), // Clay Color
+                    tag: 'L03',
+                    onTap: () => setState(() => _selectedFilter = 'WARNINGS'),
+                  ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: _buildMetricCard('REGO DEPLOYMENTS', '${notifications.where((n) => n.type == 'deploy').length}', const Color(0xFFC4E320), 'H20', isDarkMode),
+                  child: CyberStatCard(
+                    title: 'CRITICAL THREATS',
+                    value: '${notifications.where((n) => n.type == 'threat').length}',
+                    sub: 'Immediate Blast Radius',
+                    icon: Icons.gpp_bad_outlined,
+                    borderColor: const Color(0xFFD82734), // Threat Red at end
+                    isAlert: true,
+                    tag: 'L04',
+                    onTap: () => setState(() => _selectedFilter = 'THREATS'),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
 
-            // Category Filter Buttons
+            // Category Filter Buttons (Solid fill with white text when selected)
             Row(
-              children: ['ALL', 'THREATS', 'WARNINGS', 'DEPLOY'].map((filter) {
-                final isSelected = _selectedFilter == filter;
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedFilter = filter),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    margin: const EdgeInsets.only(right: 10),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? (isDarkMode ? const Color(0xFFC4E320).withOpacity(0.2) : const Color(0xFFEBECCC))
-                          : (isDarkMode ? Colors.transparent : const Color(0xFFFAF9F6)),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: isSelected
-                            ? (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416))
-                            : (isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      filter,
-                      style: CyberTextStyles.technical(
-                        fontSize: 11,
-                        color: isSelected
-                            ? (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A))
-                            : (isDarkMode ? Colors.white70 : const Color(0xFF475569)),
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
+              children: [
+                _buildFilterButton('ALL', const Color(0xFFCDD4B2), isDarkMode),
+                _buildFilterButton('DEPLOY', const Color(0xFF08652C), isDarkMode),
+                _buildFilterButton('WARNINGS', const Color(0xFFDCA278), isDarkMode),
+                _buildFilterButton('THREATS', const Color(0xFFD82734), isDarkMode),
+              ],
             ),
             const SizedBox(height: 16),
 
             // Notifications Feed Stream List
             Expanded(
               child: filteredList.isEmpty
-                  ? CyberHudCard(
-                      tag: 'EMPTY',
-                      borderColor: const Color(0xFFC4E320),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.shield_outlined, color: Color(0xFFC4E320), size: 48),
-                            const SizedBox(height: 12),
-                            Text(
-                              'ALL SYSTEMS OPERATIONAL. NO UNRESOLVED NOTIFICATIONS.',
-                              style: CyberTextStyles.technical(
-                                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
+                  ? _buildEmptyState(isDarkMode)
                   : ListView.builder(
                       itemCount: filteredList.length,
                       itemBuilder: (context, idx) {
                         final n = filteredList[idx];
-                        Color statusColor = const Color(0xFFC4E320);
-                        if (n.type == 'threat') statusColor = const Color(0xFFB91C1D);
-                        if (n.type == 'warning') statusColor = const Color(0xFFA88AED);
-                        if (n.type == 'deploy') statusColor = const Color(0xFFFFE997);
+                        final isHovered = _hoveredNotificationIdx == idx;
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border(
-                              left: BorderSide(color: statusColor, width: 4),
-                              top: BorderSide(color: isDarkMode ? Colors.transparent : const Color(0xFFCDD4B2)),
-                              right: BorderSide(color: isDarkMode ? Colors.transparent : const Color(0xFFCDD4B2)),
-                              bottom: BorderSide(color: isDarkMode ? Colors.transparent : const Color(0xFFCDD4B2)),
-                            ),
-                            boxShadow: isDarkMode
-                                ? null
-                                : [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.04),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                n.type == 'threat' ? Icons.warning_amber : (n.type == 'warning' ? Icons.error_outline : Icons.check_circle_outline),
-                                color: statusColor,
-                                size: 24,
+                        Color statusColor = const Color(0xFF08652C); // default info
+                        IconData iconData = Icons.info_outline;
+
+                        if (n.type == 'threat') {
+                          statusColor = const Color(0xFFD82734);
+                          iconData = Icons.gpp_bad_outlined;
+                        } else if (n.type == 'warning') {
+                          statusColor = const Color(0xFFE87D85);
+                          iconData = Icons.warning_amber_outlined;
+                        } else if (n.type == 'deploy') {
+                          statusColor = const Color(0xFF08652C);
+                          iconData = Icons.verified_outlined;
+                        }
+
+                        final String formattedTime =
+                            '${n.timestamp.hour.toString().padLeft(2, '0')}:${n.timestamp.minute.toString().padLeft(2, '0')}:${n.timestamp.second.toString().padLeft(2, '0')}';
+
+                        return MouseRegion(
+                          onEnter: (_) => setState(() => _hoveredNotificationIdx = idx),
+                          onExit: (_) => setState(() => _hoveredNotificationIdx = null),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            margin: const EdgeInsets.only(bottom: 10),
+                            transform: isHovered ? Matrix4.translationValues(0, -2, 0) : Matrix4.identity(),
+                            decoration: BoxDecoration(
+                              color: isDarkMode
+                                  ? const Color(0xFF111116)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: isDarkMode
+                                    ? (isHovered ? statusColor : const Color(0xFF222233))
+                                    : (isHovered ? statusColor : const Color(0xFFCDD4B2)),
+                                width: isHovered ? 1.5 : 1.0,
                               ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'CATEGORY: ${n.type.toUpperCase()}',
-                                          style: CyberTextStyles.technical(color: statusColor, fontSize: 10, fontWeight: FontWeight.bold),
-                                        ),
-                                        Text(
-                                          '${n.timestamp.hour.toString().padLeft(2, '0')}:${n.timestamp.minute.toString().padLeft(2, '0')}:${n.timestamp.second.toString().padLeft(2, '0')}',
-                                          style: CyberTextStyles.techMuted.copyWith(
-                                            fontSize: 9.5,
-                                            color: isDarkMode ? Colors.white54 : const Color(0xFF64748B),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      n.message,
-                                      style: CyberTextStyles.interface(
-                                        fontSize: 12.0,
-                                        color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(isDarkMode ? 0.25 : (isHovered ? 0.08 : 0.03)),
+                                  blurRadius: isHovered ? 8 : 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: IntrinsicHeight(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // Left Status Accent Bar
+                                  Container(
+                                    width: 5,
+                                    decoration: BoxDecoration(
+                                      color: statusColor,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(6),
+                                        bottomLeft: Radius.circular(6),
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  // Icon in tinted box
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                    child: Center(
+                                      child: Container(
+                                        padding: const EdgeInsets.all(9),
+                                        decoration: BoxDecoration(
+                                          color: statusColor.withOpacity(isDarkMode ? 0.20 : 0.12),
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(
+                                            color: statusColor.withOpacity(0.3),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Icon(iconData, color: statusColor, size: 20),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  // Content Column
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                decoration: BoxDecoration(
+                                                  color: statusColor.withOpacity(isDarkMode ? 0.22 : 0.12),
+                                                  borderRadius: BorderRadius.circular(4),
+                                                  border: Border.all(color: statusColor.withOpacity(0.4), width: 0.8),
+                                                ),
+                                                child: Text(
+                                                  n.type.toUpperCase(),
+                                                  style: TextStyle(
+                                                    fontFamily: 'monospace',
+                                                    color: statusColor,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w900,
+                                                    letterSpacing: 0.8,
+                                                  ),
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding: const EdgeInsets.only(right: 14.0),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      Icons.access_time,
+                                                      size: 11,
+                                                      color: isDarkMode ? Colors.white54 : const Color(0xFF64748B),
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      formattedTime,
+                                                      style: TextStyle(
+                                                        fontFamily: 'monospace',
+                                                        fontSize: 10.5,
+                                                        color: isDarkMode ? Colors.white60 : const Color(0xFF64748B),
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Padding(
+                                            padding: const EdgeInsets.only(right: 14.0),
+                                            child: Text(
+                                              n.message,
+                                              style: GoogleFonts.inter(
+                                                fontSize: 13.0,
+                                                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                                fontWeight: FontWeight.w600,
+                                                height: 1.4,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         );
                       },
@@ -242,17 +324,152 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     );
   }
 
-  Widget _buildMetricCard(String title, String val, Color color, String tag, bool isDarkMode) {
-    return GlassContainer(
-      padding: const EdgeInsets.all(12),
-      borderColor: color,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: CyberTextStyles.technical(fontSize: 9, color: isDarkMode ? Colors.white70 : const Color(0xFF475569))),
-          const SizedBox(height: 6),
-          Text(val, style: TextStyle(fontFamily: 'monospace', fontSize: 24, fontWeight: FontWeight.w900, color: color)),
-        ],
+  // ── FILTER BUTTON BUILDER ──────────────────────────────────────────────────
+  Widget _buildFilterButton(String label, Color activeFillColor, bool isDarkMode) {
+    final bool isSelected = _selectedFilter == label;
+
+    return Padding(
+      padding: const EdgeInsets.only(right: 10.0),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () => setState(() => _selectedFilter = label),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? activeFillColor
+                  : (isDarkMode ? const Color(0xFF14141E) : const Color(0xFFFAF9F6)),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: isSelected
+                    ? activeFillColor
+                    : (isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+                width: 1.2,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: activeFillColor.withOpacity(0.35),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Text(
+              label,
+              style: CyberTextStyles.technical(
+                fontSize: 11.5,
+                color: isSelected
+                    ? Colors.white
+                    : (isDarkMode ? Colors.white70 : const Color(0xFF475569)),
+                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
+                letterSpacing: 0.8,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── REDESIGNED EMPTY STATE ─────────────────────────────────────────────────
+  Widget _buildEmptyState(bool isDarkMode) {
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 480),
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 36),
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xFF0F0F14) : const Color(0xFFFAF9F6),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isDarkMode ? const Color(0xFF222233) : const Color(0xFFCDD4B2),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDarkMode ? const Color(0xFF162316) : const Color(0xFFEBECCC),
+                border: Border.all(
+                  color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.5) : const Color(0xFFCDD4B2),
+                  width: 1.2,
+                ),
+              ),
+              child: Icon(
+                Icons.verified_user_outlined,
+                color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF08652C),
+                size: 38,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'ALL SYSTEMS SECURE & OPERATIONAL',
+              textAlign: TextAlign.center,
+              style: CyberTextStyles.displayTitle(
+                fontSize: 15.0,
+                fontWeight: FontWeight.w900,
+                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+              ).copyWith(letterSpacing: 1.2),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No active alerts under the current filter ($_selectedFilter). Zero-Trust OPA sidecars and Zeek network sensors are actively inspecting telemetry traffic without policy violations.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 12.0,
+                color: isDarkMode ? Colors.white60 : const Color(0xFF64748B),
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF08652C).withOpacity(0.12),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFF08652C).withOpacity(0.4)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Color(0xFF08652C),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'ZERO UNRESOLVED INCIDENTS',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF08652C),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -43,7 +43,8 @@ class CyberHudCard extends ConsumerWidget {
     final isDarkMode = ref.watch(themeModeProvider);
     final isRedAlert = backgroundColor == const Color(0xFF810100) ||
         backgroundColor == const Color(0xFFDF2531) ||
-        backgroundColor == const Color(0xFFB91C1D);
+        backgroundColor == const Color(0xFFB91C1D) ||
+        backgroundColor == const Color(0xFFD82734);
 
     final effectiveBg = isDarkMode
         ? backgroundColor

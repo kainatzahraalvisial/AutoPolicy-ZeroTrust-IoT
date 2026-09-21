@@ -91,6 +91,7 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                 _buildFilterButton('ALL', 'severity', _severityFilter == 'ALL', isDarkMode),
                 _buildFilterButton('CRITICAL', 'severity', _severityFilter == 'CRITICAL', isDarkMode),
                 _buildFilterButton('HIGH', 'severity', _severityFilter == 'HIGH', isDarkMode),
+                _buildFilterButton('MEDIUM', 'severity', _severityFilter == 'MEDIUM', isDarkMode),
                 
                 const SizedBox(width: 24),
                 
@@ -133,9 +134,19 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                       itemBuilder: (context, idx) {
                         final anm = filteredAnomalies[idx];
                         final isCritical = anm.severity == SeverityLevel.critical;
+                        final isHigh = anm.severity == SeverityLevel.high;
+                        final isMedium = anm.severity == SeverityLevel.medium;
                         final String timeStr =
                             '${anm.timestamp.hour.toString().padLeft(2, '0')}:${anm.timestamp.minute.toString().padLeft(2, '0')}:${anm.timestamp.second.toString().padLeft(2, '0')}';
-                        final Color severityColor = isCritical ? const Color(0xFFDF2531) : const Color(0xFFFFA500);
+                        final Color severityColor = isCritical
+                            ? const Color(0xFFD82734)
+                            : (isHigh ? const Color(0xFFE87D85) : (isMedium ? const Color(0xFFFFF4E1) : const Color(0xFF38BDF8)));
+
+                        final Color badgeBg = isCritical
+                            ? const Color(0xFFD82734)
+                            : (isHigh ? const Color(0xFFE87D85) : (isMedium ? const Color(0xFFFFF4E1) : const Color(0xFF0284C7)));
+                        final Color badgeBorder = isMedium ? const Color(0xFFE6D6B8) : badgeBg;
+                        final Color badgeText = isMedium ? const Color(0xFF0F172A) : Colors.white;
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 10),
@@ -143,7 +154,7 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                             color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
-                              color: severityColor.withOpacity(isDarkMode ? 0.45 : 0.60),
+                              color: isMedium ? const Color(0xFFE6D6B8) : severityColor.withOpacity(isDarkMode ? 0.45 : 0.60),
                               width: 1.0,
                             ),
                           ),
@@ -155,7 +166,7 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                                 Container(
                                   width: 5,
                                   decoration: BoxDecoration(
-                                    color: severityColor,
+                                    color: isMedium ? const Color(0xFFE6D6B8) : severityColor,
                                     borderRadius: const BorderRadius.only(
                                       topLeft: Radius.circular(3),
                                       bottomLeft: Radius.circular(3),
@@ -177,16 +188,16 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                               decoration: BoxDecoration(
-                                                color: severityColor.withOpacity(0.18),
+                                                color: badgeBg,
                                                 borderRadius: BorderRadius.circular(3),
-                                                border: Border.all(color: severityColor, width: 1),
+                                                border: Border.all(color: badgeBorder, width: 1),
                                               ),
                                               child: Text(
                                                 anm.severity.toString().split('.').last.toUpperCase(),
                                                 style: CyberTextStyles.technical(
                                                   fontSize: 10.5,
                                                   fontWeight: FontWeight.w800,
-                                                  color: severityColor,
+                                                  color: badgeText,
                                                 ),
                                               ),
                                             ),
@@ -449,6 +460,53 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
   }
 
   Widget _buildFilterButton(String label, String type, bool isSelected, bool isDarkMode) {
+    Color activeBg;
+    Color activeBorder;
+    Color activeText = Colors.white;
+
+    if (type == 'severity') {
+      if (label == 'CRITICAL') {
+        activeBg = const Color(0xFFD82734);
+        activeBorder = const Color(0xFFD82734);
+      } else if (label == 'HIGH') {
+        activeBg = const Color(0xFFE87D85);
+        activeBorder = const Color(0xFFE87D85);
+      } else if (label == 'MEDIUM') {
+        activeBg = const Color(0xFFFFF4E1);
+        activeBorder = const Color(0xFFE6D6B8);
+        activeText = const Color(0xFF0F172A);
+      } else {
+        // 'ALL'
+        activeBg = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFDCA278);
+        activeBorder = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFDCA278);
+        if (isDarkMode) activeText = Colors.black;
+      }
+    } else {
+      // 'status'
+      if (label == 'ACTIVE') {
+        activeBg = const Color(0xFFD82734);
+        activeBorder = const Color(0xFFD82734);
+      } else if (label == 'MITIGATED') {
+        activeBg = const Color(0xFF08652C);
+        activeBorder = const Color(0xFF08652C);
+      } else {
+        // 'ALL'
+        activeBg = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFDCA278);
+        activeBorder = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFDCA278);
+        if (isDarkMode) activeText = Colors.black;
+      }
+    }
+
+    final Color bgColor = isSelected 
+        ? activeBg 
+        : (isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6));
+    final Color borderColor = isSelected 
+        ? activeBorder 
+        : (isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2));
+    final Color textColor = isSelected 
+        ? activeText 
+        : (isDarkMode ? Colors.white70 : const Color(0xFF475569));
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -463,25 +521,28 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         margin: const EdgeInsets.only(left: 8),
         decoration: BoxDecoration(
-          color: isSelected 
-              ? const Color(0xFF5DD62C).withOpacity(0.22) 
-              : (isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6)),
+          color: bgColor,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: isSelected 
-                ? (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416))
-                : (isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+            color: borderColor,
             width: isSelected ? 1.5 : 1.0,
           ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: activeBg.withOpacity(0.35),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           label,
           style: CyberTextStyles.technical(
             fontSize: 11.5,
             fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-            color: isSelected 
-                ? (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416))
-                : (isDarkMode ? Colors.white70 : const Color(0xFF475569)),
+            color: textColor,
           ),
         ),
       ),

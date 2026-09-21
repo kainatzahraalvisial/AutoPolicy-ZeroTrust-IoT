@@ -16,15 +16,15 @@ class CyberTrafficLineChart extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDarkMode = ref.watch(themeModeProvider);
-    final accentColor = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416);
+    final accentColor = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF5E7343);
 
     return Container(
       height: height,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF0F0F0F) : Colors.white,
+        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         border: Border.all(
-          color: accentColor.withOpacity(0.35), 
+          color: isDarkMode ? accentColor.withOpacity(0.35) : const Color(0xFFCDD4B2), 
           width: 1.0,
         ),
         borderRadius: BorderRadius.circular(4),
@@ -32,9 +32,9 @@ class CyberTrafficLineChart extends ConsumerWidget {
             ? null
             : [
                 BoxShadow(
-                  color: const Color(0xFF80A416).withOpacity(0.06),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
                 ),
               ],
       ),
@@ -71,7 +71,7 @@ class CyberTrafficLineChart extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.12),
+                      color: isDarkMode ? accentColor.withOpacity(0.12) : const Color(0xFFEBECCC),
                       borderRadius: BorderRadius.circular(3),
                     ),
                     child: Text(
@@ -89,7 +89,7 @@ class CyberTrafficLineChart extends ConsumerWidget {
                 children: [
                   _buildLegendPill('NORMAL INGRESS', accentColor),
                   const SizedBox(width: 8),
-                  _buildLegendPill('ANOMALY SPIKES', const Color(0xFFDF2531)),
+                  _buildLegendPill('ANOMALY SPIKES', const Color(0xFFD82734)),
                   if (onViewDetails != null) ...[
                     const SizedBox(width: 10),
                     InkWell(
@@ -98,7 +98,7 @@ class CyberTrafficLineChart extends ConsumerWidget {
                         'FULL IDS →',
                         style: CyberTextStyles.technical(
                           fontSize: 9,
-                          color: isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF9D8DF1),
+                          color: isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF5E7343),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -172,7 +172,7 @@ class _TrafficLineChartPainter extends CustomPainter {
 
     // Background horizontal grid lines
     final gridPaint = Paint()
-      ..color = isDarkMode ? const Color(0xFF252525) : const Color(0xFFE2E8F0)
+      ..color = isDarkMode ? const Color(0xFF252525) : const Color(0xFFEBECCC)
       ..strokeWidth = 1.0;
 
     const int gridRows = 4;
@@ -227,17 +227,22 @@ class _TrafficLineChartPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [
-          const Color(0xFF5DD62C).withOpacity(0.25),
-          const Color(0xFF5DD62C).withOpacity(0.02),
-        ],
+        colors: isDarkMode
+            ? [
+                const Color(0xFF5DD62C).withOpacity(0.25),
+                const Color(0xFF5DD62C).withOpacity(0.02),
+              ]
+            : [
+                const Color(0xFFCDD4B2).withOpacity(0.35),
+                const Color(0xFFCDD4B2).withOpacity(0.05),
+              ],
       ).createShader(Rect.fromLTWH(0, 0, w, h))
       ..style = PaintingStyle.fill;
     canvas.drawPath(fillPath, fillPaint);
 
     // Normal Line Stroke
     final normalLinePaint = Paint()
-      ..color = const Color(0xFF5DD62C)
+      ..color = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF5E7343)
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
     canvas.drawPath(normalPath, normalLinePaint);
@@ -252,15 +257,15 @@ class _TrafficLineChartPainter extends CustomPainter {
     }
 
     final anomalyLinePaint = Paint()
-      ..color = const Color(0xFFDF2531)
+      ..color = const Color(0xFFD82734)
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
     canvas.drawPath(anomalyPath, anomalyLinePaint);
 
     // Anomaly dots on spikes
-    final dotPaint = Paint()..color = const Color(0xFFDF2531);
+    final dotPaint = Paint()..color = const Color(0xFFD82734);
     final glowPaint = Paint()
-      ..color = const Color(0xFFDF2531).withOpacity(0.35)
+      ..color = const Color(0xFFD82734).withOpacity(0.35)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
 
     canvas.drawCircle(Offset(0.32 * w, 0.42 * h), 5, glowPaint);

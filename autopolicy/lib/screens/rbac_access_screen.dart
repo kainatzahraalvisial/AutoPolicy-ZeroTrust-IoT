@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/theme_provider.dart';
-import '../theme/colors.dart';
-import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
 
 /// Role-Based Access Control (RBAC) – Redesigned Layout
@@ -21,8 +19,6 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
   final TextEditingController _searchCtrl = TextEditingController();
   String _searchQuery = '';
   String _roleFilter = 'All Roles';
-  int _operatorPage = 1;
-  static const int _operatorPageSize = 6;
 
   // Active Operators List
   final List<Map<String, String>> _operatorsList = [
@@ -157,7 +153,6 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
     final notesCtrl = TextEditingController();
     
     String selectedRole = 'Security Engineer';
-    String selectedExpiry = '90 Days';
     bool sendInvite = true;
     bool forcePasswordChange = true;
     bool showAdvanced = false;
@@ -166,41 +161,43 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
 
     showDialog(
       context: context,
+      barrierColor: Colors.black.withOpacity(0.65),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDlgState) => Dialog(
           backgroundColor: Colors.transparent,
-          child: Container(
-            width: 520,
-            constraints: const BoxConstraints(maxHeight: 700),
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFFCDD4B2), width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.2) : Colors.black.withOpacity(0.08),
-                  blurRadius: 20,
-                ),
-              ],
-            ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          child: _ModalVrFrame(
+            maxWidth: 680,
+            isDarkMode: isDarkMode,
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.person_add_outlined, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A), size: 22),
-                          const SizedBox(width: 10),
+                          Text(
+                            'ZERO-TRUST IDENTITY PROVISIONING · STRICT RBAC ENFORCED',
+                            style: GoogleFonts.orbitron(
+                              fontSize: 8.5,
+                              letterSpacing: 2.0,
+                              fontWeight: FontWeight.w700,
+                              color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF80A416),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
                           Text(
                             'PROVISION NEW OPERATOR',
-                            style: CyberTextStyles.heading2.copyWith(
-                              fontSize: 15,
-                              color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A),
+                            style: GoogleFonts.orbitron(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.6,
+                              color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
                             ),
                           ),
                         ],
@@ -211,75 +208,100 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                       ),
                     ],
                   ),
-                  Text(
-                    'ZERO-TRUST IDENTITY PROVISIONING · STRICT RBAC ENFORCED',
-                    style: CyberTextStyles.techMuted.copyWith(
-                      fontSize: 9,
-                      color: isDarkMode ? Colors.white54 : const Color(0xFF64748B),
-                    ),
-                  ),
                   const SizedBox(height: 12),
-                  Divider(color: isDarkMode ? const Color(0xFF252525) : const Color(0xFFCDD4B2)),
-                  const SizedBox(height: 10),
+                  Divider(color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.25) : const Color(0xFFCDD4B2), height: 1),
+                  const SizedBox(height: 16),
 
                   if (errorText != null) ...[
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      margin: const EdgeInsets.only(bottom: 14),
                       decoration: BoxDecoration(
-                        color: const Color(0x33DF2531),
+                        color: const Color(0x22DF2531),
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: const Color(0xFFDF2531)),
                       ),
-                      child: Text(
-                        errorText!,
-                        style: const TextStyle(fontSize: 11, color: Color(0xFFFF6666)),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, size: 16, color: Color(0xFFDF2531)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              errorText!,
+                              style: GoogleFonts.spaceGrotesk(fontSize: 12, color: const Color(0xFFDF2531), fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 10),
                   ],
 
+                  // Row 1: Name & Email
                   Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: nameCtrl,
-                          style: CyberTextStyles.techBody,
-                          decoration: const InputDecoration(labelText: 'FULL NAME / IDENTITY'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextField(
-                          controller: emailCtrl,
-                          style: CyberTextStyles.techBody,
-                          decoration: const InputDecoration(labelText: 'ORGANIZATION EMAIL'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('SYSTEM ROLE', style: CyberTextStyles.techMuted.copyWith(fontSize: 10, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B))),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10),
-                              decoration: BoxDecoration(
-                                color: isDarkMode ? const Color(0xFF161616) : const Color(0xFFFAF9F6),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+                            _modalLabel('Full Name / Identity', isDarkMode),
+                            _ModalFieldShell(
+                              isDarkMode: isDarkMode,
+                              child: TextField(
+                                controller: nameCtrl,
+                                style: _modalInputTextStyle(isDarkMode),
+                                cursorColor: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A),
+                                decoration: _modalInputDeco('e.g. Sarah Jenkins', isDarkMode),
                               ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _modalLabel('Organization Email', isDarkMode),
+                            _ModalFieldShell(
+                              isDarkMode: isDarkMode,
+                              child: TextField(
+                                controller: emailCtrl,
+                                style: _modalInputTextStyle(isDarkMode),
+                                cursorColor: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A),
+                                decoration: _modalInputDeco('operator@zerotrust.internal', isDarkMode),
+                                keyboardType: TextInputType.emailAddress,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Row 2: Role & Department (Cleanly Aligned)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _modalLabel('System Role', isDarkMode),
+                            _ModalFieldShell(
+                              isDarkMode: isDarkMode,
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
                                   value: selectedRole,
                                   isExpanded: true,
-                                  dropdownColor: isDarkMode ? const Color(0xFF161616) : Colors.white,
-                                  style: CyberTextStyles.techBody.copyWith(color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
+                                  dropdownColor: isDarkMode ? const Color(0xFF0F0F14) : Colors.white,
+                                  style: _modalInputTextStyle(isDarkMode),
+                                  icon: Icon(
+                                    Icons.arrow_drop_down,
+                                    color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF0F172A),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14),
                                   items: ['Administrator', 'Security Engineer', 'Manager'].map((r) {
                                     return DropdownMenuItem(value: r, child: Text(r));
                                   }).toList(),
@@ -292,116 +314,254 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                           ],
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16),
                       Expanded(
-                        child: TextField(
-                          controller: deptCtrl,
-                          style: CyberTextStyles.techBody.copyWith(color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
-                          decoration: const InputDecoration(labelText: 'DEPARTMENT / UNIT'),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _modalLabel('Department / Unit', isDarkMode),
+                            _ModalFieldShell(
+                              isDarkMode: isDarkMode,
+                              child: TextField(
+                                controller: deptCtrl,
+                                style: _modalInputTextStyle(isDarkMode),
+                                cursorColor: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A),
+                                decoration: _modalInputDeco('e.g. SOC Incident Response', isDarkMode),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
+                  // Row 3: Temporary Password & Confirm Password (Cleanly Aligned, No Truncation)
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: TextField(
-                          controller: passCtrl,
-                          obscureText: obscurePass,
-                          style: CyberTextStyles.techBody.copyWith(color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
-                          decoration: InputDecoration(
-                            labelText: 'TEMPORARY PASSWORD',
-                            suffixIcon: IconButton(
-                              icon: Icon(obscurePass ? Icons.visibility_off : Icons.visibility, size: 16, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B)),
-                              onPressed: () => setDlgState(() => obscurePass = !obscurePass),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _modalLabel('Temporary Password', isDarkMode),
+                            _ModalFieldShell(
+                              isDarkMode: isDarkMode,
+                              child: TextField(
+                                controller: passCtrl,
+                                obscureText: obscurePass,
+                                style: _modalInputTextStyle(isDarkMode),
+                                cursorColor: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A),
+                                decoration: _modalInputDeco('••••••••••••', isDarkMode).copyWith(
+                                  suffixIcon: TextButton(
+                                    onPressed: () => setDlgState(() => obscurePass = !obscurePass),
+                                    child: Text(
+                                      obscurePass ? 'SHOW' : 'HIDE',
+                                      style: GoogleFonts.orbitron(
+                                        fontSize: 9,
+                                        letterSpacing: 1.2,
+                                        color: isDarkMode ? const Color(0xFF829A80) : const Color(0xFF0F172A),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _modalLabel('Confirm Password', isDarkMode),
+                            _ModalFieldShell(
+                              isDarkMode: isDarkMode,
+                              child: TextField(
+                                controller: cnfPassCtrl,
+                                obscureText: obscurePass,
+                                style: _modalInputTextStyle(isDarkMode),
+                                cursorColor: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A),
+                                decoration: _modalInputDeco('••••••••••••', isDarkMode),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Checkbox Options (Login Theme Aligned)
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: Checkbox(
+                          value: sendInvite,
+                          onChanged: (v) => setDlgState(() => sendInvite = v ?? true),
+                          activeColor: const Color(0xFF80A416),
+                          side: BorderSide(
+                            color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.5) : const Color(0xFFCDD4B2),
+                            width: 1.2,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextField(
-                          controller: cnfPassCtrl,
-                          obscureText: obscurePass,
-                          style: CyberTextStyles.techBody.copyWith(color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
-                          decoration: const InputDecoration(labelText: 'CONFIRM PASSWORD'),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Send invitation email with setup instructions',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 12.5,
+                          color: isDarkMode ? Colors.white70 : const Color(0xFF0F172A),
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-
-                  CheckboxListTile(
-                    value: sendInvite,
-                    onChanged: (v) => setDlgState(() => sendInvite = v ?? true),
-                    title: Text('Send invitation email with setup instructions', style: CyberTextStyles.technical(fontSize: 11, color: isDarkMode ? Colors.white : const Color(0xFF0F172A))),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: Checkbox(
+                          value: forcePasswordChange,
+                          onChanged: (v) => setDlgState(() => forcePasswordChange = v ?? true),
+                          activeColor: const Color(0xFF80A416),
+                          side: BorderSide(
+                            color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.5) : const Color(0xFFCDD4B2),
+                            width: 1.2,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Require password change on first login',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 12.5,
+                          color: isDarkMode ? Colors.white70 : const Color(0xFF0F172A),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  CheckboxListTile(
-                    value: forcePasswordChange,
-                    onChanged: (v) => setDlgState(() => forcePasswordChange = v ?? true),
-                    title: Text('Require password change on first login', style: CyberTextStyles.technical(fontSize: 11, color: isDarkMode ? Colors.white : const Color(0xFF0F172A))),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                  ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 14),
 
+                  // Expandable Advanced Security Settings
                   InkWell(
                     onTap: () => setDlgState(() => showAdvanced = !showAdvanced),
-                    child: Row(
-                      children: [
-                        Icon(showAdvanced ? Icons.expand_less : Icons.expand_more, size: 18, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A)),
-                        const SizedBox(width: 4),
-                        Text('ADVANCED SECURITY SETTINGS', style: CyberTextStyles.technical(fontSize: 10, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A), fontWeight: FontWeight.bold)),
-                      ],
+                    borderRadius: BorderRadius.circular(4),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Row(
+                        children: [
+                          Icon(
+                            showAdvanced ? Icons.expand_less : Icons.expand_more,
+                            size: 18,
+                            color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF80A416),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'ADVANCED SECURITY SETTINGS',
+                            style: GoogleFonts.orbitron(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.5,
+                              color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF80A416),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
                   if (showAdvanced) ...[
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: isDarkMode ? Colors.white12 : const Color(0xFFCDD4B2)),
+                        color: isDarkMode ? const Color(0xFF0A0F0D) : const Color(0xFFFAF9F6),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.3) : const Color(0xFFCDD4B2),
+                          width: 1.2,
+                        ),
                       ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TextField(
-                            controller: ipCtrl,
-                            style: CyberTextStyles.techBody.copyWith(color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
-                            decoration: const InputDecoration(labelText: 'ALLOWED SOURCE IP RANGE (CIDR)'),
+                          _modalLabel('Allowed Source IP Range (CIDR)', isDarkMode),
+                          _ModalFieldShell(
+                            isDarkMode: isDarkMode,
+                            child: TextField(
+                              controller: ipCtrl,
+                              style: _modalInputTextStyle(isDarkMode),
+                              cursorColor: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A),
+                              decoration: _modalInputDeco('e.g. 10.128.0.0/16', isDarkMode),
+                            ),
                           ),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: notesCtrl,
-                            style: CyberTextStyles.techBody.copyWith(color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
-                            decoration: const InputDecoration(labelText: 'OPERATOR JUSTIFICATION NOTES'),
+                          const SizedBox(height: 14),
+                          _modalLabel('Operator Justification Notes', isDarkMode),
+                          _ModalFieldShell(
+                            isDarkMode: isDarkMode,
+                            height: 72,
+                            child: TextField(
+                              controller: notesCtrl,
+                              maxLines: 2,
+                              style: _modalInputTextStyle(isDarkMode),
+                              cursorColor: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A),
+                              decoration: _modalInputDeco('Operational role scope and authorization notes...', isDarkMode),
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ],
 
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 22),
+                  Divider(color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.25) : const Color(0xFFCDD4B2), height: 1),
+                  const SizedBox(height: 16),
+
+                  // Actions Footer
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton(
                         onPressed: () => Navigator.of(ctx).pop(),
-                        child: Text('CANCEL', style: CyberTextStyles.technical(color: isDarkMode ? Colors.white54 : const Color(0xFF64748B))),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        ),
+                        child: Text(
+                          'CANCEL',
+                          style: GoogleFonts.orbitron(
+                            fontSize: 11,
+                            letterSpacing: 1.4,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.white60 : const Color(0xFF64748B),
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 10),
-                      ElevatedButton(
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isDarkMode ? const Color(0xFF80A416) : const Color(0xFFB8A9C1),
-                          foregroundColor: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                          backgroundColor: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFFB8A9C1),
+                          foregroundColor: isDarkMode ? Colors.black : const Color(0xFF0F172A),
+                          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          elevation: 0,
+                        ),
+                        icon: Icon(Icons.person_add, size: 16, color: isDarkMode ? Colors.black : const Color(0xFF0F172A)),
+                        label: Text(
+                          'PROVISION OPERATOR',
+                          style: GoogleFonts.orbitron(
+                            fontSize: 11,
+                            letterSpacing: 1.2,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.black : const Color(0xFF0F172A),
+                          ),
                         ),
                         onPressed: () {
                           if (nameCtrl.text.trim().isEmpty) {
@@ -436,14 +596,13 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               backgroundColor: isDarkMode ? const Color(0xFF112211) : const Color(0xFFFAF9F6),
-                              content: Text('Operator ${nameCtrl.text.trim()} provisioned successfully.', style: TextStyle(color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A))),
+                              content: Text(
+                                'Operator ${nameCtrl.text.trim()} provisioned successfully.',
+                                style: TextStyle(color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A)),
+                              ),
                             ),
                           );
                         },
-                        child: Text(
-                          'PROVISION OPERATOR',
-                          style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
-                        ),
                       ),
                     ],
                   ),
@@ -453,6 +612,50 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
           ),
         ),
       ),
+    );
+  }
+
+  // ── MODAL HELPER WIDGETS (MATCHING LOGIN SCREEN) ───────────────────────────
+  Widget _modalLabel(String text, bool isDarkMode) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          text.toUpperCase(),
+          style: GoogleFonts.orbitron(
+            fontSize: 8.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 2.0,
+            color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF0F172A),
+          ),
+        ),
+      ),
+    );
+  }
+
+  TextStyle _modalInputTextStyle(bool isDarkMode) {
+    return GoogleFonts.spaceGrotesk(
+      color: isDarkMode ? const Color(0xFFEDF5EB) : const Color(0xFF0F172A),
+      fontSize: 13.5,
+      fontWeight: FontWeight.w600,
+    );
+  }
+
+  InputDecoration _modalInputDeco(String hint, bool isDarkMode) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: GoogleFonts.spaceGrotesk(
+        color: isDarkMode ? const Color(0xFF829A80).withOpacity(0.65) : const Color(0xFF94A3B8),
+        fontSize: 13.0,
+      ),
+      filled: true,
+      fillColor: isDarkMode ? const Color(0xE608120C) : const Color(0xFFFAF9F6),
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      isDense: true,
     );
   }
 
@@ -971,4 +1174,292 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen> with Single
       ),
     );
   }
+}
+
+// ═════════════════════════════════════════════════════════════
+// MODAL VR FRAME & FIELD SHELLS (MATCHING LOGIN FORM STYLE)
+// ═════════════════════════════════════════════════════════════
+
+class _ModalVrFrame extends StatelessWidget {
+  final Widget child;
+  final double maxWidth;
+  final EdgeInsetsGeometry? padding;
+  final bool isDarkMode;
+
+  const _ModalVrFrame({
+    super.key,
+    required this.child,
+    this.maxWidth = 680,
+    this.padding,
+    this.isDarkMode = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final frameBg = isDarkMode ? const Color(0xFF050A07) : Colors.white;
+    final frameBorder = isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF80A416);
+    final tabColor = isDarkMode ? const Color(0xFF80A416) : const Color(0xFFC4E320);
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth + 28),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Main border box
+            Container(
+              decoration: BoxDecoration(
+                color: frameBg,
+                border: Border.all(color: frameBorder, width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: isDarkMode ? const Color(0xFFC5C764).withOpacity(0.2) : const Color(0xFF80A416).withOpacity(0.18),
+                    blurRadius: 20,
+                  ),
+                  BoxShadow(
+                    color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.08) : const Color(0xFF80A416).withOpacity(0.06),
+                    blurRadius: 50,
+                  ),
+                ],
+              ),
+              child: ClipPath(
+                clipper: _ModalVrFrameClipper(cut: 16),
+                child: Container(
+                  color: frameBg,
+                  padding: padding ?? const EdgeInsets.fromLTRB(28, 26, 28, 24),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        left: 0,
+                        bottom: 0,
+                        child: CustomPaint(
+                          size: const Size(32, 7),
+                          painter: _ModalStripePainter(isDarkMode: isDarkMode),
+                        ),
+                      ),
+                      child,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // Top notch + horizontal lines
+            Positioned(
+              top: -1,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(width: 18, height: 1.5, color: frameBorder.withOpacity(0.6)),
+                    const SizedBox(width: 4),
+                    ClipPath(
+                      clipper: _ModalNotchClipper(),
+                      child: Container(width: 56, height: 8, color: tabColor),
+                    ),
+                    const SizedBox(width: 4),
+                    Container(width: 18, height: 1.5, color: frameBorder.withOpacity(0.6)),
+                  ],
+                ),
+              ),
+            ),
+
+            // LEFT side square tab + protruding lines
+            Positioned(
+              left: -11,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: SizedBox(
+                  width: 11,
+                  height: 36,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 11,
+                        height: 36,
+                        color: tabColor,
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Container(width: 1.5, height: 36, color: frameBorder),
+                        ),
+                      ),
+                      Positioned(
+                        left: -10,
+                        top: 6,
+                        child: Column(
+                          children: List.generate(
+                            3,
+                            (i) => Container(
+                              margin: EdgeInsets.only(bottom: i < 2 ? 6 : 0),
+                              width: 10,
+                              height: 2,
+                              color: frameBorder.withOpacity(0.75),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // RIGHT side square tab + protruding lines
+            Positioned(
+              right: -11,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: SizedBox(
+                  width: 11,
+                  height: 36,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 11,
+                        height: 36,
+                        color: tabColor,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(width: 1.5, height: 36, color: frameBorder),
+                        ),
+                      ),
+                      Positioned(
+                        right: -10,
+                        top: 6,
+                        child: Column(
+                          children: List.generate(
+                            3,
+                            (i) => Container(
+                              margin: EdgeInsets.only(bottom: i < 2 ? 6 : 0),
+                              width: 10,
+                              height: 2,
+                              color: frameBorder.withOpacity(0.75),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModalVrFrameClipper extends CustomClipper<Path> {
+  final double cut;
+  _ModalVrFrameClipper({this.cut = 18});
+
+  @override
+  Path getClip(Size size) {
+    return Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width, size.height - cut)
+      ..lineTo(size.width - cut, size.height)
+      ..lineTo(cut, size.height)
+      ..lineTo(0, size.height - cut)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _ModalNotchClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    return Path()
+      ..moveTo(6, 0)
+      ..lineTo(size.width - 6, 0)
+      ..lineTo(size.width, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class _ModalStripePainter extends CustomPainter {
+  final bool isDarkMode;
+  _ModalStripePainter({this.isDarkMode = true});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = (isDarkMode ? const Color(0xFF80A416) : const Color(0xFF80A416)).withOpacity(0.55)
+      ..strokeWidth = 2;
+    for (double x = -size.height; x < size.width + size.height; x += 5) {
+      canvas.drawLine(
+        Offset(x, size.height),
+        Offset(x + size.height, 0),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _ModalFieldShell extends StatelessWidget {
+  final Widget child;
+  final bool isDarkMode;
+  final double? height;
+
+  const _ModalFieldShell({
+    super.key,
+    required this.child,
+    this.isDarkMode = true,
+    this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipPath(
+      clipper: _ModalFieldClipper(),
+      child: Container(
+        height: height ?? 48,
+        alignment: height != null ? Alignment.topLeft : Alignment.centerLeft,
+        decoration: BoxDecoration(
+          color: isDarkMode ? const Color(0xE608120C) : const Color(0xFFFAF9F6),
+          border: Border.all(
+            color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.35) : const Color(0xFFCDD4B2),
+            width: 1.2,
+          ),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _ModalFieldClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    const c = 8.0;
+    return Path()
+      ..moveTo(c, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width, size.height - c)
+      ..lineTo(size.width - c, size.height)
+      ..lineTo(0, size.height)
+      ..lineTo(0, c)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }

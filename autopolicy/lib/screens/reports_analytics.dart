@@ -41,6 +41,8 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
       'title': 'Security Audit Logs',
       'desc': 'View all security-related actions, logins and operational events',
       'icon': Icons.shield_outlined,
+      'darkColor': const Color(0xFF5DD62C),
+      'lightColor': const Color(0xFFFFF9E1),
       'color': const Color(0xFF5DD62C),
       'tag': 'LOG-1',
     },
@@ -48,6 +50,8 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
       'title': 'Policy Change History',
       'desc': 'Track policy approvals, rejections and deployments across sidecars',
       'icon': Icons.history_toggle_off,
+      'darkColor': const Color(0xFFC4E320),
+      'lightColor': const Color(0xFFEBECCC),
       'color': const Color(0xFFC4E320),
       'tag': 'LOG-2',
     },
@@ -55,28 +59,36 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
       'title': 'Alert & Threat Archive',
       'desc': 'Historical record of all detected anomalies, vectors and mitigations',
       'icon': Icons.archive_outlined,
+      'darkColor': const Color(0xFFDF2531),
+      'lightColor': const Color(0xFFDCA278), // Clay color
       'color': const Color(0xFFDF2531),
       'tag': 'LOG-3',
-    },
-    {
-      'title': 'System Health Logs',
-      'desc': 'Zeek sensors, OPA proxies, GNN Model inference and service logs',
-      'icon': Icons.monitor_heart_outlined,
-      'color': const Color(0xFFA88AED),
-      'tag': 'LOG-4',
-    },
-    {
-      'title': 'Compliance Reports',
-      'desc': 'SOC2, ISO 27001, HIPAA and regulatory compliance audit reports',
-      'icon': Icons.verified_user_outlined,
-      'color': const Color(0xFFFFE997),
-      'tag': 'LOG-5',
     },
     {
       'title': 'Export Center',
       'desc': 'Generate, compile and download cryptographic PDF and CSV reports',
       'icon': Icons.file_download_outlined,
+      'darkColor': const Color(0xFF80A416),
+      'lightColor': const Color(0xFFCDD4B2),
       'color': const Color(0xFF80A416),
+      'tag': 'LOG-4',
+    },
+    {
+      'title': 'System Health Logs',
+      'desc': 'Zeek sensors, OPA proxies, GNN Model inference and service logs',
+      'icon': Icons.monitor_heart_outlined,
+      'darkColor': const Color(0xFFA88AED),
+      'lightColor': const Color(0xFFD4C9D8),
+      'color': const Color(0xFFA88AED),
+      'tag': 'LOG-5',
+    },
+    {
+      'title': 'Compliance Reports',
+      'desc': 'SOC2, ISO 27001, HIPAA and regulatory compliance audit reports',
+      'icon': Icons.verified_user_outlined,
+      'darkColor': const Color(0xFFFFE997),
+      'lightColor': const Color(0xFFB8A9C1),
+      'color': const Color(0xFFFFE997),
       'tag': 'LOG-6',
     },
   ];
@@ -285,7 +297,7 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
             ),
             icon: const Icon(Icons.arrow_back, size: 16),
             label: Text(
-              '← BACK TO LOGS & REPORTS',
+              'BACK TO LOGS & REPORTS',
               style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A)),
             ),
             onPressed: () => setState(() {
@@ -317,15 +329,10 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
           ),
           itemBuilder: (context, idx) {
             final tile = _hubTiles[idx];
-            Color color = tile['color'] as Color;
-            if (!isDarkMode) {
-              if (color == const Color(0xFFFFE997)) {
-                color = const Color(0xFFB45309); // High contrast amber in light mode
-              } else if (color == const Color(0xFFC4E320)) {
-                color = const Color(0xFF15803D); // High contrast deep green in light mode
-              }
-            }
-
+            final Color darkColor = tile['darkColor'] as Color? ?? tile['color'] as Color;
+            final Color lightColor = tile['lightColor'] as Color? ?? const Color(0xFFFAF9F6);
+            final Color cardColor = isDarkMode ? darkColor : lightColor;
+            final Color accentColor = isDarkMode ? darkColor : const Color(0xFF0A0A0E);
             final bool isHovered = _hoveredHubIdx == idx;
 
             return MouseRegion(
@@ -333,18 +340,27 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
               onEnter: (_) => setState(() => _hoveredHubIdx = idx),
               onExit: (_) => setState(() => _hoveredHubIdx = null),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                transform: isHovered ? Matrix4.translationValues(0, -4, 0) : Matrix4.identity(),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(6),
                   boxShadow: isHovered
                       ? [
                           BoxShadow(
-                            color: color.withOpacity(isDarkMode ? 0.55 : 0.22),
-                            blurRadius: 22,
-                            spreadRadius: 3,
+                            color: (isDarkMode ? darkColor : const Color(0xFF0A0A0E))
+                                .withOpacity(isDarkMode ? 0.45 : 0.16),
+                            blurRadius: 18,
+                            offset: const Offset(0, 6),
                           ),
                         ]
-                      : [],
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.04),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                 ),
                 child: InkWell(
                   onTap: () {
@@ -358,9 +374,10 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                   borderRadius: BorderRadius.circular(6),
                   child: CyberHudCard(
                     tag: tile['tag'] as String,
+                    backgroundColor: isDarkMode ? const Color(0xFF0F0F0F) : cardColor,
                     borderColor: isHovered 
-                        ? color 
-                        : (isDarkMode ? color.withOpacity(0.7) : const Color(0xFFCDD4B2)),
+                        ? (isDarkMode ? darkColor : const Color(0xFF0A0A0E))
+                        : (isDarkMode ? darkColor.withOpacity(0.7) : const Color(0xFF0A0A0E).withOpacity(0.22)),
                     borderWidth: isHovered ? 2.0 : 1.2,
                     child: Padding(
                       padding: const EdgeInsets.all(14),
@@ -374,11 +391,17 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: color.withOpacity(isHovered ? 0.30 : (isDarkMode ? 0.15 : 0.20)),
+                                  color: isDarkMode
+                                      ? darkColor.withOpacity(isHovered ? 0.30 : 0.15)
+                                      : Colors.black.withOpacity(isHovered ? 0.12 : 0.06),
                                   borderRadius: BorderRadius.circular(4),
-                                  border: Border.all(color: color.withOpacity(isHovered ? 0.9 : 0.5)),
+                                  border: Border.all(
+                                    color: isDarkMode
+                                        ? darkColor.withOpacity(isHovered ? 0.9 : 0.5)
+                                        : const Color(0xFF0A0A0E).withOpacity(0.2),
+                                  ),
                                 ),
-                                child: Icon(tile['icon'] as IconData, color: color, size: 22),
+                                child: Icon(tile['icon'] as IconData, color: accentColor, size: 22),
                               ),
                               Row(
                                 children: [
@@ -386,12 +409,12 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                                     'OPEN SECTION',
                                     style: CyberTextStyles.technical(
                                       fontSize: 10, 
-                                      color: isDarkMode ? color : const Color(0xFF0F172A), 
+                                      color: isDarkMode ? darkColor : const Color(0xFF0A0A0E), 
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   const SizedBox(width: 4),
-                                  Icon(Icons.arrow_forward_ios, size: 10, color: isDarkMode ? color : const Color(0xFF0F172A)),
+                                  Icon(Icons.arrow_forward_ios, size: 10, color: isDarkMode ? darkColor : const Color(0xFF0A0A0E)),
                                 ],
                               ),
                             ],
@@ -405,7 +428,7 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                                 style: CyberTextStyles.technical(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDarkMode ? Colors.white : const Color(0xFF0A0A0E),
                                 ).copyWith(letterSpacing: 0.8),
                               ),
                               const SizedBox(height: 4),
@@ -413,8 +436,8 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                                 tile['desc'] as String,
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
-                                  color: isDarkMode ? Colors.white70 : const Color(0xFF475569),
-                                  fontWeight: FontWeight.w400,
+                                  color: isDarkMode ? Colors.white70 : const Color(0xFF1E293B),
+                                  fontWeight: FontWeight.w600,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,

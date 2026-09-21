@@ -20,8 +20,9 @@ class DashboardOverview extends ConsumerStatefulWidget {
   ConsumerState<DashboardOverview> createState() => _DashboardOverviewState();
 }
 
-class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
+class _DashboardOverviewState extends ConsumerState<DashboardOverview> with SingleTickerProviderStateMixin {
   late final Timer _logTimer;
+  late final AnimationController _pulseController;
   final List<String> _systemLogs = [
     '[13:42:10] IDS Engine -> Captured 1.4k MQTT pkts/s',
     '[13:42:12] GNN Model -> Evaluated IoT graph topology',
@@ -38,7 +39,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
       'ip': '10.128.4.12',
       'attack': 'Syn-Flood DDoS Surge',
       'severity': 'CRITICAL',
-      'color': const Color(0xFFDF2531),
+      'color': const Color(0xFFD82734),
     },
     {
       'time': '14:12:05',
@@ -46,7 +47,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
       'ip': '10.128.4.45',
       'attack': 'Port Scan Sweep',
       'severity': 'HIGH',
-      'color': const Color(0xFFFF9900),
+      'color': const Color(0xFFE87D85),
     },
     {
       'time': '13:58:40',
@@ -54,7 +55,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
       'ip': '10.128.8.19',
       'attack': 'Unauthorized Modbus Write',
       'severity': 'CRITICAL',
-      'color': const Color(0xFFDF2531),
+      'color': const Color(0xFFD82734),
     },
     {
       'time': '13:45:11',
@@ -62,7 +63,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
       'ip': '10.128.8.88',
       'attack': 'Data Exfiltration Spike',
       'severity': 'HIGH',
-      'color': const Color(0xFFFF9900),
+      'color': const Color(0xFFE87D85),
     },
     {
       'time': '13:20:00',
@@ -70,13 +71,18 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
       'ip': '10.128.4.99',
       'attack': 'ARP Poisoning Attempt',
       'severity': 'MEDIUM',
-      'color': const Color(0xFFFFE997),
+      'color': const Color(0xFFFFF4E1),
     },
   ];
 
   @override
   void initState() {
     super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
+
     _logTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (mounted) {
         final now = DateTime.now();
@@ -98,6 +104,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
 
   @override
   void dispose() {
+    _pulseController.dispose();
     _logTimer.cancel();
     super.dispose();
   }
@@ -146,7 +153,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                 border: Border.all(
                   color: isDarkMode 
                       ? const Color(0xFF5DD62C).withOpacity(0.40) 
-                      : const Color(0xFF80A416).withOpacity(0.25), 
+                      : const Color(0xFFCDD4B2), 
                   width: 1.0,
                 ),
                 borderRadius: BorderRadius.circular(4),
@@ -195,7 +202,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                                   'SYSTEM STATUS: ZERO-TRUST ENFORCING',
                                   style: CyberTextStyles.technical(
                                     fontSize: 10,
-                                    color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF80A416),
+                                    color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF08652C),
                                   ),
                                 ),
                               ],
@@ -210,15 +217,19 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                             _buildQuickActionBtn(
                               icon: Icons.pending_actions_outlined,
                               label: 'REVIEW PENDING POLICIES ($pendingCount)',
-                              color: const Color(0xFFC4E320),
+                              color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF5E7343),
                               onTap: () => ref.read(navigationTabProvider.notifier).state = 4,
                             ),
                             const SizedBox(width: 8),
-                            _buildQuickActionBtn(
-                              icon: Icons.warning_amber_outlined,
-                              label: 'VIEW CRITICAL ALERTS (${activeThreats > 0 ? activeThreats : 17})',
-                              color: const Color(0xFFDF2531),
-                              onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+                            _BeatingCriticalBox(
+                              animation: _pulseController,
+                              isChip: true,
+                              child: _buildQuickActionBtn(
+                                icon: Icons.warning_amber_outlined,
+                                label: 'VIEW CRITICAL ALERTS (${activeThreats > 0 ? activeThreats : 17})',
+                                color: const Color(0xFFD82734),
+                                onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+                              ),
                             ),
                           ],
                         ),
@@ -233,14 +244,18 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                         _buildQuickActionBtn(
                           icon: Icons.pending_actions_outlined,
                           label: 'REVIEW POLICIES ($pendingCount)',
-                          color: const Color(0xFFC4E320),
+                          color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF5E7343),
                           onTap: () => ref.read(navigationTabProvider.notifier).state = 4,
                         ),
-                        _buildQuickActionBtn(
-                          icon: Icons.warning_amber_outlined,
-                          label: 'CRITICAL ALERTS (${activeThreats > 0 ? activeThreats : 17})',
-                          color: const Color(0xFFDF2531),
-                          onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+                        _BeatingCriticalBox(
+                          animation: _pulseController,
+                          isChip: true,
+                          child: _buildQuickActionBtn(
+                            icon: Icons.warning_amber_outlined,
+                            label: 'CRITICAL ALERTS (${activeThreats > 0 ? activeThreats : 17})',
+                            color: const Color(0xFFD82734),
+                            onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+                          ),
                         ),
                       ],
                     ),
@@ -339,7 +354,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
               decoration: BoxDecoration(
                 color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
                 border: Border.all(
-                  color: isDarkMode ? const Color(0xFF8B5CF6).withOpacity(0.45) : const Color(0xFF80A416).withOpacity(0.25), 
+                  color: isDarkMode ? const Color(0xFF8B5CF6).withOpacity(0.45) : const Color(0xFFCDD4B2), 
                   width: 1.0,
                 ),
                 borderRadius: BorderRadius.circular(4),
@@ -363,7 +378,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                         'PIPELINE STATUS: Zeek IDS Capture → PyTorch GNN Inference → OPA Rego Microsegmentation Active.',
                         style: CyberTextStyles.technical(
                           fontSize: 10,
-                          color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF08652C),
+                          color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -371,7 +386,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                         '99.4% HEALTH NOMINAL',
                         style: CyberTextStyles.technical(
                           fontSize: 10,
-                          color: isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF80A416),
+                          color: isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF5E7343),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -383,8 +398,8 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                     child: LinearProgressIndicator(
                       value: 0.994,
                       minHeight: 4,
-                      backgroundColor: isDarkMode ? const Color(0xFF202020) : const Color(0xFFF1F5F9),
-                      valueColor: AlwaysStoppedAnimation<Color>(isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF80A416)),
+                      backgroundColor: isDarkMode ? const Color(0xFF202020) : const Color(0xFFEBECCC),
+                      valueColor: AlwaysStoppedAnimation<Color>(isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFFCDD4B2)),
                     ),
                   ),
                 ],
@@ -414,7 +429,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           value: '94.0%',
           sub: '+2.4% this week',
           icon: Icons.shield_outlined,
-          borderColor: const Color(0xFFC4E326),
+          borderColor: const Color(0xFFFFF9E1),
           tag: 'M01',
           onTap: () => ref.read(navigationTabProvider.notifier).state = 8,
         ),
@@ -423,27 +438,17 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           value: '91.2%',
           sub: 'ISO 27001 / NIST SP 800-207',
           icon: Icons.verified_outlined,
-          borderColor: const Color(0xFF9D8DF1),
+          borderColor: const Color(0xFFEBECCC),
           tag: 'M02',
           onTap: () => ref.read(navigationTabProvider.notifier).state = 8,
-        ),
-        CyberStatCard(
-          title: 'ACTIVE THREATS',
-          value: activeThreats > 0 ? '$activeThreats' : '17',
-          sub: '5 Critical · 12 High',
-          icon: Icons.gpp_maybe_outlined,
-          borderColor: const Color(0xFF810100),
-          isAlert: true,
-          tag: 'M03',
-          onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
         ),
         CyberStatCard(
           title: 'MTTR (AVG RESP TIME)',
           value: '18 min',
           sub: '-4 min vs last month',
           icon: Icons.timer_outlined,
-          borderColor: const Color(0xFFFFEDA8),
-          tag: 'M04',
+          borderColor: const Color(0xFFCDD4B2),
+          tag: 'M03',
           onTap: () => ref.read(navigationTabProvider.notifier).state = 8,
         ),
         CyberStatCard(
@@ -451,8 +456,8 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           value: totalDevices > 1000 ? '1,248' : '$totalDevices',
           sub: '1,226 Online · 22 Offline',
           icon: Icons.router_outlined,
-          borderColor: const Color(0xFFB1A9DA),
-          tag: 'M05',
+          borderColor: const Color(0xFFD4C9D8),
+          tag: 'M04',
           onTap: () => ref.read(navigationTabProvider.notifier).state = 6,
         ),
         CyberStatCard(
@@ -460,9 +465,22 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           value: '12.4K',
           sub: '100% Ingress Quarantined',
           icon: Icons.gpp_good_outlined,
-          borderColor: const Color(0xFF80A416),
-          tag: 'M06',
+          borderColor: const Color(0xFFB8A9C1),
+          tag: 'M05',
           onTap: () => ref.read(navigationTabProvider.notifier).state = 8,
+        ),
+        _BeatingCriticalBox(
+          animation: _pulseController,
+          child: CyberStatCard(
+            title: 'ACTIVE THREATS',
+            value: activeThreats > 0 ? '$activeThreats' : '17',
+            sub: '5 Critical · 12 High',
+            icon: Icons.gpp_maybe_outlined,
+            borderColor: const Color(0xFFD82734),
+            isAlert: true,
+            tag: 'M06',
+            onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+          ),
         ),
       ];
     }
@@ -470,22 +488,12 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
     if (isEngineer) {
       return [
         CyberStatCard(
-          title: 'ACTIVE THREATS',
-          value: activeThreats > 0 ? '$activeThreats' : '17',
-          sub: '5 Critical · 12 High',
-          icon: Icons.gpp_maybe_outlined,
-          borderColor: const Color(0xFF810100),
-          isAlert: true,
-          tag: 'E01',
-          onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
-        ),
-        CyberStatCard(
           title: 'PENDING REVIEWS',
           value: '$pendingCount',
           sub: 'Requires SOC Approval',
           icon: Icons.pending_actions_outlined,
-          borderColor: const Color(0xFFFFEDA8),
-          tag: 'E02',
+          borderColor: const Color(0xFFFFF9E1),
+          tag: 'E01',
           onTap: () => ref.read(navigationTabProvider.notifier).state = 4,
         ),
         CyberStatCard(
@@ -493,8 +501,8 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           value: '$blockedAttacksCount',
           sub: '100% Ingress Quarantined',
           icon: Icons.gpp_good_outlined,
-          borderColor: const Color(0xFF80A416),
-          tag: 'E03',
+          borderColor: const Color(0xFFEBECCC),
+          tag: 'E02',
           onTap: () => ref.read(navigationTabProvider.notifier).state = 1,
         ),
         CyberStatCard(
@@ -502,8 +510,8 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           value: '1.4M',
           sub: 'Zeek Packet Capture',
           icon: Icons.radar_outlined,
-          borderColor: const Color(0xFFC4E326),
-          tag: 'E04',
+          borderColor: const Color(0xFFCDD4B2),
+          tag: 'E03',
           onTap: () => ref.read(navigationTabProvider.notifier).state = 1,
         ),
         CyberStatCard(
@@ -511,8 +519,8 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           value: '98.6%',
           sub: 'PyTorch Graph Model',
           icon: Icons.hub_outlined,
-          borderColor: const Color(0xFF9D8DF1),
-          tag: 'E05',
+          borderColor: const Color(0xFFD4C9D8),
+          tag: 'E04',
           onTap: () => ref.read(navigationTabProvider.notifier).state = 3,
         ),
         CyberStatCard(
@@ -520,9 +528,22 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           value: '298',
           sub: 'OPA Rego Microsegments',
           icon: Icons.shield_outlined,
-          borderColor: const Color(0xFFB1A9DA),
-          tag: 'E06',
+          borderColor: const Color(0xFFB8A9C1),
+          tag: 'E05',
           onTap: () => ref.read(navigationTabProvider.notifier).state = 5,
+        ),
+        _BeatingCriticalBox(
+          animation: _pulseController,
+          child: CyberStatCard(
+            title: 'ACTIVE THREATS',
+            value: activeThreats > 0 ? '$activeThreats' : '17',
+            sub: '5 Critical · 12 High',
+            icon: Icons.gpp_maybe_outlined,
+            borderColor: const Color(0xFFD82734),
+            isAlert: true,
+            tag: 'E06',
+            onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+          ),
         ),
       ];
     }
@@ -534,7 +555,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
         value: totalDevices > 1000 ? '1,248' : '$totalDevices',
         sub: '1,226 Online · 22 Offline',
         icon: Icons.router_outlined,
-        borderColor: const Color(0xFFFFEDA8),
+        borderColor: const Color(0xFFFFF9E1),
         tag: 'H17',
         onTap: () => ref.read(navigationTabProvider.notifier).state = 6,
       ),
@@ -543,7 +564,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
         value: '$generatedPoliciesCount',
         sub: '$pendingCount Pending Review',
         icon: Icons.auto_awesome_outlined,
-        borderColor: const Color(0xFFC4E326),
+        borderColor: const Color(0xFFEBECCC),
         tag: 'H18',
         onTap: () => ref.read(navigationTabProvider.notifier).state = 4,
       ),
@@ -552,7 +573,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
         value: '298',
         sub: 'Active in OPA Sidecars',
         icon: Icons.shield_outlined,
-        borderColor: const Color(0xFFB1A9DA),
+        borderColor: const Color(0xFFCDD4B2),
         tag: 'H19',
         onTap: () => ref.read(navigationTabProvider.notifier).state = 5,
       ),
@@ -561,7 +582,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
         value: '$blockedAttacksCount',
         sub: '100% Ingress Quarantined',
         icon: Icons.gpp_good_outlined,
-        borderColor: const Color(0xFF80A416),
+        borderColor: const Color(0xFFD4C9D8),
         tag: 'H20',
         onTap: () => ref.read(navigationTabProvider.notifier).state = 1,
       ),
@@ -570,19 +591,22 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
         value: '99.4%',
         sub: 'Zeek, GNN & OPA Nominal',
         icon: Icons.health_and_safety_outlined,
-        borderColor: const Color(0xFF9D8DF1),
+        borderColor: const Color(0xFFB8A9C1),
         tag: 'H21',
         onTap: () => ref.read(navigationTabProvider.notifier).state = 9,
       ),
-      CyberStatCard(
-        title: 'ACTIVE THREATS',
-        value: activeThreats > 0 ? '$activeThreats' : '17',
-        sub: '5 Critical · 12 High',
-        icon: Icons.gpp_maybe_outlined,
-        borderColor: const Color(0xFF810100),
-        isAlert: true,
-        tag: 'H22',
-        onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+      _BeatingCriticalBox(
+        animation: _pulseController,
+        child: CyberStatCard(
+          title: 'ACTIVE THREATS',
+          value: activeThreats > 0 ? '$activeThreats' : '17',
+          sub: '5 Critical · 12 High',
+          icon: Icons.gpp_maybe_outlined,
+          borderColor: const Color(0xFFD82734),
+          isAlert: true,
+          tag: 'H22',
+          onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+        ),
       ),
     ];
   }
@@ -596,7 +620,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         border: Border.all(
-          color: isDarkMode ? const Color(0xFFDF2531).withOpacity(0.35) : const Color(0xFFDF2531).withOpacity(0.25), 
+          color: isDarkMode ? const Color(0xFFD82734).withOpacity(0.35) : const Color(0xFFD82734).withOpacity(0.25), 
           width: 1.0,
         ),
         borderRadius: BorderRadius.circular(4),
@@ -618,28 +642,39 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.warning_amber_outlined, color: Color(0xFFDF2531), size: 16),
+                  const Icon(Icons.warning_amber_outlined, color: Color(0xFFD82734), size: 16),
                   const SizedBox(width: 8),
                   Text(
                     'RECENT THREAT ALERTS (LAST 5 INCIDENTS)',
                     style: CyberTextStyles.technical(
                       fontSize: 11.5,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFFDF2531),
+                      color: const Color(0xFFD82734),
                     ),
                   ),
                 ],
               ),
-              InkWell(
-                onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
-                child: Text(
-                  'ALL ANOMALIES FEED →',
-                  style: CyberTextStyles.technical(
-                    fontSize: 9,
-                    color: isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF80A416),
-                    fontWeight: FontWeight.bold,
+              Row(
+                children: [
+                  // Severity Index Legend Chips
+                  _buildSeverityLegendChip('CRITICAL', const Color(0xFFD82734), isDarkMode),
+                  const SizedBox(width: 6),
+                  _buildSeverityLegendChip('HIGH', const Color(0xFFE87D85), isDarkMode),
+                  const SizedBox(width: 6),
+                  _buildSeverityLegendChip('MEDIUM', const Color(0xFFFFF4E1), isDarkMode),
+                  const SizedBox(width: 12),
+                  InkWell(
+                    onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
+                    child: Text(
+                      'ALL ANOMALIES FEED →',
+                      style: CyberTextStyles.technical(
+                        fontSize: 9,
+                        color: isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF80A416),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
           ),
@@ -662,14 +697,40 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
 
           // Table Rows
           ..._recentAlerts.map((alert) {
-            Color sevColor = alert['color'] as Color;
-            if (!isDarkMode) {
-              if (alert['severity'] == 'MEDIUM' || sevColor == const Color(0xFFFFE997)) {
-                sevColor = const Color(0xFFB45309); // High contrast amber for light mode
-              } else if (alert['severity'] == 'HIGH' || sevColor == const Color(0xFFFF9900)) {
-                sevColor = const Color(0xFFC2410C); // High contrast deep orange for light mode
-              }
+            final String sev = alert['severity'] as String;
+            Color badgeBg;
+            Color badgeBorder;
+            Color badgeTextColor = Colors.white;
+
+            if (sev == 'CRITICAL') {
+              badgeBg = const Color(0xFFD82734);
+              badgeBorder = const Color(0xFFD82734);
+            } else if (sev == 'HIGH') {
+              badgeBg = const Color(0xFFE87D85);
+              badgeBorder = const Color(0xFFE87D85);
+            } else {
+              badgeBg = const Color(0xFFFFF4E1);
+              badgeBorder = const Color(0xFFE6D6B8);
+              badgeTextColor = const Color(0xFF0F172A);
             }
+
+            final badgeContainer = Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: badgeBg,
+                borderRadius: BorderRadius.circular(3),
+                border: Border.all(color: badgeBorder, width: 0.8),
+              ),
+              child: Text(
+                sev,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 10.5, 
+                  fontWeight: FontWeight.bold, 
+                  color: badgeTextColor,
+                ),
+              ),
+            );
+
             return Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
@@ -728,18 +789,13 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                     flex: 2,
                     child: Align(
                       alignment: Alignment.centerLeft,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: sevColor.withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(3),
-                          border: Border.all(color: sevColor, width: 0.8),
-                        ),
-                        child: Text(
-                          alert['severity'] as String,
-                          style: GoogleFonts.spaceGrotesk(fontSize: 10.5, fontWeight: FontWeight.bold, color: sevColor),
-                        ),
-                      ),
+                      child: sev == 'CRITICAL'
+                          ? _BeatingCriticalBox(
+                              animation: _pulseController,
+                              isChip: true,
+                              child: badgeContainer,
+                            )
+                          : badgeContainer,
                     ),
                   ),
                   Expanded(
@@ -779,6 +835,43 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
     );
   }
 
+  Widget _buildSeverityLegendChip(String label, Color color, bool isDarkMode) {
+    Color chipBg = color;
+    Color chipBorder = color;
+    Color chipText = Colors.white;
+    if (label == 'MEDIUM') {
+      chipBg = const Color(0xFFFFF4E1);
+      chipBorder = const Color(0xFFE6D6B8);
+      chipText = const Color(0xFF0F172A);
+    }
+
+    final chipWidget = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: chipBg,
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(color: chipBorder, width: 0.8),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.spaceGrotesk(
+          fontSize: 9,
+          fontWeight: FontWeight.bold,
+          color: chipText,
+        ),
+      ),
+    );
+
+    if (label == 'CRITICAL') {
+      return _BeatingCriticalBox(
+        animation: _pulseController,
+        isChip: true,
+        child: chipWidget,
+      );
+    }
+    return chipWidget;
+  }
+
   // ── POLICY STATUS SUMMARY CARD ────────────────────────────────────────────
   Widget _buildPolicyStatusSummaryCard() {
     final isDarkMode = ref.watch(themeModeProvider);
@@ -788,7 +881,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         border: Border.all(
-          color: isDarkMode ? const Color(0xFFC4E320).withOpacity(0.35) : const Color(0xFF80A416).withOpacity(0.25), 
+          color: isDarkMode ? const Color(0xFFC4E320).withOpacity(0.35) : const Color(0xFFCDD4B2), 
           width: 1.0,
         ),
         borderRadius: BorderRadius.circular(4),
@@ -810,7 +903,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.shield_outlined, color: Color(0xFF80A416), size: 16),
+                  Icon(Icons.shield_outlined, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF5E7343), size: 16),
                   const SizedBox(width: 8),
                   Text(
                     'POLICY STATUS BREAKDOWN',
@@ -828,7 +921,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                   'REVIEW ALL →',
                   style: CyberTextStyles.technical(
                     fontSize: 9,
-                    color: isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF80A416),
+                    color: isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF5E7343),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -837,13 +930,13 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           ),
           const SizedBox(height: 12),
 
-          _buildPolicyStatusRow('1. PENDING APPROVAL', '24 Policies', const Color(0xFFFFE997), 0.15, isDarkMode),
+          _buildPolicyStatusRow('1. PENDING APPROVAL', '24 Policies', isDarkMode ? const Color(0xFFFFE997) : const Color(0xFFB8A9C1), 0.15, isDarkMode),
           const SizedBox(height: 8),
-          _buildPolicyStatusRow('2. APPROVED BY ADMIN', '20 Policies', const Color(0xFF8B5CF6), 0.12, isDarkMode),
+          _buildPolicyStatusRow('2. APPROVED BY ADMIN', '20 Policies', isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFFCDD4B2), 0.12, isDarkMode),
           const SizedBox(height: 8),
-          _buildPolicyStatusRow('3. DEPLOYED IN OPA', '298 Policies', const Color(0xFF5DD62C), 0.85, isDarkMode),
+          _buildPolicyStatusRow('3. DEPLOYED IN OPA', '298 Policies', isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416), 0.85, isDarkMode),
           const SizedBox(height: 8),
-          _buildPolicyStatusRow('4. REJECTED / AUDITED', '8 Policies', const Color(0xFFDF2531), 0.05, isDarkMode),
+          _buildPolicyStatusRow('4. REJECTED / AUDITED', '8 Policies', const Color(0xFFD82734), 0.05, isDarkMode),
 
           const SizedBox(height: 12),
           InkWell(
@@ -852,8 +945,8 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFFC4E320).withOpacity(0.12) : const Color(0xFFC4E320).withOpacity(0.25),
-                border: Border.all(color: const Color(0xFF80A416), width: 1.0),
+                color: isDarkMode ? const Color(0xFFC4E320).withOpacity(0.12) : const Color(0xFFEBECCC),
+                border: Border.all(color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFFCDD4B2), width: 1.0),
                 borderRadius: BorderRadius.circular(3),
               ),
               child: Center(
@@ -862,7 +955,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                   style: CyberTextStyles.technical(
                     fontSize: 9.5,
                     fontWeight: FontWeight.bold,
-                    color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF5E7343),
+                    color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A),
                   ),
                 ),
               ),
@@ -890,7 +983,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 4,
-            backgroundColor: isDarkMode ? const Color(0xFF222222) : const Color(0xFFF1F5F9),
+            backgroundColor: isDarkMode ? const Color(0xFF222222) : const Color(0xFFEBECCC),
             valueColor: AlwaysStoppedAnimation<Color>(color),
           ),
         ),
@@ -906,7 +999,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
-        border: Border.all(color: const Color(0xFF80A416).withOpacity(0.35), width: 1.0),
+        border: Border.all(color: isDarkMode ? const Color(0xFF80A416).withOpacity(0.35) : const Color(0xFFCDD4B2), width: 1.0),
         borderRadius: BorderRadius.circular(4),
         boxShadow: isDarkMode
             ? null
@@ -926,7 +1019,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.hub_outlined, color: Color(0xFF80A416), size: 16),
+                  Icon(Icons.hub_outlined, color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF5E7343), size: 16),
                   const SizedBox(width: 8),
                   Text(
                     'ZERO-TRUST ENGINE HEALTH',
@@ -949,10 +1042,10 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
             ],
           ),
           const SizedBox(height: 8),
-          _healthRowItem('Zeek Network Sensor', '1.4k pkts/s · 1.2ms latency', const Color(0xFF5DD62C), isDarkMode),
-          _healthRowItem('PyTorch GNN Embeddings', '64-dim · 4.8ms inference', const Color(0xFF8B5CF6), isDarkMode),
-          _healthRowItem('Open Policy Agent (OPA)', '298 Active Microsegments', const Color(0xFFC4E320), isDarkMode),
-          _healthRowItem('RBAC Zero-Trust Enclave', '100% Policy Sync', const Color(0xFFFFE997), isDarkMode),
+          _healthRowItem('Zeek Network Sensor', '1.4k pkts/s · 1.2ms latency', isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF5E7343), isDarkMode),
+          _healthRowItem('PyTorch GNN Embeddings', '64-dim · 4.8ms inference', isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFFB8A9C1), isDarkMode),
+          _healthRowItem('Open Policy Agent (OPA)', '298 Active Microsegments', isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416), isDarkMode),
+          _healthRowItem('RBAC Zero-Trust Enclave', '100% Policy Sync', isDarkMode ? const Color(0xFFFFE997) : const Color(0xFFCDD4B2), isDarkMode),
         ],
       ),
     );
@@ -1017,7 +1110,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         border: Border.all(
-          color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.35) : const Color(0xFF80A416).withOpacity(0.25), 
+          color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.35) : const Color(0xFFCDD4B2), 
           width: 1.0,
         ),
         borderRadius: BorderRadius.circular(4),
@@ -1051,7 +1144,7 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                   'VIEW INCIDENTS →',
                   style: CyberTextStyles.technical(
                     fontSize: 10,
-                    color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF80A416),
+                    color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF5E7343),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -1081,6 +1174,45 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _BeatingCriticalBox extends StatelessWidget {
+  final Widget child;
+  final Animation<double> animation;
+  final bool isChip;
+
+  const _BeatingCriticalBox({
+    required this.child,
+    required this.animation,
+    this.isChip = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, _) {
+        final t = animation.value;
+        final scale = 1.0 + (isChip ? 0.035 * t : 0.02 * t);
+        return Transform.scale(
+          scale: scale,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(isChip ? 3 : 4),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFD82734).withOpacity(isChip ? 0.35 + 0.35 * t : 0.30 + 0.35 * t),
+                  blurRadius: isChip ? 4 + 6 * t : 8 + 10 * t,
+                  spreadRadius: isChip ? 0.5 + 1.2 * t : 1.0 + 2.5 * t,
+                ),
+              ],
+            ),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

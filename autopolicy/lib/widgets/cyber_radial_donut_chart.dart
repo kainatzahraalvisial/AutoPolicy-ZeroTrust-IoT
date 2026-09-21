@@ -14,11 +14,11 @@ class CyberRadialDonutChart extends ConsumerWidget {
     final isDarkMode = ref.watch(themeModeProvider);
 
     final List<Map<String, dynamic>> categories = [
-      {'name': 'DDoS SURGE', 'pct': 48, 'color': const Color(0xFF80A416)},
-      {'name': 'PORT SCAN', 'pct': 22, 'color': const Color(0xFF08652C)},
-      {'name': 'ANOMALY', 'pct': 12, 'color': isDarkMode ? const Color(0xFFAD9F3C) : const Color(0xFFB1A9DA)},
-      {'name': 'REGO BLOCK', 'pct': 9, 'color': isDarkMode ? const Color(0xFFC5C764) : const Color(0xFFC4E320)},
-      {'name': 'OTHER', 'pct': 9, 'color': isDarkMode ? const Color(0xFF5E7343) : const Color(0xFF94A3B8)},
+      {'name': 'DDoS SURGE', 'pct': 48, 'color': isDarkMode ? const Color(0xFF80A416) : const Color(0xFFD82734)},
+      {'name': 'PORT SCAN', 'pct': 22, 'color': isDarkMode ? const Color(0xFF08652C) : const Color(0xFFE87D85)},
+      {'name': 'ANOMALY', 'pct': 12, 'color': isDarkMode ? const Color(0xFFAD9F3C) : const Color(0xFFCDD4B2)},
+      {'name': 'REGO BLOCK', 'pct': 9, 'color': isDarkMode ? const Color(0xFFC5C764) : const Color(0xFFD4C9D8)},
+      {'name': 'OTHER', 'pct': 9, 'color': isDarkMode ? const Color(0xFF5E7343) : const Color(0xFFB8A9C1)},
     ];
 
     return InkWell(
@@ -28,11 +28,11 @@ class CyberRadialDonutChart extends ConsumerWidget {
         height: height,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDarkMode ? const Color(0xFF08120C) : Colors.white,
+          color: isDarkMode ? const Color(0xFF08120C) : const Color(0xFFFAF9F6),
           border: Border.all(
             color: isDarkMode 
                 ? const Color(0xFF80A416).withOpacity(0.40) 
-                : const Color(0xFF80A416).withOpacity(0.25), 
+                : const Color(0xFFCDD4B2), 
             width: 1.0,
           ),
           borderRadius: BorderRadius.circular(4),
@@ -57,14 +57,14 @@ class CyberRadialDonutChart extends ConsumerWidget {
                   style: CyberTextStyles.technical(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF0F172A),
+                    color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF0A0A0E),
                   ),
                 ),
                 Text(
                   'DETAILS →',
                   style: CyberTextStyles.technical(
                     fontSize: 8.5,
-                    color: const Color(0xFF80A416),
+                    color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF5E7343),
                   ),
                 ),
               ],
@@ -92,14 +92,14 @@ class CyberRadialDonutChart extends ConsumerWidget {
                               style: CyberTextStyles.displayTitle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,
-                                color: isDarkMode ? const Color(0xFFAD9F3C) : const Color(0xFF80A416),
+                                color: isDarkMode ? const Color(0xFFAD9F3C) : const Color(0xFF0A0A0E),
                               ),
                             ),
                             Text(
                               'ACTIVE',
                               style: CyberTextStyles.technical(
                                 fontSize: 8,
-                                color: isDarkMode ? const Color(0xFF5E7343) : const Color(0xFF64748B),
+                                color: isDarkMode ? const Color(0xFF5E7343) : const Color(0xFF1E293B),
                               ),
                             ),
                           ],
@@ -133,7 +133,7 @@ class CyberRadialDonutChart extends ConsumerWidget {
                                   cat['name'] as String,
                                   style: CyberTextStyles.technical(
                                     fontSize: 9.5,
-                                    color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF1E293B),
+                                    color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF0A0A0E),
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -143,7 +143,7 @@ class CyberRadialDonutChart extends ConsumerWidget {
                                 style: CyberTextStyles.technical(
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.bold,
-                                  color: isDarkMode ? const Color(0xFFAD9F3C) : const Color(0xFF80A416),
+                                  color: isDarkMode ? const Color(0xFFAD9F3C) : const Color(0xFF0A0A0E),
                                 ),
                               ),
                             ],
@@ -176,7 +176,7 @@ class _DonutChartPainter extends CustomPainter {
     double startAngle = -math.pi / 2;
 
     final Paint bgPaint = Paint()
-      ..color = isDarkMode ? const Color(0xFF032820).withOpacity(0.5) : const Color(0xFFE2E8F0)
+      ..color = isDarkMode ? const Color(0xFF032820).withOpacity(0.5) : const Color(0xFFEBECCC)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth;
     canvas.drawCircle(center, radius - (strokeWidth / 2), bgPaint);

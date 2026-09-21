@@ -91,7 +91,7 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                     title: 'TOTAL REGO RULES',
                     value: '${securityState.policies.length}',
                     sub: 'Synthesized Rules',
-                    borderColor: const Color(0xFFFFEDA8), // 1. #FFEDA8 (Pale Cream Yellow)
+                    borderColor: const Color(0xFFFFF9E1), // 1. #FFF9E1 (H17)
                     tag: 'H17',
                   ),
                 ),
@@ -101,7 +101,7 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                     title: 'ENFORCED POLICIES',
                     value: '${securityState.policies.where((p) => p.status == PolicyStatus.deployed).length}',
                     sub: 'Active OPA Sidecars',
-                    borderColor: const Color(0xFFC4E326), // 2. #C4E326 (Bright Neon Lime-Green)
+                    borderColor: const Color(0xFFEBECCC), // 2. #EBECCC (H18)
                     tag: 'H18',
                   ),
                 ),
@@ -111,7 +111,7 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                     title: 'PENDING APPROVAL',
                     value: '${pendingPolicies.length}',
                     sub: 'Awaiting Sign-off',
-                    borderColor: const Color(0xFFB1A9DA), // 3. #B1A9DA (Pastel Lavender)
+                    borderColor: const Color(0xFFCDD4B2), // 3. #CDD4B2 (H19)
                     tag: 'H19',
                   ),
                 ),
@@ -121,7 +121,7 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                     title: 'SYNTHESIS LATENCY',
                     value: '1.4ms',
                     sub: 'Sub-Millisecond Rego',
-                    borderColor: const Color(0xFF80A416), // 4. #80A416 (Olive Green)
+                    borderColor: const Color(0xFFD4C9D8), // 4. #D4C9D8 (H20)
                     tag: 'H20',
                   ),
                 ),
@@ -561,14 +561,18 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                 controller: _codeController,
                 maxLines: null,
                 keyboardType: TextInputType.multiline,
+                cursorColor: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
                 style: TextStyle(
                   fontFamily: 'monospace',
                   color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
                   fontSize: 12.5,
                   height: 1.4,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: isDarkMode ? const Color(0xFF050608) : const Color(0xFFFAF9F6),
+                  isDense: true,
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,

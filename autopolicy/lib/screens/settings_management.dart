@@ -245,7 +245,8 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
         'title': '1. ZEEK SENSOR CONFIGURATION',
         'subtitle': 'Network capture interfaces, BPF packet filters, capture intervals, and ring buffers',
         'icon': Icons.radar_outlined,
-        'color': const Color(0xFFFFE997),
+        'darkColor': const Color(0xFFFFE997),
+        'lightColor': const Color(0xFFFFF9E1),
         'tag': 'CFG-1',
       },
       {
@@ -253,7 +254,8 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
         'title': '2. DETECTION THRESHOLDS & GNN SENSITIVITY',
         'subtitle': 'GNN confidence score triggers, severity classification mapping, and auto-quarantine toggles',
         'icon': Icons.tune_outlined,
-        'color': const Color(0xFFA88AED),
+        'darkColor': const Color(0xFFA88AED),
+        'lightColor': const Color(0xFFEBECCC),
         'tag': 'CFG-2',
       },
       {
@@ -261,7 +263,8 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
         'title': '3. MODEL & RETRAINING SETTINGS',
         'subtitle': 'PyTorch transformer weights, automated retraining flow limits, and manual training triggers',
         'icon': Icons.psychology_outlined,
-        'color': const Color(0xFFC4E320),
+        'darkColor': const Color(0xFFC4E320),
+        'lightColor': const Color(0xFFCDD4B2),
         'tag': 'CFG-3',
       },
       {
@@ -269,7 +272,8 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
         'title': '4. OPA CONNECTION & SIDECAR SETTINGS',
         'subtitle': 'Open Policy Agent REST endpoint, compiled Rego bundle paths, and sidecar health check',
         'icon': Icons.shield_outlined,
-        'color': const Color(0xFF80A416),
+        'darkColor': const Color(0xFF80A416),
+        'lightColor': const Color(0xFFD4C9D8),
         'tag': 'CFG-4',
       },
       {
@@ -277,7 +281,8 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
         'title': '5. NOTIFICATION & WEBHOOK SETTINGS',
         'subtitle': 'Slack / Teams webhooks, SIEM event dispatch, SMTP alert host, and emergency SMS',
         'icon': Icons.notifications_active_outlined,
-        'color': const Color(0xFFB91C1D),
+        'darkColor': const Color(0xFFB91C1D),
+        'lightColor': const Color(0xFFB8A9C1),
         'tag': 'CFG-5',
       },
       {
@@ -285,7 +290,8 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
         'title': '6. APPEARANCE & CYBER THEME PREFERENCES',
         'subtitle': 'Toggle Dark/Light mode, high-contrast cyber palette, and telemetry refresh frequency',
         'icon': Icons.palette_outlined,
-        'color': const Color(0xFFC5C764),
+        'darkColor': const Color(0xFFC5C764),
+        'lightColor': const Color(0xFFDCA278),
         'tag': 'CFG-6',
       },
     ];
@@ -296,9 +302,28 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
         final String title = cat['title'] as String;
         final String subtitle = cat['subtitle'] as String;
         final IconData icon = cat['icon'] as IconData;
-        final Color color = cat['color'] as Color;
+        final Color darkColor = cat['darkColor'] as Color;
+        final Color lightColor = cat['lightColor'] as Color;
+        final Color cardColor = isDarkMode ? darkColor : lightColor;
         final String tag = cat['tag'] as String;
         final bool isHovered = _hoveredTileId == id;
+
+        final Color titleColor = isDarkMode
+            ? Colors.white
+            : const Color(0xFF0A0A0E);
+        final Color subtitleColor = isDarkMode
+            ? Colors.white70
+            : const Color(0xFF1E293B);
+        final Color iconColor = isDarkMode
+            ? cardColor
+            : const Color(0xFF0A0A0E);
+        final Color iconBg = isDarkMode
+            ? cardColor.withOpacity(isHovered ? 0.28 : 0.15)
+            : Colors.black.withOpacity(isHovered ? 0.12 : 0.06);
+
+        final Color cardBorderColor = isDarkMode
+            ? (isHovered ? cardColor : cardColor.withOpacity(0.7))
+            : (isHovered ? const Color(0xFF0A0A0E) : const Color(0xFF0A0A0E).withOpacity(0.22));
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
@@ -307,18 +332,27 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             onEnter: (_) => setState(() => _hoveredTileId = id),
             onExit: (_) => setState(() => _hoveredTileId = null),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutCubic,
+              transform: isHovered ? Matrix4.translationValues(0, -4, 0) : Matrix4.identity(),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: isHovered
                     ? [
                         BoxShadow(
-                          color: color.withOpacity(0.45),
-                          blurRadius: 20,
-                          spreadRadius: 2,
+                          color: (isDarkMode ? cardColor : const Color(0xFF0A0A0E))
+                              .withOpacity(isDarkMode ? 0.45 : 0.18),
+                          blurRadius: 18,
+                          offset: const Offset(0, 6),
                         ),
                       ]
-                    : [],
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
               ),
               child: InkWell(
                 onTap: () {
@@ -329,18 +363,23 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
                 borderRadius: BorderRadius.circular(10),
                 child: CyberHudCard(
                   tag: tag,
-                  borderColor: isHovered ? color : color.withOpacity(0.7),
+                  backgroundColor: isDarkMode ? const Color(0xFF0F0F0F) : cardColor,
+                  borderColor: cardBorderColor,
                   borderWidth: isHovered ? 2.0 : 1.2,
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: color.withOpacity(isHovered ? 0.28 : 0.15),
+                          color: iconBg,
                           shape: BoxShape.circle,
-                          border: Border.all(color: color.withOpacity(isHovered ? 0.9 : 0.5)),
+                          border: Border.all(
+                            color: isDarkMode
+                                ? cardColor.withOpacity(isHovered ? 0.9 : 0.5)
+                                : const Color(0xFF0A0A0E).withOpacity(0.2),
+                          ),
                         ),
-                        child: Icon(icon, color: color, size: 24),
+                        child: Icon(icon, color: iconColor, size: 24),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -350,7 +389,7 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
                             Text(
                               title,
                               style: CyberTextStyles.technical(
-                                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                color: titleColor,
                                 fontSize: 15.0,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -359,16 +398,16 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
                             Text(
                               subtitle,
                               style: CyberTextStyles.technical(
-                                color: isDarkMode ? Colors.white70 : const Color(0xFF475569),
+                                color: subtitleColor,
                                 fontSize: 13.0,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Icon(Icons.arrow_forward_ios, color: color, size: 18),
+                      Icon(Icons.arrow_forward_ios, color: iconColor, size: 18),
                     ],
                   ),
                 ),
@@ -445,10 +484,22 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             controller: _bpfFilterCtrl,
             style: TextStyle(color: titleColor, fontFamily: 'monospace', fontSize: 13),
             decoration: InputDecoration(
+              filled: true,
+              fillColor: isDarkMode ? const Color(0xFF0F0F14) : const Color(0xFFFAF9F6),
               labelText: 'BERKELEY PACKET FILTER (BPF) STRING',
-              labelStyle: TextStyle(color: isDarkMode ? const Color(0xFFFFE997) : const Color(0xFF80A416), fontSize: 12),
-              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2))),
-              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? const Color(0xFFFFE997) : const Color(0xFF80A416))),
+              labelStyle: TextStyle(color: isDarkMode ? const Color(0xFFFFE997) : const Color(0xFF475569), fontSize: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF8B5CF6)),
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -470,7 +521,10 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             ],
           ),
           SwitchListTile(
-            activeColor: const Color(0xFFFFE997),
+            activeColor: const Color(0xFF8B5CF6),
+            activeTrackColor: const Color(0xFFD4C9D8),
+            inactiveThumbColor: const Color(0xFFFFF9E1),
+            inactiveTrackColor: isDarkMode ? const Color(0xFF333333) : const Color(0xFFEBECCC),
             title: Text('PROMISCUOUS PACKET CAPTURE', style: CyberTextStyles.technical(fontSize: 12, color: titleColor)),
             subtitle: Text('Inspect all lateral traffic across VLAN switches', style: CyberTextStyles.techMuted.copyWith(fontSize: 10, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
             value: _zeekPromiscuous,
@@ -512,13 +566,17 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             value: _gnnSensitivityThreshold,
             min: 0.50,
             max: 0.99,
-            activeColor: const Color(0xFFA88AED),
-            inactiveColor: isDarkMode ? Colors.white24 : const Color(0xFFE2E8F0),
+            activeColor: const Color(0xFF8B5CF6),
+            inactiveColor: isDarkMode ? const Color(0xFF333333) : const Color(0xFFEBECCC),
+            thumbColor: const Color(0xFF8B5CF6),
             onChanged: (val) => setState(() => _gnnSensitivityThreshold = val),
           ),
           const SizedBox(height: 10),
           SwitchListTile(
-            activeColor: const Color(0xFFA88AED),
+            activeColor: const Color(0xFF8B5CF6),
+            activeTrackColor: const Color(0xFFD4C9D8),
+            inactiveThumbColor: const Color(0xFFFFF9E1),
+            inactiveTrackColor: isDarkMode ? const Color(0xFF333333) : const Color(0xFFEBECCC),
             title: Text('AUTO-QUARANTINE HIGH-RISK DEVICES', style: CyberTextStyles.technical(fontSize: 12, color: titleColor)),
             subtitle: Text('Instantly isolate target node when anomaly score crosses threshold', style: CyberTextStyles.techMuted.copyWith(fontSize: 10, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
             value: _autoQuarantineEnabled,
@@ -550,7 +608,10 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
           Divider(color: borderColor.withOpacity(0.35)),
           const SizedBox(height: 10),
           SwitchListTile(
-            activeColor: const Color(0xFFC4E320),
+            activeColor: const Color(0xFF8B5CF6),
+            activeTrackColor: const Color(0xFFD4C9D8),
+            inactiveThumbColor: const Color(0xFFFFF9E1),
+            inactiveTrackColor: isDarkMode ? const Color(0xFF333333) : const Color(0xFFEBECCC),
             title: Text('AUTO-RETRAIN ON FLOW BATCH', style: CyberTextStyles.technical(fontSize: 12, color: titleColor)),
             subtitle: Text('Retrain GNN graph weights automatically every $_retrainFlowBatchSize incoming network flows', style: CyberTextStyles.techMuted.copyWith(fontSize: 10, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
             value: _autoRetrainOnFlows,
@@ -607,10 +668,22 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             controller: _opaEndpointCtrl,
             style: TextStyle(color: titleColor, fontFamily: 'monospace', fontSize: 12.5),
             decoration: InputDecoration(
+              filled: true,
+              fillColor: isDarkMode ? const Color(0xFF0F0F14) : const Color(0xFFFAF9F6),
               labelText: 'OPA ENGINE REST ENDPOINT',
-              labelStyle: TextStyle(color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF80A416), fontSize: 12),
-              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2))),
-              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF80A416))),
+              labelStyle: TextStyle(color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF475569), fontSize: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF8B5CF6)),
+              ),
             ),
           ),
           const SizedBox(height: 10),
@@ -618,15 +691,30 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             controller: _bundlePathCtrl,
             style: TextStyle(color: titleColor, fontFamily: 'monospace', fontSize: 12.5),
             decoration: InputDecoration(
+              filled: true,
+              fillColor: isDarkMode ? const Color(0xFF0F0F14) : const Color(0xFFFAF9F6),
               labelText: 'REGO POLICY BUNDLE PATH',
-              labelStyle: TextStyle(color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF80A416), fontSize: 12),
-              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2))),
-              focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF80A416))),
+              labelStyle: TextStyle(color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF475569), fontSize: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF8B5CF6)),
+              ),
             ),
           ),
           const SizedBox(height: 12),
           SwitchListTile(
-            activeColor: const Color(0xFF80A416),
+            activeColor: const Color(0xFF8B5CF6),
+            activeTrackColor: const Color(0xFFD4C9D8),
+            inactiveThumbColor: const Color(0xFFFFF9E1),
+            inactiveTrackColor: isDarkMode ? const Color(0xFF333333) : const Color(0xFFEBECCC),
             title: Text('STRICT REGO DENY-BY-DEFAULT', style: CyberTextStyles.technical(fontSize: 12, color: titleColor)),
             subtitle: Text('Zero-Trust principle: drop all unspecified microsegments', style: CyberTextStyles.techMuted.copyWith(fontSize: 10, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
             value: _strictOpaEnforcement,
@@ -680,10 +768,22 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             controller: _webhookController,
             style: TextStyle(color: titleColor, fontFamily: 'monospace', fontSize: 12),
             decoration: InputDecoration(
+              filled: true,
+              fillColor: isDarkMode ? const Color(0xFF0F0F14) : const Color(0xFFFAF9F6),
               labelText: 'INCIDENT ALERT WEBHOOK URL (SLACK / TEAMS)',
-              labelStyle: TextStyle(color: isDarkMode ? const Color(0xFFB91C1D) : const Color(0xFFB91C1D), fontSize: 12),
-              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2))),
-              focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFB91C1D))),
+              labelStyle: TextStyle(color: isDarkMode ? const Color(0xFFB91C1D) : const Color(0xFF475569), fontSize: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: const BorderSide(color: Color(0xFF8B5CF6)),
+              ),
             ),
           ),
           const SizedBox(height: 10),
@@ -691,10 +791,22 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             controller: _smtpHostCtrl,
             style: TextStyle(color: titleColor, fontFamily: 'monospace', fontSize: 12),
             decoration: InputDecoration(
+              filled: true,
+              fillColor: isDarkMode ? const Color(0xFF0F0F14) : const Color(0xFFFAF9F6),
               labelText: 'ENCLAVE SMTP DISPATCH HOST',
-              labelStyle: TextStyle(color: isDarkMode ? const Color(0xFFB91C1D) : const Color(0xFFB91C1D), fontSize: 12),
-              enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2))),
-              focusedBorder: const UnderlineInputBorder(borderSide: BorderSide(color: Color(0xFFB91C1D))),
+              labelStyle: TextStyle(color: isDarkMode ? const Color(0xFFB91C1D) : const Color(0xFF475569), fontSize: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(6),
+                borderSide: const BorderSide(color: Color(0xFF8B5CF6)),
+              ),
             ),
           ),
           const SizedBox(height: 12),
@@ -740,7 +852,10 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
           Divider(color: borderColor.withOpacity(0.35)),
           const SizedBox(height: 10),
           SwitchListTile(
-            activeColor: const Color(0xFFC4E320),
+            activeColor: const Color(0xFF8B5CF6),
+            activeTrackColor: const Color(0xFFD4C9D8),
+            inactiveThumbColor: const Color(0xFFFFF9E1),
+            inactiveTrackColor: isDarkMode ? const Color(0xFF333333) : const Color(0xFFEBECCC),
             title: Text('DARK CYBER THEME MODE', style: CyberTextStyles.technical(fontSize: 12, color: titleColor)),
             subtitle: Text(
               isDarkMode ? 'OBSIDIAN TERMINAL DARK MODE ACTIVE' : 'PASTEL LAVENDER LIGHT MODE ACTIVE',

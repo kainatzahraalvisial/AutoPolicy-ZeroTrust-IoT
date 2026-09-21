@@ -335,6 +335,12 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
         'index': 8,
       },
       {
+        'category': 'Notifications',
+        'icon': Icons.notifications_outlined,
+        'index': 11,
+        'badge': unreadNotificationsCount > 0 ? '$unreadNotificationsCount' : null,
+      },
+      {
         'category': 'System Settings',
         'icon': Icons.settings_outlined,
         'index': 9,
@@ -384,11 +390,11 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   color: isSelectedDirect
-                      ? (isDarkMode ? const Color(0xFFC4E320).withOpacity(0.20) : const Color(0xFFC4E320).withOpacity(0.35))
+                      ? (isDarkMode ? const Color(0xFFC4E320).withOpacity(0.20) : const Color(0xFFDDE69E))
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(8),
                   border: isSelectedDirect
-                      ? Border.all(color: const Color(0xFF80A416), width: 1.2)
+                      ? Border.all(color: const Color(0xFF80A416), width: 1.3)
                       : null,
                 ),
                 child: Row(
@@ -397,7 +403,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                       catIcon,
                       size: 20,
                       color: (isSelectedDirect || hasSelectedChild)
-                          ? (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF80A416))
+                          ? (isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A))
                           : (isDarkMode ? Colors.white70 : const Color(0xFF475569)),
                     ),
                     if (!_isSidebarCollapsed) ...[
@@ -461,7 +467,7 @@ class _MainLayoutState extends ConsumerState<MainLayout> with TickerProviderStat
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? (isDarkMode ? const Color(0xFFC4E320).withOpacity(0.20) : const Color(0xFFC4E320).withOpacity(0.35))
+                              ? (isDarkMode ? const Color(0xFFC4E320).withOpacity(0.20) : const Color(0xFFDDE69E))
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(20),
                           border: isSelected
