@@ -1,0 +1,16 @@
+{
+  "name": "autopolicy-renderer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node extract-content.js && esbuild src/scene.js --bundle --format=esm --target=es2020 --outfile=../assets/renderer/runtime.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "three": "0.180.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.10",
+    "prettier": "3.6.2"
+  }
+}

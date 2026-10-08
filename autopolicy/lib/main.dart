@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme/app_theme.dart';
+import 'landing/landing_route_observer.dart';
 import 'screens/splash_screen.dart';
 import 'screens/landing_screen.dart';
 import 'screens/login_screen.dart';
@@ -29,9 +30,17 @@ class AutoPolicyApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: isDarkMode ? CyberTheme.darkTheme : CyberTheme.lightTheme,
       initialRoute: '/',
+      navigatorObservers: [landingRouteObserver],
       onGenerateRoute: (settings) {
         Widget page;
         switch (settings.name) {
+          case '/landing/arch':
+            page = const LandingScreen(initialChapter: 'arch');
+            break;
+          case '/landing/sec':
+            page = const LandingScreen(initialChapter: 'sec');
+            break;
+          case '/landing/explore':
           case '/landing':
             page = const LandingScreen();
             break;

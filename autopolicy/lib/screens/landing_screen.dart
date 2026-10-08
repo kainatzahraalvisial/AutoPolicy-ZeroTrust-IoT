@@ -1,937 +1,754 @@
-import 'dart:ui';
+import 'dart:convert';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../widgets/three_particle_canvas.dart';
-import '../widgets/pipeline_stage_widget.dart';
-import '../widgets/cyber_hud_card.dart';
-import '../widgets/end_cta_widget.dart';
-import '../widgets/chamfered_cyber_button.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../landing/narrative_controller.dart';
+import '../landing/landing_composition.dart';
+import '../landing/cinematic_button.dart';
+import '../landing/visual_polish.dart';
+import '../landing/landing_route_observer.dart';
+import '../landing/renderer_host.dart';
+import '../providers/theme_provider.dart';
 
-class LandingScreen extends StatefulWidget {
-  const LandingScreen({super.key});
-
+class LandingScreen extends ConsumerStatefulWidget {
+  final String initialChapter;
+  const LandingScreen({super.key, this.initialChapter = 'explore'});
   @override
-  State<LandingScreen> createState() => _LandingScreenState();
+  ConsumerState<LandingScreen> createState() => _LandingScreenState();
 }
 
-class _LandingScreenState extends State<LandingScreen>
-    with SingleTickerProviderStateMixin {
-  int _currentPage = 0;
-  bool _isTransitioning = false;
-  bool _wheelLock = false;
-  Offset _globalMousePos = const Offset(-9999, -9999);
-  late final PageController _pageController;
-  late final AnimationController _heroAnimCtrl;
-
+class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
+  PageRoute<dynamic>? _observedRoute;
+  final NarrativeController _story = NarrativeController();
+  Map<String, dynamic>? _content;
+  bool _menu = false, _wasReady = false, _reduced = false;
+  Key _rendererKey = UniqueKey();
+  late LandingComposition _layout;
+  String? _sentViewport;
+  String? _lastRailStage;
+  final _stageKeys = List.generate(9, (_) => GlobalKey());
+  Color get _accent => ref.read(themeModeProvider)
+      ? const Color(0xFF94B51A)
+      : const Color(0xFF708B0E);
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
-    _heroAnimCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    );
-    // Trigger hero text entrance reveal animation
-    _heroAnimCtrl.forward();
+    _story.chapter = widget.initialChapter;
+    _story.addListener(_updated);
+    _load();
+  }
+
+  Future<void> _load() async {
+    final data =
+        jsonDecode(await rootBundle.loadString('assets/renderer/story.json'))
+            as Map<String, dynamic>;
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    final saved = prefs.getBool('autopolicy.darkTheme');
+    if (saved != null) ref.read(themeModeProvider.notifier).state = saved;
+    setState(() => _content = data);
+  }
+
+  void _updated() {
+    if (!mounted) return;
+    if (_story.ready && !_wasReady) {
+      _wasReady = true;
+      _syncSettings();
+      _syncRouteVisibility();
+    }
+    setState(() {});
+    final railStage =
+        '${_layout.width}:${_story.chapter}:${_story.activeStage}';
+    if (_lastRailStage != railStage) {
+      _lastRailStage = railStage;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _layout.verticalStages) return;
+        final target = _stageKeys[_story.activeStage].currentContext;
+        if (target != null) {
+          Scrollable.ensureVisible(target,
+              alignment: .5,
+              duration: Duration(milliseconds: _reduced ? 0 : 180),
+              curve: Curves.easeOut);
+        }
+      });
+    }
+  }
+
+  void _syncSettings() {
+    _story.sender
+        ?.call(RendererCommand.setTheme, {'dark': ref.read(themeModeProvider)});
+    _story.sender
+        ?.call(RendererCommand.setReducedMotion, {'enabled': _reduced});
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute<dynamic> && route != _observedRoute) {
+      landingRouteObserver.unsubscribe(this);
+      _observedRoute = route;
+      landingRouteObserver.subscribe(this, route);
+    }
+    _reduced = MediaQuery.of(context).disableAnimations;
+    _syncSettings();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _syncRouteVisibility();
+    });
+  }
+
+  void _syncRouteVisibility() {
+    _story.sender?.call(RendererCommand.setRenderingEnabled,
+        {'enabled': _observedRoute?.isCurrent ?? true});
+  }
+
+  @override
+  void didPushNext() {
+    _story.sender
+        ?.call(RendererCommand.setRenderingEnabled, {'enabled': false});
+  }
+
+  @override
+  void didPopNext() {
+    _syncSettings();
+    _story.sender?.call(RendererCommand.setRenderingEnabled, {'enabled': true});
+  }
+
+  void _scroll(double delta) {
+    _story.scroll(delta, MediaQuery.sizeOf(context).height);
+  }
+
+  void _chapter(String chapter) {
+    setState(() => _menu = false);
+    _story.selectChapter(chapter);
+    _syncSettings();
+  }
+
+  void _toggleTheme() async {
+    final dark = !ref.read(themeModeProvider);
+    ref.read(themeModeProvider.notifier).state = dark;
+    _story.sender?.call(RendererCommand.setTheme, {'dark': dark});
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('autopolicy.darkTheme', dark);
+  }
+
+  void _retry() {
+    _story.ready = false;
+    _story.error = null;
+    _wasReady = false;
+    _sentViewport = null;
+    setState(() => _rendererKey = UniqueKey());
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
-    _heroAnimCtrl.dispose();
+    landingRouteObserver.unsubscribe(this);
+    _story.removeListener(_updated);
+    _story.dispose();
     super.dispose();
   }
 
-  void _goToPage(int index) {
-    if (index < 0 || index > 3 || index == _currentPage || _isTransitioning) return;
+  Widget _button(String label, VoidCallback action, {bool filled = false}) =>
+      CinematicButton(
+          label: label,
+          onPressed: action,
+          filled: filled,
+          compact: _layout.phone,
+          angular: true);
+  List<dynamic> get _stages =>
+      _content?[_story.chapter] as List<dynamic>? ?? [];
+  Widget _navLink(String chapter, Color fg) => CinematicNavLink(
+      label: chapter == 'arch'
+          ? 'Architecture'
+          : chapter == 'sec'
+              ? 'Security'
+              : 'Explore',
+      active: _story.chapter == chapter,
+      foreground: fg,
+      onPressed: () => _chapter(chapter));
+  Widget _header(bool narrow, Color foreground) => Container(
+      height: _layout.header,
+      padding: EdgeInsets.symmetric(horizontal: _layout.phone ? 16 : 28),
+      decoration: BoxDecoration(
+          color: ref.read(themeModeProvider)
+              ? const Color(0xFF000000)
+              : const Color(0xFFFAF9F6),
+          border: Border(bottom: BorderSide(color: _accent.withOpacity(.18)))),
+      child: Stack(alignment: Alignment.center, children: [
+        Align(
+            alignment: Alignment.centerLeft,
+            child: Semantics(
+                label: 'AutoPolicy',
+                image: true,
+                child: SizedBox(
+                    width: _layout.phone ? 154 : 236,
+                    height: _layout.phone ? 38 : 56,
+                    child: AutoPolicyWordmark(
+                        dark: ref.read(themeModeProvider))))),
+        if (!narrow)
+          Center(
+              child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: ['explore', 'arch', 'sec']
+                      .map((c) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: _navLink(c, foreground)))
+                      .toList())),
+        Align(
+            alignment: Alignment.centerRight,
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              CinematicButton(
+                  label: 'Sign in',
+                  compact: true,
+                  filled: true,
+                  onPressed: () =>
+                      Navigator.pushReplacementNamed(context, '/login')),
+              if (narrow)
+                IconButton(
+                    tooltip:
+                        'Chapter menu · ${_story.chapter == 'arch' ? 'Architecture' : _story.chapter == 'sec' ? 'Security' : 'Explore'}',
+                    onPressed: () => setState(() => _menu = !_menu),
+                    icon:
+                        Icon(_menu ? Icons.close : Icons.menu, color: _accent))
+            ]))
+      ]));
 
-    setState(() {
-      _isTransitioning = true;
-      _currentPage = index;
-    });
+  Widget _brandRail() => LayoutBuilder(builder: (context, constraints) {
+        const fill = Color(0xFF80A416), ink = Color(0xFF152000);
+        final h = constraints.maxHeight;
+        final mainWidth = constraints.maxWidth * 38 / 58;
+        Widget word() => RotatedBox(
+            quarterTurns: 3,
+            child: Text('AUTOPOLICY',
+                style: TextStyle(
+                    fontFamily: 'Orbitron',
+                    color: ink,
+                    fontWeight: FontWeight.w700,
+                    fontSize: _layout.phone ? 6 : 9,
+                    letterSpacing: _layout.phone ? 1.5 : 2)));
+        return Stack(clipBehavior: Clip.none, children: [
+          Positioned(
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: mainWidth,
+              child: Container(
+                  decoration: BoxDecoration(
+                      color: fill,
+                      borderRadius: BorderRadius.circular(mainWidth / 2),
+                      boxShadow: [
+                    BoxShadow(
+                        color: fill.withOpacity(.3),
+                        blurRadius: 24,
+                        spreadRadius: 2)
+                  ]))),
+          Positioned(
+              left: 0,
+              top: h * .045,
+              width: mainWidth,
+              child: Center(child: word())),
+          Positioned(
+              left: mainWidth / 2 - .6,
+              top: h * .445,
+              width: 1.2,
+              height: h * .108,
+              child: const ColoredBox(color: ink)),
+          if (!_layout.phone)
+            Positioned(
+                left: 0,
+                bottom: h * .045,
+                width: mainWidth,
+                child: Center(child: word())),
+          Positioned(
+              right: 0,
+              bottom: 0,
+              width: constraints.maxWidth * 14 / 58,
+              height: h * .143,
+              child: Container(
+                  decoration: BoxDecoration(
+                      color: fill,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(color: fill.withOpacity(.22), blurRadius: 14)
+                      ]),
+                  child: Center(
+                      child:
+                          Container(width: 1, height: h * .065, color: ink))))
+        ]);
+      });
 
-    if (index == 0) {
-      _heroAnimCtrl.forward(from: 0.0);
-    }
-
-    // Smooth vertical scroll animation between pages
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 650),
-      curve: Curves.easeInOutCubic,
-    ).then((_) {
-      if (mounted) {
-        setState(() {
-          _isTransitioning = false;
-        });
-      }
-    });
+  Widget _copy(bool portrait, Color fg, Color muted) {
+    final hero = _story.hero;
+    final darkAccent = ref.read(themeModeProvider)
+        ? const Color(0xFFC5C764)
+        : const Color(0xFF6D8415);
+    final stage =
+        _stages.isEmpty ? null : _stages[_story.activeStage] as List<dynamic>;
+    final chapter = _story.chapter;
+    final heading = hero
+        ? (chapter == 'arch'
+            ? 'From devices.\nto zero trust.'
+            : chapter == 'sec'
+                ? 'Detect. Respond.\nStay protected.'
+                : 'Every device.\nZero trust.')
+        : stage?[1].toString() ?? '';
+    final description = hero
+        ? (chapter == 'arch'
+            ? 'AutoPolicy transforms raw IoT network activity into intelligent, enforceable zero-trust security policies.'
+            : chapter == 'sec'
+                ? 'Continuously monitor, detect and respond to threats across your IoT network.'
+                : 'AutoPolicy detects anomalies in IoT networks and generates enforceable zero-trust security policies.')
+        : stage?[2].toString() ?? '';
+    final gen = _story.parameter('gen');
+    final showPolicy = !hero &&
+        gen > .05 &&
+        (_story.activeStage == 5 ||
+            _story.activeStage == 6 ||
+            chapter == 'sec' &&
+                (_story.activeStage == 2 || _story.activeStage == 3));
+    return StaggeredCopy(
+        key: ValueKey('$chapter/$hero/${_story.activeStage}'),
+        children: [
+          Text(
+              hero
+                  ? (chapter == 'explore'
+                      ? 'ANOMALY DETECTION · ZERO TRUST · POLICY AUTOMATION'
+                      : chapter == 'arch'
+                          ? 'SYSTEM ARCHITECTURE'
+                          : 'SECURITY')
+                  : '0${_story.activeStage + 1} / ${stage?[0] ?? ''}',
+              style: TextStyle(
+                  fontFamily: 'Orbitron',
+                  color: _accent,
+                  fontSize: 9,
+                  letterSpacing: 1.6)),
+          const SizedBox(height: 22),
+          HeroHeading(
+              text: heading,
+              foreground: fg,
+              accent: darkAccent,
+              size: _layout.headingSize,
+              emphasize: hero),
+          const SizedBox(height: 26),
+          Text(description,
+              style: TextStyle(
+                  fontFamily: 'SpaceGrotesk',
+                  color: muted,
+                  fontSize: _layout.phone ? 14 : 16,
+                  height: 1.65)),
+          const SizedBox(height: 24),
+          if (hero)
+            Wrap(spacing: 10, runSpacing: 16, children: [
+              _button(
+                  _layout.phone
+                      ? (chapter == 'sec' ? 'SECURITY →' : 'EXPLORE →')
+                      : chapter == 'sec'
+                          ? 'EXPLORE SECURITY →'
+                          : 'EXPLORE SYSTEM →',
+                  () => _story.progress(.4 / (_story.stageCount - 1)),
+                  filled: true),
+              _button(
+                  _layout.phone
+                      ? (chapter == 'arch' ? 'SECURITY' : 'ARCHITECTURE')
+                      : chapter == 'arch'
+                          ? 'VIEW SECURITY'
+                          : 'VIEW ARCHITECTURE',
+                  () => _chapter(chapter == 'arch' ? 'sec' : 'arch'))
+            ])
+          else
+            Text(stage?[3].toString() ?? '',
+                style: TextStyle(
+                    color: _accent, fontSize: 10, letterSpacing: 1.3)),
+          if (showPolicy) ...[const SizedBox(height: 22), _policy(gen, fg)],
+          if (_story.chapter == 'sec') ...[
+            const SizedBox(height: 24),
+            _workflow()
+          ],
+          if (_story.chapter == 'sec')
+            ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                dense: true,
+                iconColor: _accent,
+                collapsedIconColor: _accent,
+                title: Text('THREAT CATEGORIES',
+                    style: TextStyle(
+                        fontFamily: 'Orbitron',
+                        color: muted,
+                        fontSize: 9,
+                        letterSpacing: 1)),
+                children: (_content?['threats'] as List? ?? [])
+                    .map((t) => Align(
+                        alignment: Alignment.centerLeft,
+                        child: Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Text((t as List)[0].toString(),
+                                style: TextStyle(
+                                    fontFamily: 'SpaceGrotesk',
+                                    color: muted,
+                                    fontSize: 12)))))
+                    .toList()),
+          if (_story.device != null) ...[
+            const SizedBox(height: 12),
+            Row(children: [
+              Expanded(
+                  child: Text('${_story.device} · ${_story.deviceStatus}',
+                      style: TextStyle(
+                          color: _story.deviceStatus == 'anomalous'
+                              ? const Color(0xFFD92949)
+                              : _accent,
+                          fontSize: 12))),
+              IconButton(
+                  tooltip: 'Dismiss device details',
+                  onPressed: _story.dismissDevice,
+                  icon: const Icon(Icons.close, size: 16))
+            ])
+          ]
+        ]);
   }
 
-  void _handleWheel(PointerScrollEvent event) {
-    if (_wheelLock || _isTransitioning) return;
-    if (event.scrollDelta.dy.abs() < 20) return;
-
-    _wheelLock = true;
-    if (event.scrollDelta.dy > 0) {
-      _goToPage((_currentPage + 1).clamp(0, 3));
-    } else {
-      _goToPage((_currentPage - 1).clamp(0, 3));
-    }
-
-    Future.delayed(const Duration(milliseconds: 700), () {
-      _wheelLock = false;
-    });
+  Widget _policy(double gen, Color foreground) {
+    const lines = [
+      '{',
+      '  "device": "glass-sensor",',
+      '  "action": "isolate",',
+      '  "trust": "low",',
+      '  "network": "restricted",',
+      '  "source": "graph-anomaly",',
+      '  "enforce": "opa"',
+      '}'
+    ];
+    final count = (gen * 8).ceil().clamp(0, 8);
+    return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+            color: foreground.withOpacity(.04),
+            border: Border.all(color: foreground.withOpacity(.15)),
+            borderRadius: BorderRadius.circular(8)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('GENERATED POLICY · DEMONSTRATION',
+              style:
+                  TextStyle(color: foreground, fontSize: 9, letterSpacing: 1)),
+          const SizedBox(height: 8),
+          Text(lines.take(count).join('\n'),
+              style: TextStyle(
+                  fontFamily: 'monospace',
+                  color: ref.read(themeModeProvider)
+                      ? const Color(0xFFFFEDA8)
+                      : const Color(0xFF665629),
+                  fontSize: 11,
+                  height: 1.4))
+        ]));
   }
 
-  void _navigateToLogin() {
-    Navigator.of(context).pushNamed('/login');
+  Widget _rail(Color foreground) {
+    return Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: _stages
+            .asMap()
+            .entries
+            .map((entry) => TextButton(
+                onPressed: () => _story.gotoStage(entry.key),
+                child: Text('0${entry.key + 1}  ${(entry.value as List)[0]}',
+                    style: TextStyle(
+                        color: entry.key == _story.activeStage
+                            ? _accent
+                            : foreground.withOpacity(.45),
+                        fontSize: 10,
+                        letterSpacing: .7))))
+            .toList());
+  }
+
+  Widget _mobileRail(Color foreground) => SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+          children: _stages
+              .asMap()
+              .entries
+              .map((entry) => TextButton(
+                    key: _stageKeys[entry.key],
+                    onPressed: () => _story.gotoStage(entry.key),
+                    child: Text('0${entry.key + 1} ${(entry.value as List)[0]}',
+                        style: TextStyle(
+                            fontSize: 10,
+                            color: entry.key == _story.activeStage
+                                ? _accent
+                                : foreground.withOpacity(.65))),
+                  ))
+              .toList()));
+
+  Widget _workflow() {
+    final f = _story.displayProgress * 4;
+    final active = f < .5
+        ? -1
+        : f < 1.2
+            ? 0
+            : f < 1.7
+                ? 1
+                : f < 2.6
+                    ? 2
+                    : f < 3.4
+                        ? 3
+                        : 4;
+    return Wrap(
+        spacing: 5,
+        runSpacing: 4,
+        children: ['DETECT', 'ANALYZE', 'GENERATE', 'ENFORCE', 'ISOLATE']
+            .asMap()
+            .entries
+            .map((e) => Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                decoration: BoxDecoration(
+                    color: e.key == active ? _accent : Colors.transparent,
+                    border: Border.all(color: _accent.withOpacity(.4)),
+                    borderRadius: BorderRadius.circular(20)),
+                child: Text(e.value, style: const TextStyle(fontSize: 8))))
+            .toList());
   }
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final bool isDesktop = size.width > 960;
-    final bool isFullDarkPage = _currentPage >= 1;
-
+    final dark = ref.watch(themeModeProvider);
+    final fg = dark ? const Color(0xFFEDF3E8) : const Color(0xFF1F2418);
+    final muted = dark ? const Color(0xFFB0B8A6) : const Color(0xFF5F6552);
+    final bg = dark ? const Color(0xFF000000) : const Color(0xFFFAF9F6);
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F),
-      body: Container(
-        color: const Color(0xFF0F0F0F),
-        child: MouseRegion(
-        onHover: (event) {
-          setState(() {
-            _globalMousePos = event.localPosition;
-          });
-        },
-        onExit: (event) {
-          setState(() {
-            _globalMousePos = const Offset(-9999, -9999);
-          });
-        },
-        child: Listener(
-          behavior: HitTestBehavior.translucent,
-          onPointerHover: (event) {
-            setState(() {
-              _globalMousePos = event.localPosition;
+        backgroundColor: bg,
+        body: SafeArea(child: LayoutBuilder(builder: (context, constraints) {
+          final width = constraints.maxWidth, height = constraints.maxHeight;
+          _layout = LandingComposition(width, height);
+          final area = _layout.sceneRect;
+          final viewport = _layout.kind.name;
+          if (_story.ready && _sentViewport != viewport) {
+            _sentViewport = viewport;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                _story.sender
+                    ?.call(RendererCommand.setViewport, {'class': viewport});
+              }
             });
-          },
-          onPointerMove: (event) {
-            setState(() {
-              _globalMousePos = event.localPosition;
-            });
-          },
-          onPointerSignal: (event) {
-            if (event is PointerScrollEvent) {
-              _handleWheel(event);
-            }
-          },
-          child: Stack(
-          children: [
-            // 0. Page 1 Hero Atmosphere Gradient at Complete Back (behind WebGL particles & UI elements)
-            Positioned.fill(
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 400),
-                opacity: _currentPage == 0 ? 1.0 : 0.0,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomLeft,
-                      end: Alignment.topRight,
-                      colors: [
-                        Color(0xFF67EE00), // Vibrant cyber lime green on bottom-left margin
-                        Color(0xFF80A416), // Rich olive green #80A416
-                        Color(0xFF284414), // Deep forest green transition
-                        Color(0xFF0A0512), // Deep midnight black center
-                        Color(0xFF2E0C4A), // Rich electric purple
-                        Color(0xFF6D28D9), // Vibrant cyber purple on top-right
-                        Color(0xFF8B5CF6), // Bright electric purple corner
-                      ],
-                      stops: [0.0, 0.15, 0.32, 0.50, 0.72, 0.88, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // 1. Full-Screen Interactive WebGL/3D Particle Background (Fades out on full dark pages)
-            Positioned.fill(
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 400),
-                opacity: isFullDarkPage ? 0.0 : 1.0,
-                child: ThreeParticleCanvas(mousePos: _globalMousePos),
-              ),
-            ),
-
-            // 2. Left Vertical Margin Pill & Accent Bar (Fades out on full dark pages)
-            if (isDesktop) ...[
-              Positioned(
-                left: 24,
-                top: 88,
-                bottom: 24,
-                width: 54,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 400),
-                  opacity: isFullDarkPage ? 0.0 : 1.0,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF80A416),
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF80A416).withOpacity(0.45),
-                          blurRadius: 25,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 38),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        RotatedBox(
-                          quarterTurns: 3,
-                          child: Text(
-                            'AUTOPOLICY',
-                            style: GoogleFonts.orbitron(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 3.5,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          width: 2,
-                          height: 90,
-                          color: Colors.black.withOpacity(0.85),
-                        ),
-                        RotatedBox(
-                          quarterTurns: 3,
-                          child: Text(
-                            'AUTOPOLICY',
-                            style: GoogleFonts.orbitron(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 3.5,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                left: 86,
-                bottom: 24,
-                width: 18,
-                height: 120,
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 400),
-                  opacity: isFullDarkPage ? 0.0 : 1.0,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF80A416),
-                      borderRadius: BorderRadius.circular(9),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF80A416).withOpacity(0.35),
-                          blurRadius: 15,
-                        ),
-                      ],
-                    ),
-                    alignment: Alignment.center,
-                    child: Container(
-                      width: 2,
-                      height: 72,
-                      color: Colors.black.withOpacity(0.8),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-
-            // 3. Scrollable PageView Scenes (Hero, Pipeline Stage, System Specs, End CTA)
-            Positioned.fill(
-              child: PageView(
-                controller: _pageController,
-                scrollDirection: Axis.vertical,
-                physics: const NeverScrollableScrollPhysics(),
-                onPageChanged: (idx) {
-                  if (_currentPage != idx) {
-                    setState(() => _currentPage = idx);
-                    if (idx == 0) _heroAnimCtrl.forward(from: 0.0);
-                  }
-                },
-                children: [
-                  _buildHeroPage(context, isDesktop),
-                  PipelinePage(isActive: _currentPage == 1),
-                  _buildSystemSpecsPage(context, isDesktop),
-                  EndCtaWidget(isActive: _currentPage == 3),
-                ],
-              ),
-            ),
-
-            // 4. Top Navigation Bar (Always rendered on top across ALL pages)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: ClipRect(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                  child: Container(
-                    padding: EdgeInsets.fromLTRB(
-                      isDesktop ? 36 : 20,
-                      18,
-                      isDesktop ? 36 : 20,
-                      18,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.65),
-                      border: Border(
-                        bottom: BorderSide(
-                          color: const Color(0xFF80A416).withOpacity(0.18),
-                          width: 1.0,
-                        ),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Logo
-                        GestureDetector(
-                          onTap: () => _goToPage(0),
-                          child: MouseRegion(
-                            cursor: SystemMouseCursors.click,
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: const Color(0xFFBBF438),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFFBBF438).withOpacity(0.9),
-                                        blurRadius: 12,
-                                        spreadRadius: 2,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  'AutoPolicy',
-                                  style: GoogleFonts.orbitron(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 3.8,
-                                    color: const Color(0xFFEDF5EB),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // Nav Links (All pages: EXPLORE, PIPELINE, SYSTEM, DEPLOY)
-                        if (isDesktop || size.width > 700)
-                          Row(
-                            children: [
-                              _HoverNavLink(
-                                title: 'EXPLORE',
-                                isActive: _currentPage == 0,
-                                onTap: () => _goToPage(0),
-                              ),
-                              SizedBox(width: isDesktop ? 36 : 18),
-                              _HoverNavLink(
-                                title: 'PIPELINE',
-                                isActive: _currentPage == 1,
-                                onTap: () => _goToPage(1),
-                              ),
-                              SizedBox(width: isDesktop ? 36 : 18),
-                              _HoverNavLink(
-                                title: 'SYSTEM',
-                                isActive: _currentPage == 2,
-                                onTap: () => _goToPage(2),
-                              ),
-                              SizedBox(width: isDesktop ? 36 : 18),
-                              _HoverNavLink(
-                                title: 'DEPLOY',
-                                isActive: _currentPage == 3,
-                                onTap: () => _goToPage(3),
-                              ),
-                            ],
-                          ),
-
-                        // Login Action Button
-                        _NavLoginButton(onTap: _navigateToLogin),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  ),
-);
-}
-
-  // Section 0: Hero (with staggered reveal animations for all text elements)
-  Widget _buildHeroPage(BuildContext context, bool isDesktop) {
-    return AnimatedBuilder(
-      animation: _heroAnimCtrl,
-      builder: (context, _) {
-        final t = _heroAnimCtrl.value;
-
-        // Staggered interval transforms:
-        final tTag = const Interval(0.0, 0.40, curve: Curves.easeOutCubic).transform(t);
-        final tTitle1 = const Interval(0.15, 0.60, curve: Curves.easeOutCubic).transform(t);
-        final tTitle2 = const Interval(0.28, 0.75, curve: Curves.easeOutCubic).transform(t);
-        final tSub = const Interval(0.42, 0.88, curve: Curves.easeOutCubic).transform(t);
-        final tBtns = const Interval(0.58, 1.0, curve: Curves.easeOutCubic).transform(t);
-
-        return Container(
-          padding: EdgeInsets.fromLTRB(isDesktop ? 120 : 24, 64, isDesktop ? 60 : 24, 24),
-          child: Center(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 680),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // 1. Hero Tag: Slides down & reveals
-                  Opacity(
-                    opacity: tTag,
-                    child: Transform.translate(
-                      offset: Offset(0, (1 - tTag) * -18),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 34,
-                            height: 2,
-                            color: const Color(0xFF80A416),
-                          ),
-                          const SizedBox(width: 14),
-                          Text(
-                            'ANOMALY DETECTION · ZERO TRUST · POLICY AUTOMATION',
-                            style: GoogleFonts.shareTechMono(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 2.8,
-                              color: const Color(0xFFC5C764),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // 2. H1 Title Line 1: Slides up & reveals
-                  Opacity(
-                    opacity: tTitle1,
-                    child: Transform.translate(
-                      offset: Offset(0, (1 - tTitle1) * 36),
-                      child: Text(
-                        'Every device.',
-                        style: GoogleFonts.orbitron(
-                          fontSize: isDesktop ? 72 : 44,
-                          fontWeight: FontWeight.w900,
-                          height: 1.05,
-                          letterSpacing: -1.0,
-                          color: const Color(0xFFEDF5EB),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-
-                  // 3. H1 Title Line 2: Slides up & reveals with glowing lime-yellow
-                  Opacity(
-                    opacity: tTitle2,
-                    child: Transform.translate(
-                      offset: Offset(0, (1 - tTitle2) * 36),
-                      child: Text(
-                        'Zero trust.',
-                        style: GoogleFonts.orbitron(
-                          fontSize: isDesktop ? 72 : 44,
-                          fontWeight: FontWeight.w900,
-                          fontStyle: FontStyle.italic,
-                          height: 1.05,
-                          letterSpacing: -1.0,
-                          color: const Color(0xFFC5C764),
-                          shadows: [
-                            BoxShadow(
-                              color: const Color(0xFFC5C764).withOpacity(0.4),
-                              blurRadius: 20,
-                            ),
-                          ],
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // 4. Subtitle: Slides up & reveals
-                  Opacity(
-                    opacity: tSub,
-                    child: Transform.translate(
-                      offset: Offset(0, (1 - tSub) * 26),
-                      child: Text(
-                        'AutoPolicy detects anomalies in IoT networks and automatically generates enforceable zero-trust security policies — in real time.',
-                        style: GoogleFonts.spaceGrotesk(
-                          fontSize: isDesktop ? 18.0 : 15.5,
-                          fontWeight: FontWeight.w400,
-                          height: 1.65,
-                          color: const Color(0xFFD5E5D3),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 42),
-
-                  // 5. Buttons: Slide up & reveal
-                  Opacity(
-                    opacity: tBtns,
-                    child: Transform.translate(
-                      offset: Offset(0, (1 - tBtns) * 20),
-                      child: Wrap(
-                        spacing: 24,
-                        runSpacing: 16,
-                        alignment: WrapAlignment.center,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          ChamferedCyberButton(
-                            text: 'EXPLORE NOW',
-                            onTap: () => _goToPage(1),
-                          ),
-                          _LearnMoreHoverButton(onTap: () => _goToPage(1)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // Section 2: System Specs (HUD Frame Cards with text animation & increased sizes)
-  Widget _buildSystemSpecsPage(BuildContext context, bool isDesktop) {
-    final bool isActive = _currentPage == 2;
-
-    return Container(
-      color: Colors.black,
-      child: Stack(
-        children: [
-          // Background Tile Grid
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _SystemGridPainter(),
-            ),
-          ),
-
-          // Central System Stage
-          Center(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(
-                horizontal: isDesktop ? 48 : 24,
-                vertical: 60,
-              ),
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 1060),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // Tag
-                    AnimatedOpacity(
-                      duration: const Duration(milliseconds: 700),
-                      curve: Curves.easeOutCubic,
-                      opacity: isActive ? 1.0 : 0.0,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 700),
-                        curve: Curves.easeOutCubic,
-                        transform: isActive
-                            ? Matrix4.identity()
-                            : (Matrix4.identity()..translate(0.0, -28.0, 0.0)),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              width: 34,
-                              height: 2,
-                              color: const Color(0xFF80A416),
-                            ),
-                            const SizedBox(width: 14),
-                            Text(
-                              'BY THE NUMBERS',
-                              style: GoogleFonts.shareTechMono(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 3.0,
-                                color: const Color(0xFFC5C764),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // H2 Title with Split-Text Sliding Animation: Left and Right reveal
-                    Wrap(
-                      alignment: WrapAlignment.center,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        // Left part of heading: slides in from left
-                        AnimatedOpacity(
-                          duration: const Duration(milliseconds: 800),
-                          curve: Curves.easeOutCubic,
-                          opacity: isActive ? 1.0 : 0.0,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 800),
-                            curve: Curves.easeOutCubic,
-                            transform: isActive
-                                ? Matrix4.identity()
-                                : (Matrix4.identity()..translate(-42.0, 0.0, 0.0)),
-                            child: Text(
-                              'Built to scale. ',
-                              style: GoogleFonts.orbitron(
-                                fontSize: isDesktop ? 46 : 30, // Increased prominent size
-                                fontWeight: FontWeight.w800,
-                                height: 1.15,
-                                color: const Color(0xFFEDF5EB),
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Right part of heading: slides in with delay from right
-                        AnimatedOpacity(
-                          duration: const Duration(milliseconds: 950),
-                          curve: Curves.easeOutCubic,
-                          opacity: isActive ? 1.0 : 0.0,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 950),
-                            curve: Curves.easeOutCubic,
-                            transform: isActive
-                                ? Matrix4.identity()
-                                : (Matrix4.identity()..translate(42.0, 0.0, 0.0)),
-                            child: Text(
-                              'Built to enforce.',
-                              style: GoogleFonts.orbitron(
-                                fontSize: isDesktop ? 46 : 30,
-                                fontWeight: FontWeight.w800,
-                                fontStyle: FontStyle.italic,
-                                height: 1.15,
-                                color: const Color(0xFFC5C764),
-                                shadows: [
-                                  BoxShadow(
-                                    color: const Color(0xFFC5C764).withOpacity(0.5),
-                                    blurRadius: 18,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 36),
-
-                    // Original Chamfered Cyber HUD Cards Grid
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        if (constraints.maxWidth > 700) {
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: CyberHudCard(
-                                  num: '1K+',
-                                  title: 'DEVICES SIMULATED',
-                                  desc: 'Continuous real-time anomaly discovery across large heterogeneous clusters.',
-                                  borderColor: const Color(0xFF5DD62C),
-                                  tag: 'SYS-01',
-                                  delayMs: 200,
-                                  isActive: isActive,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: CyberHudCard(
-                                  num: '33',
-                                  title: 'ATTACK CATEGORIES',
-                                  desc: 'Pre-trained models covering Mirai botnets, DDoS, lateral scanning, and port sweeps.',
-                                  borderColor: const Color(0xFFA88AED),
-                                  tag: 'SYS-02',
-                                  delayMs: 400,
-                                  isActive: isActive,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: CyberHudCard(
-                                  num: 'RT',
-                                  title: 'ENFORCEMENT ENGINE',
-                                  desc: 'Instant policy propagation without microcode flashing or device firmware reboots.',
-                                  borderColor: const Color(0xFFC5C764),
-                                  tag: 'SYS-03',
-                                  delayMs: 600,
-                                  isActive: isActive,
-                                ),
-                              ),
-                            ],
-                          );
-                        } else {
-                          return Column(
-                            children: [
-                              CyberHudCard(
-                                num: '1K+',
-                                title: 'DEVICES SIMULATED',
-                                desc: 'Continuous real-time anomaly discovery across large heterogeneous clusters.',
-                                borderColor: const Color(0xFF5DD62C),
-                                tag: 'SYS-01',
-                                delayMs: 200,
-                                isActive: isActive,
-                              ),
-                              const SizedBox(height: 16),
-                              CyberHudCard(
-                                num: '33',
-                                title: 'ATTACK CATEGORIES',
-                                desc: 'Pre-trained models covering Mirai botnets, DDoS, lateral scanning, and port sweeps.',
-                                borderColor: const Color(0xFFA88AED),
-                                tag: 'SYS-02',
-                                delayMs: 400,
-                                isActive: isActive,
-                              ),
-                              const SizedBox(height: 16),
-                              CyberHudCard(
-                                num: 'RT',
-                                title: 'ENFORCEMENT ENGINE',
-                                desc: 'Instant policy propagation without microcode flashing or device firmware reboots.',
-                                borderColor: const Color(0xFFC5C764),
-                                tag: 'SYS-03',
-                                delayMs: 600,
-                                isActive: isActive,
-                              ),
-                            ],
-                          );
+          }
+          final alert = _story.parameter('roq') > .1 &&
+              _story.parameter('enf') < .6 &&
+              _story.parameter('iso') < .9 &&
+              _story.parameter('zt') < .5;
+          final copyTop = _layout.stacked
+              ? area.bottom + 8
+              : _layout.header + (height - _layout.header - 80) * .18;
+          return CallbackShortcuts(
+              bindings: {
+                const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
+                    _scroll(height * .6),
+                const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
+                    _scroll(-height * .6),
+                const SingleActivator(LogicalKeyboardKey.home): () =>
+                    _story.progress(0),
+                const SingleActivator(LogicalKeyboardKey.end): () =>
+                    _story.progress(1),
+              },
+              child: Focus(
+                  autofocus: true,
+                  child: Listener(
+                      onPointerSignal: (event) {
+                        if (event is PointerScrollEvent &&
+                            !Rect.fromLTWH(
+                                    _layout.contentLeft,
+                                    copyTop,
+                                    _layout.copyWidth,
+                                    height -
+                                        copyTop -
+                                        (_layout.stacked ? 72 : 100))
+                                .contains(event.localPosition)) {
+                          _scroll(event.scrollDelta.dy);
                         }
                       },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+                      child: Stack(children: [
+                        Positioned.fromRect(
+                            rect: area,
+                            child: RendererHost(
+                                key: _rendererKey,
+                                controller: _story,
+                                onScroll: _scroll)),
+                        Positioned(
+                            left: 12,
+                            top: _layout.header + 18,
+                            width: _layout.brandWidth,
+                            height: _layout.phone
+                                ? 132
+                                : height - _layout.header - 98,
+                            child: IgnorePointer(child: _brandRail())),
+                        if (_layout.verticalStages)
+                          Positioned(
+                              left: _layout.brandWidth + 24,
+                              top: _layout.header + 42,
+                              bottom: 108,
+                              width: _layout.railWidth,
+                              child: PointerInterceptor(child: _rail(fg))),
+                        if (!_layout.verticalStages)
+                          Positioned(
+                              top: _layout.header + 7,
+                              left: _layout.brandWidth + 20,
+                              right: 14,
+                              height: 38,
+                              child:
+                                  PointerInterceptor(child: _mobileRail(fg))),
+                        Positioned(
+                            left: _layout.contentLeft,
+                            top: copyTop,
+                            bottom: _layout.stacked ? 72 : 100,
+                            width: _layout.copyWidth,
+                            child: PointerInterceptor(
+                                child: SizedBox.expand(
+                                    child: SingleChildScrollView(
+                                        child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 12),
+                                            child: _copy(_layout.stacked, fg,
+                                                muted)))))),
+                        ..._story.annotations
+                            .where((a) =>
+                                !_layout.phone ||
+                                (_story.parameter('dash') > .3
+                                    ? ['soc', 'core'].contains(a['id'])
+                                    : ['allow', 'deny', 'restricted', 'device']
+                                        .contains(a['id'])))
+                            .where((a) =>
+                                (a['x'] as num) > .02 &&
+                                (a['x'] as num) < .9 &&
+                                (a['y'] as num) > .02 &&
+                                (a['y'] as num) < .94)
+                            .map((a) => Positioned(
+                                left: (area.left + (a['x'] as num).toDouble() * area.width)
+                                    .clamp(area.left, area.right - 126),
+                                top: area.top +
+                                    (a['y'] as num).toDouble() * area.height,
+                                child: IgnorePointer(
+                                    child: Container(
+                                        constraints:
+                                            const BoxConstraints(maxWidth: 126),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 4),
+                                        decoration: BoxDecoration(color: bg.withOpacity(.72), border: Border(left: BorderSide(color: _accent.withOpacity(.5)))),
+                                        child: Text(a['label'].toString(),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                                fontFamily: 'SpaceGrotesk',
+                                                color: a['id'] == 'deny' || a['id'] == 'restricted'
+                                                    ? const Color(0xFFD92949)
+                                                    : dark
+                                                        ? const Color(0xFFBFD46D)
+                                                        : const Color(0xFF607810),
+                                                fontSize: _layout.phone ? 8 : 9)))))),
+                        Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            child: PointerInterceptor(
+                                child: _header(_layout.menu, fg))),
+                        if (_menu)
+                          Positioned(
+                              top: _layout.header,
+                              right: 16,
+                              width: _layout.phone ? width - 32 : 270,
+                              child: PointerInterceptor(
+                                  child: Material(
+                                      color: bg,
+                                      elevation: 12,
+                                      child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            ...[
+                                              'explore',
+                                              'arch',
+                                              'sec'
+                                            ].map((c) => ListTile(
+                                                selected: c == _story.chapter,
+                                                selectedColor: _accent,
+                                                title: Text(
+                                                    c == 'arch'
+                                                        ? 'Architecture'
+                                                        : c == 'sec'
+                                                            ? 'Security'
+                                                            : 'Explore',
+                                                    style: const TextStyle(
+                                                        fontFamily: 'Orbitron',
+                                                        fontSize: 12)),
+                                                onTap: () => _chapter(c))),
+                                          ])))),
+                        Positioned(
+                            bottom: 12,
+                            left: _layout.brandWidth + 24,
+                            right: 20,
+                            child: PointerInterceptor(
+                                child: Column(children: [
+                              LinearProgressIndicator(
+                                  value: _story.displayProgress,
+                                  minHeight: 2,
+                                  color: _accent,
+                                  backgroundColor: fg.withOpacity(.1)),
+                              const SizedBox(height: 6),
+                              Row(children: [
+                                Expanded(
+                                    child: Text(
+                                        'DEMONSTRATION · ${alert ? 'ALERT' : 'PROTECTED'}${width > 600 ? ' · ${_story.parameter('zt') > .5 ? 'ZERO TRUST ACTIVE' : 'MONITORING'} · THREATS ${alert ? 1 : 0} · POLICIES ${_story.parameter('gen') > .9 ? 1 : 0} · BLOCKED ${_story.parameter('enf') > .6 ? 1 : 0}' : ''}',
+                                        style: TextStyle(
+                                            fontFamily: 'SpaceGrotesk',
+                                            color: alert
+                                                ? const Color(0xFFD92949)
+                                                : muted,
+                                            fontSize: 9,
+                                            letterSpacing: .5))),
+                                IconButton(
+                                    tooltip:
+                                        dark ? 'Light theme' : 'Dark theme',
+                                    onPressed: _toggleTheme,
+                                    icon: Icon(
+                                        dark
+                                            ? Icons.light_mode_outlined
+                                            : Icons.dark_mode_outlined,
+                                        size: 17,
+                                        color: fg))
+                              ])
+                            ]))),
+                        if (!_story.ready)
+                          Positioned.fill(
+                              child: PointerInterceptor(
+                                  child: ColoredBox(
+                                      color: bg,
+                                      child: Center(
+                                          child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                            if (_story.error == null) ...[
+                                              CircularProgressIndicator(
+                                                  color: _accent),
+                                              const SizedBox(height: 20),
+                                              Text('Loading AutoPolicy system…',
+                                                  style: TextStyle(color: fg))
+                                            ] else ...[
+                                              Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(24),
+                                                  child: Text(_story.error!,
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: TextStyle(
+                                                          color: fg))),
+                                              _button('RETRY', _retry),
+                                              const SizedBox(height: 12),
+                                              _button(
+                                                  'SIGN IN',
+                                                  () => Navigator
+                                                      .pushReplacementNamed(
+                                                          context, '/login'))
+                                            ]
+                                          ])))))
+                      ]))));
+        })));
   }
 }
-
-class _SystemGridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF80A416).withOpacity(0.12)
-      ..strokeWidth = 1.0;
-
-    const double spacing = 52.0;
-    for (double x = 0; x < size.width; x += spacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += spacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _HoverNavLink extends StatefulWidget {
-  final String title;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _HoverNavLink({
-    required this.title,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  State<_HoverNavLink> createState() => _HoverNavLinkState();
-}
-
-class _HoverNavLinkState extends State<_HoverNavLink> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final Color textColor = (_isHovered || widget.isActive)
-        ? const Color(0xFFBBF438)
-        : const Color(0xFFC5C764);
-
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedDefaultTextStyle(
-          duration: const Duration(milliseconds: 200),
-          style: GoogleFonts.orbitron(
-            fontSize: 11.5,
-            fontWeight: (_isHovered || widget.isActive) ? FontWeight.w800 : FontWeight.w600,
-            letterSpacing: 2.2,
-            color: textColor,
-            shadows: _isHovered
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFFBBF438).withOpacity(0.6),
-                      blurRadius: 10,
-                    )
-                  ]
-                : [],
-          ),
-          child: Text(widget.title),
-        ),
-      ),
-    );
-  }
-}
-
-class _NavLoginButton extends StatefulWidget {
-  final VoidCallback onTap;
-  const _NavLoginButton({required this.onTap});
-
-  @override
-  State<_NavLoginButton> createState() => _NavLoginButtonState();
-}
-
-class _NavLoginButtonState extends State<_NavLoginButton> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          transform: Matrix4.translationValues(0, _isHovered ? -2 : 0, 0),
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
-          decoration: BoxDecoration(
-            color: _isHovered ? const Color(0xFFBBF438) : const Color(0xFF80A416),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: (_isHovered ? const Color(0xFFBBF438) : const Color(0xFF80A416)).withOpacity(_isHovered ? 0.75 : 0.35),
-                blurRadius: _isHovered ? 20 : 12,
-                spreadRadius: _isHovered ? 2 : 1,
-              ),
-            ],
-          ),
-          child: Text(
-            'SIGN IN',
-            style: GoogleFonts.orbitron(
-              fontSize: 10.2,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.8,
-              color: Colors.black,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LearnMoreHoverButton extends StatefulWidget {
-  final VoidCallback onTap;
-  const _LearnMoreHoverButton({required this.onTap});
-
-  @override
-  State<_LearnMoreHoverButton> createState() => _LearnMoreHoverButtonState();
-}
-
-class _LearnMoreHoverButtonState extends State<_LearnMoreHoverButton> {
-  bool _isHovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          transform: Matrix4.translationValues(_isHovered ? 4 : 0, 0, 0),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 200),
-                style: GoogleFonts.orbitron(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 2.0,
-                  color: _isHovered ? const Color(0xFFBBF438) : const Color(0xFFEDF5EB),
-                  shadows: _isHovered
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFFBBF438).withOpacity(0.6),
-                            blurRadius: 10,
-                          ),
-                        ]
-                      : [],
-                ),
-                child: const Text('Learn more '),
-              ),
-              AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 200),
-                style: GoogleFonts.orbitron(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: const Color(0xFFBBF438),
-                  shadows: _isHovered
-                      ? [
-                          BoxShadow(
-                            color: const Color(0xFFBBF438).withOpacity(0.9),
-                            blurRadius: 14,
-                          ),
-                        ]
-                      : [],
-                ),
-                child: const Text('›'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
