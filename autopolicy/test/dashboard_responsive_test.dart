@@ -52,23 +52,22 @@ void main() {
     final sidebar = find.byType(AnimatedSize);
     expect(tester.getSize(sidebar).width, 200);
     expect(tester.getTopLeft(sidebar).dy, 0);
-    expect(find.text('Dashboard Overview'), findsNothing);
     expect(find.descendant(of: sidebar, matching: find.byType(AutoPolicyWordmark)), findsOneWidget);
     final highlight = find.descendant(of: find.byTooltip('Dashboard Overview'), matching: find.byType(AnimatedContainer));
-    expect((tester.widget<AnimatedContainer>(highlight).decoration as BoxDecoration).gradient, isNotNull);
+    expect((tester.widget<AnimatedContainer>(highlight).decoration as BoxDecoration).color, isNotNull);
     final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
     await mouse.addPointer(location: Offset.zero);
     await mouse
         .moveTo(tester.getCenter(find.byTooltip('Live Traffic & Alerts')));
     await tester.pump(const Duration(milliseconds: 200));
     expect(tester.takeException(), isNull);
-    await tester.tap(find.byIcon(Icons.menu));
+    await tester.tap(find.byIcon(Icons.menu).first);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 130));
     expect(tester.takeException(), isNull);
     await tester.pump(const Duration(milliseconds: 160));
     expect(tester.getSize(sidebar).width, 64);
-    await tester.tap(find.byIcon(Icons.menu_open));
+    await tester.tap(find.byIcon(Icons.menu).first);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(tester.getSize(sidebar).width, 200);

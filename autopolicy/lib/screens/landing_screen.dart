@@ -165,11 +165,15 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
             image: true,
             child: SizedBox(
                 width: _layout.phone
-                    ? 120
+                    ? 165
                     : _layout.width < 900
-                        ? 132
-                        : 166,
-                height: _layout.width < 900 ? 34 : 38,
+                        ? 205
+                        : 265,
+                height: _layout.phone
+                    ? 44
+                    : _layout.width < 900
+                        ? 52
+                        : 62,
                 child: AutoPolicyWordmark(dark: ref.read(themeModeProvider)))),
         const Spacer(),
         if (!narrow)
@@ -312,7 +316,9 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
     final children = <Widget>[
       entrance(
           hero && chapter == 'explore'
-              ? ExploreEyebrow(dark: ref.read(themeModeProvider))
+              ? ExploreEyebrow(
+                  dark: ref.read(themeModeProvider),
+                  fontSize: _layout.width > 1600 ? 11.5 : (_layout.width > 1200 ? 10.5 : 9.5))
               : Text(
                   hero
                       ? (chapter == 'explore'
@@ -324,7 +330,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
                   style: TextStyle(
                       fontFamily: 'Orbitron',
                       color: _accent,
-                      fontSize: 9,
+                      fontSize: _layout.width > 1400 ? 11 : 9,
                       letterSpacing: 1.6)),
           520),
       SizedBox(height: _layout.gap),
@@ -342,7 +348,13 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
           style: TextStyle(
               fontFamily: 'SpaceGrotesk',
               color: muted,
-              fontSize: _layout.phone ? 14 : 16,
+              fontSize: _layout.phone
+                  ? 14
+                  : _layout.width > 1600
+                      ? 18
+                      : _layout.width > 1200
+                          ? 16.5
+                          : 15,
               height: _layout.compact ? 1.5 : 1.65)),
       SizedBox(height: _layout.gap + 4),
       if (hero)

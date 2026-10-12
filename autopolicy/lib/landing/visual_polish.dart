@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 
 class ExploreEyebrow extends StatelessWidget {
   final bool dark;
-  const ExploreEyebrow({super.key, required this.dark});
+  final double fontSize;
+  const ExploreEyebrow({super.key, required this.dark, this.fontSize = 9.5});
   @override
   Widget build(BuildContext context) => SizedBox(
-      height: 16,
+      height: 20,
       child: Align(
           alignment: Alignment.centerLeft,
           child: FittedBox(
@@ -16,8 +17,8 @@ class ExploreEyebrow extends StatelessWidget {
                   style: TextStyle(
                       fontFamily: 'SpaceGrotesk',
                       fontWeight: FontWeight.w700,
-                      fontSize: 8,
-                      letterSpacing: 2,
+                      fontSize: fontSize,
+                      letterSpacing: 2.2,
                       color: dark
                           ? const Color(0xFFC5C764)
                           : const Color(0xFF526B0E))))));
@@ -108,8 +109,11 @@ class _Atmosphere extends CustomPainter {
   final bool dark;
   final Offset? glowCenter;
   const _Atmosphere(this.scene, this.dark, this.glowCenter);
+
   void field(
-      Canvas canvas, Offset center, double rx, double ry, List<Color> colors) {
+      Canvas canvas, Offset center, double rx, double ry, List<Color> colors,
+      [List<double>? stops]) {
+    if (rx <= 0 || ry <= 0) return;
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.scale(rx, ry);
@@ -117,37 +121,698 @@ class _Atmosphere extends CustomPainter {
         Offset.zero,
         1,
         Paint()
-          ..shader = RadialGradient(colors: colors, stops: const [0, .42, 1])
-              .createShader(const Rect.fromLTWH(-1, -1, 2, 2)));
+          ..shader = RadialGradient(
+            colors: colors,
+            stops: stops ?? const [0.0, 0.45, 1.0],
+          ).createShader(const Rect.fromLTWH(-1, -1, 2, 2)));
     canvas.restore();
+  }
+
+  void _drawVerticalBeam(Canvas canvas, double x, double top, double bottom,
+      double width, Color color, double opacity,
+      {double blur = 18}) {
+    if (opacity <= 0 || bottom <= top) return;
+    final rect = Rect.fromLTWH(x - width / 2, top, width, bottom - top);
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.transparent,
+          color.withOpacity(opacity * 0.35),
+          color.withOpacity(opacity),
+          color.withOpacity(opacity * 0.75),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.18, 0.55, 0.85, 1.0],
+      ).createShader(rect)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, blur);
+    canvas.drawRect(rect, paint);
+  }
+
+  void _drawHoloGlassPanel(
+    Canvas canvas,
+    Rect rect,
+    Color color,
+    double fillOpacity,
+    double borderOpacity, {
+    double skewY = -0.22,
+  }) {
+    final path = Path()
+      ..moveTo(rect.left, rect.top - rect.width * skewY * 0.5)
+      ..lineTo(rect.right, rect.top + rect.width * skewY * 0.5)
+      ..lineTo(rect.right, rect.bottom + rect.width * skewY * 0.5)
+      ..lineTo(rect.left, rect.bottom - rect.width * skewY * 0.5)
+      ..close();
+
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          color.withOpacity(fillOpacity * 0.35),
+          color.withOpacity(fillOpacity),
+          color.withOpacity(fillOpacity * 0.10),
+        ],
+        stops: const [0.0, 0.55, 1.0],
+      ).createShader(rect);
+    canvas.drawPath(path, fillPaint);
+
+    // Crisp luminous top & side edges of the holographic glass plane
+    final edgePath = Path()
+      ..moveTo(rect.left, rect.bottom - rect.width * skewY * 0.5)
+      ..lineTo(rect.left, rect.top - rect.width * skewY * 0.5)
+      ..lineTo(rect.right, rect.top + rect.width * skewY * 0.5)
+      ..lineTo(rect.right, rect.bottom + rect.width * skewY * 0.5);
+    final edgePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.1
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          const Color(0xFFE6FF68).withOpacity(borderOpacity),
+          color.withOpacity(borderOpacity * 0.55),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.65, 1.0],
+      ).createShader(rect);
+    canvas.drawPath(edgePath, edgePaint);
+  }
+
+  void _drawStarPoint(Canvas canvas, Offset pos, double radius, Color color,
+      double opacity, {bool cross = false}) {
+    canvas.drawCircle(
+      pos,
+      radius * 3.2,
+      Paint()
+        ..color = color.withOpacity(opacity * 0.35)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+    canvas.drawCircle(
+      pos,
+      radius,
+      Paint()..color = const Color(0xFFF2FF9B).withOpacity(opacity),
+    );
+    if (cross) {
+      final p = Paint()
+        ..color = color.withOpacity(opacity * 0.55)
+        ..strokeWidth = 0.8;
+      canvas.drawLine(
+          pos.translate(-radius * 3.5, 0), pos.translate(radius * 3.5, 0), p);
+      canvas.drawLine(
+          pos.translate(0, -radius * 3.5), pos.translate(0, radius * 3.5), p);
+    }
   }
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0) return;
+    final isPortrait = size.height > size.width || size.width < 900;
+    final fullRect = Offset.zero & size;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 1. BASE LAYER: Deep obsidian / cyber green-black foundation
+    // ─────────────────────────────────────────────────────────────────────────
+    final baseGradient = LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: dark
+          ? const [
+              Color(0xFF040604),
+              Color(0xFF060E07),
+              Color(0xFF071409),
+              Color(0xFF06160B),
+              Color(0xFF041008),
+            ]
+          : const [
+              Color(0xFFFAF9F6),
+              Color(0xFFF4F6EE),
+              Color(0xFFE9EFE2),
+            ],
+      stops: dark
+          ? const [0.0, 0.28, 0.58, 0.82, 1.0]
+          : const [0.0, 0.5, 1.0],
+    );
+    canvas.drawRect(
+        fullRect, Paint()..shader = baseGradient.createShader(fullRect));
+
     final center =
-        glowCenter ?? Offset(scene.center.dx, scene.top + scene.height * .48);
-    // Feathered light fields terminate inside the scene; stacked copy stays dark.
-    field(canvas, center, scene.width * .64, scene.height * .49, [
-      const Color(0xFF17452E).withOpacity(dark ? .95 : .12),
-      const Color(0xFF0D2119).withOpacity(dark ? .8 : .04),
-      Colors.transparent
-    ]);
-    field(canvas, center, scene.width * .47, scene.height * .43, [
-      const Color(0xFFBCDA27).withOpacity(dark ? .68 : .28),
-      const Color(0xFF80A416).withOpacity(dark ? .40 : .12),
-      Colors.transparent
-    ]);
-    field(canvas, center, scene.width * .23, scene.height * .32, [
-      const Color(0xFFC4E326).withOpacity(dark ? .46 : .16),
-      const Color(0xFF80A416).withOpacity(dark ? .16 : .06),
-      Colors.transparent
-    ]);
-    field(canvas, center.translate(scene.width * .24, -scene.height * .05),
-        scene.width * .12, scene.height * .44, [
-      const Color(0xFFB1A9DA).withOpacity(dark ? .15 : .08),
-      const Color(0xFFCFE6F2).withOpacity(dark ? .04 : .025),
-      Colors.transparent
-    ]);
+        glowCenter ?? Offset(scene.center.dx, scene.top + scene.height * 0.48);
+    final double scale = dark ? 1.0 : 0.45;
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 2. FAINT CYBER COORDINATE GRID & STARFIELD NODES
+    // ─────────────────────────────────────────────────────────────────────────
+    if (dark) {
+      final gridPaint = Paint()
+        ..color = const Color(0xFF88B81A).withOpacity(0.028)
+        ..strokeWidth = 0.7;
+      const double step = 88.0;
+      for (double x = step; x < size.width; x += step) {
+        canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+      }
+      for (double y = step; y < size.height; y += step) {
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 3. AMBIENT ENVIRONMENTAL WASH & BOTTOM-RIGHT CORNER ILLUMINATION
+    // ─────────────────────────────────────────────────────────────────────────
+    field(
+      canvas,
+      center,
+      scene.width * 0.68,
+      scene.height * 0.58,
+      [
+        const Color(0xFF3E5E08).withOpacity(0.45 * scale),
+        const Color(0xFF1A2E05).withOpacity(0.26 * scale),
+        Colors.transparent,
+      ],
+      const [0.0, 0.48, 1.0],
+    );
+
+    // Bottom-right warm chartreuse corner wash (matches reference bottom-right glow)
+    field(
+      canvas,
+      Offset(size.width * 0.90, size.height * 0.92),
+      size.width * 0.36,
+      size.height * 0.34,
+      [
+        const Color(0xFF80A416).withOpacity(0.42 * scale),
+        const Color(0xFF435B09).withOpacity(0.20 * scale),
+        Colors.transparent,
+      ],
+      const [0.0, 0.45, 1.0],
+    );
+
+    // Bottom-center-left subtle green floor reflection under buttons/platform
+    field(
+      canvas,
+      Offset(size.width * 0.56, size.height * 0.94),
+      size.width * 0.34,
+      size.height * 0.22,
+      [
+        const Color(0xFF6B9612).withOpacity(0.22 * scale),
+        Colors.transparent,
+      ],
+      const [0.0, 1.0],
+    );
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 4. HOLOGRAPHIC VERTICAL LIGHT COLUMNS & TRANSLUCENT GLASS PLANES BEHIND 3D MODEL
+    // ─────────────────────────────────────────────────────────────────────────
+    final double modelTop = center.dy - scene.height * 0.42;
+    final double modelMidY = center.dy + scene.height * 0.08;
+
+    // Soft rising chartreuse light beams behind the central tower and side nodes
+    _drawVerticalBeam(
+        canvas,
+        center.dx - scene.width * 0.22,
+        modelTop + scene.height * 0.06,
+        modelMidY,
+        scene.width * 0.14,
+        const Color(0xFFA8DC1E),
+        0.30 * scale,
+        blur: 22);
+    _drawVerticalBeam(
+        canvas,
+        center.dx - scene.width * 0.04,
+        modelTop - scene.height * 0.04,
+        modelMidY,
+        scene.width * 0.18,
+        const Color(0xFFC8F528),
+        0.38 * scale,
+        blur: 24);
+    _drawVerticalBeam(
+        canvas,
+        center.dx + scene.width * 0.15,
+        modelTop,
+        modelMidY + scene.height * 0.04,
+        scene.width * 0.16,
+        const Color(0xFFB4E622),
+        0.34 * scale,
+        blur: 20);
+    _drawVerticalBeam(
+        canvas,
+        center.dx + scene.width * 0.30,
+        modelTop + scene.height * 0.10,
+        modelMidY + scene.height * 0.06,
+        scene.width * 0.12,
+        const Color(0xFF88BD16),
+        0.26 * scale,
+        blur: 18);
+
+    // Crisp vertical laser light streaks rising behind the tower
+    for (final dxFactor in [-0.25, -0.14, -0.06, 0.07, 0.16, 0.24, 0.33]) {
+      _drawVerticalBeam(
+        canvas,
+        center.dx + scene.width * dxFactor,
+        center.dy - scene.height * (0.36 - dxFactor.abs() * 0.25),
+        center.dy + scene.height * 0.04,
+        3.5,
+        const Color(0xFFE6FF66),
+        0.38 * scale,
+        blur: 3.5,
+      );
+    }
+
+    // Isometric translucent holographic glass panels behind the 3D tower (matching reference)
+    if (!isPortrait) {
+      // Back-right tall holographic glass panel
+      _drawHoloGlassPanel(
+        canvas,
+        Rect.fromLTWH(
+          center.dx + scene.width * 0.08,
+          center.dy - scene.height * 0.35,
+          scene.width * 0.095,
+          scene.height * 0.28,
+        ),
+        const Color(0xFFB8EC24),
+        0.16 * scale,
+        0.42 * scale,
+        skewY: 0.26,
+      );
+      // Far-right mid holographic glass panel
+      _drawHoloGlassPanel(
+        canvas,
+        Rect.fromLTWH(
+          center.dx + scene.width * 0.21,
+          center.dy - scene.height * 0.23,
+          scene.width * 0.13,
+          scene.height * 0.24,
+        ),
+        const Color(0xFFA2D81C),
+        0.15 * scale,
+        0.36 * scale,
+        skewY: 0.26,
+      );
+      // Left-side stepped holographic glass panel
+      _drawHoloGlassPanel(
+        canvas,
+        Rect.fromLTWH(
+          center.dx - scene.width * 0.33,
+          center.dy - scene.height * 0.14,
+          scene.width * 0.08,
+          scene.height * 0.14,
+        ),
+        const Color(0xFFB8EC24),
+        0.14 * scale,
+        0.34 * scale,
+        skewY: -0.24,
+      );
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 5. PRIMARY CORE GLOW BEHIND THE 3D MODEL & UNDER-PLATFORM FLARES
+    // ─────────────────────────────────────────────────────────────────────────
+    // Central intense chartreuse-lime aura
+    field(
+      canvas,
+      center.translate(0, -scene.height * 0.04),
+      scene.width * 0.44,
+      scene.height * 0.40,
+      [
+        const Color(0xFFC4E326).withOpacity(0.58 * scale),
+        const Color(0xFF88B416).withOpacity(0.34 * scale),
+        const Color(0xFF476309).withOpacity(0.12 * scale),
+        Colors.transparent,
+      ],
+      const [0.0, 0.35, 0.68, 1.0],
+    );
+
+    // Bright specular heart behind tower
+    field(
+      canvas,
+      center.translate(0, -scene.height * 0.06),
+      scene.width * 0.22,
+      scene.height * 0.24,
+      [
+        const Color(0xFFE8FF72).withOpacity(0.54 * scale),
+        const Color(0xFFC4E326).withOpacity(0.32 * scale),
+        Colors.transparent,
+      ],
+      const [0.0, 0.42, 1.0],
+    );
+
+    // Under-platform Left Corner Neon Flare (matches the bright green streak at left corner of base)
+    final leftBaseFlare = Offset(
+      center.dx - scene.width * 0.39,
+      center.dy + scene.height * 0.09,
+    );
+    field(
+      canvas,
+      leftBaseFlare,
+      scene.width * 0.14,
+      scene.height * 0.07,
+      [
+        const Color(0xFFDFFF4F).withOpacity(0.55 * scale),
+        const Color(0xFF8CC418).withOpacity(0.24 * scale),
+        Colors.transparent,
+      ],
+      const [0.0, 0.42, 1.0],
+    );
+    // Crisp diagonal light streak at left base corner
+    final flareLinePaint = Paint()
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.0)
+      ..color = const Color(0xFFEAFF75).withOpacity(0.70 * scale);
+    canvas.drawLine(
+      leftBaseFlare.translate(-scene.width * 0.05, scene.height * 0.025),
+      leftBaseFlare.translate(scene.width * 0.04, -scene.height * 0.02),
+      flareLinePaint,
+    );
+
+    // Under-platform Bottom-Left & Bottom-Center downward light bursts
+    final bottomLeftBurst = Offset(
+      center.dx - scene.width * 0.15,
+      center.dy + scene.height * 0.29,
+    );
+    field(
+      canvas,
+      bottomLeftBurst,
+      scene.width * 0.07,
+      scene.height * 0.13,
+      [
+        const Color(0xFFD8FF44).withOpacity(0.50 * scale),
+        const Color(0xFF7CB214).withOpacity(0.20 * scale),
+        Colors.transparent,
+      ],
+      const [0.0, 0.40, 1.0],
+    );
+
+    final bottomApexBurst = Offset(
+      center.dx - scene.width * 0.02,
+      center.dy + scene.height * 0.41,
+    );
+    field(
+      canvas,
+      bottomApexBurst,
+      scene.width * 0.08,
+      scene.height * 0.15,
+      [
+        const Color(0xFFBFF028).withOpacity(0.36 * scale),
+        const Color(0xFF638E0E).withOpacity(0.14 * scale),
+        Colors.transparent,
+      ],
+      const [0.0, 0.45, 1.0],
+    );
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 6. LUMINOUS PLANETARY DOME RIM ARC BEHIND THE 3D MODEL (Top-Left to Top-Right)
+    // ─────────────────────────────────────────────────────────────────────────
+    final domeRect = Rect.fromCenter(
+      center: Offset(
+        center.dx + scene.width * 0.03,
+        center.dy + scene.height * 0.08,
+      ),
+      width: scene.width * 0.96,
+      height: scene.height * 0.94,
+    );
+
+    // 6a. Misty green nebula clouds along the inside of the upper-left dome rim
+    for (final double deg in [195, 212, 230, 248, 266, 284]) {
+      final double rad = deg * math.pi / 180.0;
+      final Offset cloudPos = Offset(
+        domeRect.center.dx + (domeRect.width * 0.46) * math.cos(rad),
+        domeRect.center.dy + (domeRect.height * 0.46) * math.sin(rad),
+      );
+      field(
+        canvas,
+        cloudPos,
+        scene.width * 0.14,
+        scene.height * 0.11,
+        [
+          const Color(0xFFB8EC26).withOpacity(0.32 * scale),
+          const Color(0xFF72A312).withOpacity(0.15 * scale),
+          Colors.transparent,
+        ],
+        const [0.0, 0.48, 1.0],
+      );
+    }
+
+    // 6b. Wide outer atmospheric bloom along the dome arc (165° -> 335°)
+    const double domeStart = 162 * math.pi / 180.0;
+    const double domeSweep = 172 * math.pi / 180.0;
+    final domeShader = SweepGradient(
+      center: Alignment.center,
+      startAngle: 0,
+      endAngle: math.pi * 2,
+      colors: [
+        Colors.transparent,
+        const Color(0xFF78B012).withOpacity(0.05 * scale),
+        const Color(0xFFB8F024).withOpacity(0.75 * scale),
+        const Color(0xFFEAFF70).withOpacity(0.95 * scale),
+        const Color(0xFFC4F228).withOpacity(0.80 * scale),
+        const Color(0xFF82B816).withOpacity(0.32 * scale),
+        Colors.transparent,
+      ],
+      stops: const [0.0, 0.44, 0.54, 0.64, 0.74, 0.88, 1.0],
+    ).createShader(domeRect);
+
+    // Wide soft glow around the dome arc
+    canvas.drawArc(
+      domeRect,
+      domeStart,
+      domeSweep,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 26.0
+        ..shader = domeShader
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20),
+    );
+
+    // Medium neon bloom along the dome arc
+    canvas.drawArc(
+      domeRect,
+      domeStart,
+      domeSweep,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 8.0
+        ..shader = domeShader
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+    );
+
+    // Razor-sharp intense lime-white core rim line
+    canvas.drawArc(
+      domeRect,
+      domeStart,
+      domeSweep,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0
+        ..shader = domeShader,
+    );
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 7. SWEEPING ORBITAL LIGHT LINES & INTERSECTING ASTRO RINGS (Circled in user ref)
+    // ─────────────────────────────────────────────────────────────────────────
+    // 7a. Outer Left-to-Top sweeping orbital line (grazes top of dome with bright flare)
+    final outerOrbitRect = Rect.fromCenter(
+      center: Offset(
+        center.dx + scene.width * 0.16,
+        center.dy + scene.height * 0.16,
+      ),
+      width: scene.width * 1.36,
+      height: scene.height * 1.24,
+    );
+    canvas.drawArc(
+      outerOrbitRect,
+      148 * math.pi / 180.0,
+      145 * math.pi / 180.0,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.15
+        ..color = const Color(0xFFC8F53B).withOpacity(0.38 * scale),
+    );
+    // Tangent flare where outer orbit meets top of dome
+    _drawStarPoint(
+      canvas,
+      Offset(center.dx - scene.width * 0.03, domeRect.top + 3),
+      2.6,
+      const Color(0xFFE8FF6B),
+      0.85 * scale,
+      cross: true,
+    );
+
+    // 7b. Top-Right intersecting diagonal/curved light ray
+    final topRightRayPath = Path()
+      ..moveTo(center.dx - scene.width * 0.06, 0)
+      ..quadraticBezierTo(
+        center.dx + scene.width * 0.22,
+        center.dy - scene.height * 0.34,
+        size.width,
+        center.dy - scene.height * 0.04,
+      );
+    canvas.drawPath(
+      topRightRayPath,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0
+        ..color = const Color(0xFFC4E834).withOpacity(0.34 * scale),
+    );
+    // Secondary steeper top-right orbital arc
+    final topRightSteepPath = Path()
+      ..moveTo(center.dx + scene.width * 0.10, 0)
+      ..quadraticBezierTo(
+        center.dx + scene.width * 0.16,
+        center.dy - scene.height * 0.22,
+        center.dx + scene.width * 0.44,
+        center.dy + scene.height * 0.12,
+      );
+    canvas.drawPath(
+      topRightSteepPath,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.9
+        ..color = const Color(0xFFA8D41E).withOpacity(0.24 * scale),
+    );
+
+    // 7c. Bottom-Left sweeping concentric elliptical orbital rings (below Explore / View Architecture)
+    final bottomLeftOrbit1 = Rect.fromCenter(
+      center: Offset(size.width * 0.24, size.height * 1.08),
+      width: size.width * 0.46,
+      height: size.height * 0.62,
+    );
+    canvas.drawArc(
+      bottomLeftOrbit1,
+      195 * math.pi / 180.0,
+      145 * math.pi / 180.0,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.1
+        ..color = const Color(0xFFA6D41D).withOpacity(0.24 * scale),
+    );
+
+    final bottomLeftOrbit2 = Rect.fromCenter(
+      center: Offset(size.width * 0.30, size.height * 1.15),
+      width: size.width * 0.66,
+      height: size.height * 0.84,
+    );
+    canvas.drawArc(
+      bottomLeftOrbit2,
+      190 * math.pi / 180.0,
+      150 * math.pi / 180.0,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.9
+        ..color = const Color(0xFF94C018).withOpacity(0.16 * scale),
+    );
+
+    // Sweeping arc connecting lower-left under buttons toward lower-center of platform
+    final lowerSweepPath = Path()
+      ..moveTo(size.width * 0.42, size.height * 0.68)
+      ..quadraticBezierTo(
+        size.width * 0.50,
+        size.height * 0.86,
+        size.width * 0.68,
+        size.height,
+      );
+    canvas.drawPath(
+      lowerSweepPath,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0
+        ..color = const Color(0xFFACE020).withOpacity(0.26 * scale),
+    );
+
+    // 7d. Bottom-Right Bright Neon Energy Sweep (under the right edge of 3D platform)
+    final brSweepPath = Path()
+      ..moveTo(size.width * 0.69, size.height)
+      ..quadraticBezierTo(
+        size.width * 0.82,
+        size.height * 0.88,
+        size.width * 0.99,
+        size.height * 0.72,
+      );
+    // Outer blur glow for bottom-right sweep
+    canvas.drawPath(
+      brSweepPath,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 8.0
+        ..color = const Color(0xFFB4EC22).withOpacity(0.42 * scale)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+    );
+    // Crisp bright lime-yellow core for bottom-right sweep
+    canvas.drawPath(
+      brSweepPath,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.8
+        ..color = const Color(0xFFEAFF70).withOpacity(0.85 * scale),
+    );
+
+    // Secondary parallel bottom-right orbital line
+    final brSweepOuter = Path()
+      ..moveTo(size.width * 0.78, size.height)
+      ..quadraticBezierTo(
+        size.width * 0.89,
+        size.height * 0.92,
+        size.width,
+        size.height * 0.82,
+      );
+    canvas.drawPath(
+      brSweepOuter,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0
+        ..color = const Color(0xFFC4EE38).withOpacity(0.35 * scale),
+    );
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 8. GLOWING STAR SPECKS & TECH INTERSECTION DOTS
+    // ─────────────────────────────────────────────────────────────────────────
+    if (dark) {
+      final stars = < List<double>>[
+        [0.27, 0.08, 1.8],
+        [0.25, 0.18, 1.3],
+        [0.44, 0.20, 1.5],
+        [0.43, 0.36, 1.4],
+        [0.46, 0.67, 1.7],
+        [0.47, 0.89, 1.5],
+        [0.52, 0.82, 1.3],
+        [0.84, 0.89, 1.8],
+        [0.95, 0.50, 1.6],
+        [0.97, 0.42, 1.4],
+      ];
+      for (final s in stars) {
+        _drawStarPoint(
+          canvas,
+          Offset(size.width * s[0], size.height * s[1]),
+          s[2],
+          const Color(0xFFD6FF4B),
+          0.75,
+        );
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 9. SUBTLE VIGNETTE & TEXT CONTRAST PROTECTION
+    // ─────────────────────────────────────────────────────────────────────────
+    if (!isPortrait && dark) {
+      final textShieldRect =
+          Rect.fromLTWH(0, size.height * 0.18, size.width * 0.42, size.height * 0.56);
+      final textShieldGradient = RadialGradient(
+        center: const Alignment(-0.35, 0.0),
+        radius: 0.95,
+        colors: [
+          const Color(0xFF050705).withOpacity(0.45),
+          Colors.transparent,
+        ],
+      );
+      canvas.drawRect(textShieldRect,
+          Paint()..shader = textShieldGradient.createShader(textShieldRect));
+    }
   }
 
   @override
@@ -183,27 +848,39 @@ class StaggeredCopy extends StatelessWidget {
   }
 }
 
-/// Vector shield and live typography: no raster background in either theme.
+/// Theme-adaptive PNG wordmark logo
 class AutoPolicyWordmark extends StatelessWidget {
   final bool dark;
-  const AutoPolicyWordmark({super.key, required this.dark});
+  final double? height;
+  final double? width;
+  const AutoPolicyWordmark({super.key, required this.dark, this.height, this.width});
+
   @override
-  Widget build(BuildContext context) => FittedBox(
-        fit: BoxFit.contain,
+  Widget build(BuildContext context) {
+    final imagePath = dark
+        ? 'assets/images/logo_dark.png'
+        : 'assets/images/logo_light.png';
+    return Image.asset(
+      imagePath,
+      height: height,
+      width: width,
+      alignment: Alignment.centerLeft,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.medium,
+      isAntiAlias: true,
+      errorBuilder: (ctx, err, stack) => Image.asset(
+        dark
+            ? 'assets/images/exec-2772fd73-2c51-4a0f-b67f-bddddac23aa0.png'
+            : 'assets/images/exec-d66326b0-56de-4c49-b9b6-8532701a0611.png',
+        height: height,
+        width: width,
         alignment: Alignment.centerLeft,
-        child: Row(children: [
-          CustomPaint(size: const Size(48, 54), painter: _Shield(dark)),
-          const SizedBox(width: 10),
-          Text('AutoPolicy',
-              style: TextStyle(
-                  fontFamily: 'Orbitron',
-                  fontSize: 25,
-                  fontWeight: FontWeight.w700,
-                  color: dark
-                      ? const Color(0xFFD6DBD9)
-                      : const Color(0xFF26321B))),
-        ]),
-      );
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.medium,
+        isAntiAlias: true,
+      ),
+    );
+  }
 }
 
 class _Shield extends CustomPainter {

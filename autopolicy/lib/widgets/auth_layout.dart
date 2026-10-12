@@ -28,7 +28,7 @@ class AuthHeader extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: Row(children: [
             SizedBox(
-                width: 124, height: 34, child: AutoPolicyWordmark(dark: dark)),
+                width: 170, height: 44, child: AutoPolicyWordmark(dark: dark)),
             const Spacer(),
             IconButton(
                 tooltip: dark ? 'Light theme' : 'Dark theme',

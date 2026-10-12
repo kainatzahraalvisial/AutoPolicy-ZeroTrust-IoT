@@ -65,18 +65,18 @@ class _CinematicButtonState extends State<CinematicButton> {
                   : Theme.of(context).brightness == Brightness.dark
                       ? const Color(0xFFBFD46D)
                       : const Color(0xFF607810),
-              minimumSize: Size(0, widget.compact ? 44 : 58),
+              minimumSize: Size(0, widget.compact ? 44 : 52),
               padding: EdgeInsets.symmetric(
                   horizontal: widget.navbar
-                      ? 16
+                      ? 18
                       : widget.compact
                           ? 24
-                          : 34,
+                          : 32,
                   vertical: widget.navbar
                       ? 10
                       : widget.compact
-                          ? 15
-                          : 21),
+                          ? 14
+                          : 18),
               shape: const _CutCornerBorder(),
               side: widget.angular || widget.filled
                   ? BorderSide.none
@@ -86,8 +86,8 @@ class _CinematicButtonState extends State<CinematicButton> {
                 style: TextStyle(
                     fontFamily: 'Orbitron',
                     fontWeight: FontWeight.w600,
-                    fontSize: widget.compact ? 9 : 10,
-                    letterSpacing: widget.navbar ? .7 : 1.25)),
+                    fontSize: widget.navbar ? 11 : (widget.compact ? 11 : 12.5),
+                    letterSpacing: widget.navbar ? .8 : 1.3)),
           ),
         ),
       ),

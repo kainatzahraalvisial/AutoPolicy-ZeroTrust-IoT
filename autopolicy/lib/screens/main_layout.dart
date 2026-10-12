@@ -39,7 +39,8 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     with TickerProviderStateMixin {
   bool _isSidebarCollapsed = false;
   String? _hoveredCategory;
-  final bool _showSidebarLabels = false;
+  bool get _showSidebarLabels => !_isSidebarCollapsed;
+  double _lastRailCenterY = 78.0;
   late final Timer _clockTimer;
   String _currentTimeString = '';
 
@@ -415,26 +416,17 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
-                          gradient:
-                              (isSelectedDirect || _hoveredCategory == catTitle)
-                                  ? LinearGradient(
-                                      colors: isDarkMode
-                                          ? [
-                                              const Color(0xFFC4E320)
-                                                  .withOpacity(.35),
-                                              const Color(0xFF80A416)
-                                                  .withOpacity(.12)
-                                            ]
-                                          : const [
-                                              Color(0xFFDDE69E),
-                                              Color(0xFFCDD4B2)
-                                            ])
-                                  : null,
+                          color: isSelectedDirect
+                              ? (isDarkMode
+                                  ? const Color(0xFF282A30)
+                                  : const Color(0xFFCBB9A4))
+                              : (_hoveredCategory == catTitle
+                                  ? (isDarkMode
+                                      ? const Color(0xFF1A1B20)
+                                      : const Color(0xFFDDD0BD))
+                                  : Colors.transparent),
                           borderRadius: BorderRadius.circular(8),
-                          border:
-                              (isSelectedDirect || _hoveredCategory == catTitle)
-                                  ? Border.all(color: const Color(0xFF80A416))
-                                  : null,
+                          border: null,
                         ),
                         child: Row(
                           children: [
@@ -443,71 +435,69 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                               size: 20,
                               color: (isSelectedDirect || hasSelectedChild)
                                   ? (isDarkMode
-                                      ? const Color(0xFFC4E320)
-                                      : const Color(0xFF0F172A))
+                                      ? Colors.white
+                                      : const Color(0xFF1A1612))
                                   : (isDarkMode
-                                      ? Colors.white70
-                                      : const Color(0xFF475569)),
+                                      ? const Color(0xFF8E929E)
+                                      : const Color(0xFF5C5247)),
                             ),
-                            if (_showSidebarLabels) ...[
-                              const SizedBox(width: 12),
-                              Expanded(
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                catTitle,
+                                style: CyberTextStyles.technical(
+                                  fontSize: 12.0,
+                                  fontWeight:
+                                      (isSelectedDirect || hasSelectedChild)
+                                          ? FontWeight.bold
+                                          : FontWeight.w600,
+                                  color:
+                                      (isSelectedDirect || hasSelectedChild)
+                                          ? (isDarkMode
+                                              ? Colors.white
+                                              : const Color(0xFF1A1612))
+                                          : (isDarkMode
+                                              ? const Color(0xFF8E929E)
+                                              : const Color(0xFF4A433A)),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (catBadge != null) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFB91C1D),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                                 child: Text(
-                                  catTitle,
-                                  style: CyberTextStyles.technical(
-                                    fontSize: 11.0,
-                                    fontWeight:
-                                        (isSelectedDirect || hasSelectedChild)
-                                            ? FontWeight.bold
-                                            : FontWeight.w600,
-                                    color:
-                                        (isSelectedDirect || hasSelectedChild)
-                                            ? (isDarkMode
-                                                ? const Color(0xFFC4E320)
-                                                : const Color(0xFF0F172A))
-                                            : (isDarkMode
-                                                ? Colors.white
-                                                : const Color(0xFF1E293B)),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                                  catBadge,
+                                  style: const TextStyle(
+                                      fontSize: 9.5,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
-                              if (catBadge != null) ...[
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFB91C1D),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    catBadge,
-                                    style: const TextStyle(
-                                        fontSize: 9.5,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                              ],
-                              if (!isDirectPage)
-                                Icon(
-                                  isExpanded
-                                      ? Icons.keyboard_arrow_up
-                                      : Icons.keyboard_arrow_down,
-                                  size: 18,
-                                  color: isDarkMode
-                                      ? Colors.white54
-                                      : Colors.black45,
-                                ),
+                              const SizedBox(width: 6),
                             ],
+                            if (!isDirectPage)
+                              Icon(
+                                isExpanded
+                                    ? Icons.keyboard_arrow_up
+                                    : Icons.keyboard_arrow_down,
+                                size: 18,
+                                color: isDarkMode
+                                    ? Colors.white54
+                                    : const Color(0xFF64748B),
+                              ),
                           ],
                         ),
                       ),
                     ))),
 
             // Nested Sub-Items List (for expandable categories like Policy Engine)
-            if (!isDirectPage && isExpanded && _showSidebarLabels)
+            if (!isDirectPage && isExpanded)
               Padding(
                 padding: const EdgeInsets.only(left: 14.0),
                 child: Column(
@@ -531,14 +521,11 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                         decoration: BoxDecoration(
                           color: isSelected
                               ? (isDarkMode
-                                  ? const Color(0xFFC4E320).withOpacity(0.20)
-                                  : const Color(0xFFDDE69E))
+                                  ? const Color(0xFF282A30)
+                                  : const Color(0xFFCBB9A4))
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(20),
-                          border: isSelected
-                              ? Border.all(
-                                  color: const Color(0xFF80A416), width: 1.2)
-                              : null,
+                          border: null,
                         ),
                         child: Row(
                           children: [
@@ -549,11 +536,11 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                 shape: BoxShape.circle,
                                 color: isSelected
                                     ? (isDarkMode
-                                        ? const Color(0xFFC4E320)
-                                        : const Color(0xFF80A416))
+                                        ? Colors.white
+                                        : const Color(0xFF1A1612))
                                     : (isDarkMode
-                                        ? Colors.white30
-                                        : const Color(0xFF94A3B8)),
+                                        ? const Color(0xFF555865)
+                                        : const Color(0xFF9E9488)),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -565,10 +552,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                   color: isSelected
                                       ? (isDarkMode
                                           ? Colors.white
-                                          : const Color(0xFF0F172A))
+                                          : const Color(0xFF1A1612))
                                       : (isDarkMode
-                                          ? Colors.white60
-                                          : const Color(0xFF475569)),
+                                          ? const Color(0xFF8E929E)
+                                          : const Color(0xFF4A433A)),
                                   fontWeight: isSelected
                                       ? FontWeight.bold
                                       : FontWeight.w500,
@@ -605,6 +592,407 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     );
   }
 
+  Widget _buildExpandedSidebar(BuildContext context, bool isDarkMode,
+      String activeRole, int unreadCount, String username) {
+    return Container(
+      width: 200,
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.only(left: 4),
+      decoration: BoxDecoration(
+        color: isDarkMode ? const Color(0xFF101114) : const Color(0xFFE6DAC8),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with prominent tight-cropped logo and collapse button
+            Container(
+              height: 66,
+              padding: const EdgeInsets.only(left: 8, right: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 48,
+                      child: AutoPolicyWordmark(
+                        dark: isDarkMode,
+                        height: 48,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints:
+                        const BoxConstraints(minWidth: 30, minHeight: 30),
+                    tooltip: 'Collapse sidebar',
+                    icon: Icon(
+                      Icons.menu,
+                      size: 20,
+                      color: isDarkMode
+                          ? Colors.white70
+                          : const Color(0xFF4A433A),
+                    ),
+                    onPressed: () =>
+                        setState(() => _isSidebarCollapsed = true),
+                  ),
+                ],
+              ),
+            ),
+            // Navigation items list
+            Expanded(
+              child: _buildTreeSidebar(
+                  context, isDarkMode, activeRole, unreadCount),
+            ),
+            // Bottom Profile Section
+            _buildBottomProfileSection(
+                context, username, activeRole, isDarkMode),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCollapsedSidebar(BuildContext context, bool isDarkMode,
+      String activeRole, int unreadCount, String username) {
+    final activeTab = ref.watch(navigationTabProvider);
+    final treeNav = _getTreeNavigation(unreadCount, activeRole);
+
+    int selectedNavIndex = treeNav.indexWhere(
+        (cat) => cat.containsKey('index') && cat['index'] == activeTab);
+    if (selectedNavIndex < 0) {
+      selectedNavIndex = treeNav.indexWhere((cat) =>
+          cat.containsKey('subItems') &&
+          (cat['subItems'] as List).any((s) => s['index'] == activeTab));
+    }
+    if (selectedNavIndex < 0) selectedNavIndex = 0;
+
+    const double pillLeft = 4.0;
+    const double pillRight = 46.0;
+    const double pillWidth = pillRight - pillLeft; // 42.0
+    const double pillCenterX = pillLeft + pillWidth / 2; // 25.0
+    const double circleCenterX = 43.5;
+    const double circleRadius = 17.5; // diameter 35.0
+    const double pocketGap = 5.0;
+
+    const double itemHeight = 44.0;
+    const double topPadding = 52.0;
+    final double targetCenterY =
+        topPadding + (selectedNavIndex * itemHeight) + (itemHeight / 2);
+    final double fromY = _lastRailCenterY;
+    _lastRailCenterY = targetCenterY;
+
+    final sidebarBg =
+        isDarkMode ? const Color(0xFF101114) : const Color(0xFFE6DAC8);
+    final highlightBg =
+        isDarkMode ? const Color(0xFF282A30) : const Color(0xFFCBB9A4);
+    final activeIconColor =
+        isDarkMode ? Colors.white : const Color(0xFF1A1612);
+    final unselectedIconColor =
+        isDarkMode ? const Color(0xFF8E929E) : const Color(0xFF5C5247);
+
+    return Container(
+      width: 64,
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 1. Top Circular Logo Badge aligned directly over the vertical pill
+          Padding(
+            padding: const EdgeInsets.only(left: pillLeft, bottom: 8),
+            child: Container(
+              width: pillWidth,
+              height: pillWidth,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: sidebarBg,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDarkMode ? 0.35 : 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: InkWell(
+                onTap: () {
+                  setState(() {
+                    _isSidebarCollapsed = false;
+                  });
+                },
+                borderRadius: BorderRadius.circular(pillWidth / 2),
+                child: Center(
+                  child: SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: Image.asset(
+                      isDarkMode
+                          ? 'assets/images/logo_icon_dark.png'
+                          : 'assets/images/logo_icon_light.png',
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.medium,
+                      isAntiAlias: true,
+                      errorBuilder: (ctx, err, _) => ClipRect(
+                        child: OverflowBox(
+                          alignment: Alignment.centerLeft,
+                          minWidth: 120,
+                          maxWidth: 120,
+                          child: SizedBox(
+                            width: 120,
+                            height: 26,
+                            child: AutoPolicyWordmark(dark: isDarkMode),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // 2. The Floating Pill Rail with deep concentric pocket & separated circular highlight
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return TweenAnimationBuilder<double>(
+                  key: ValueKey(targetCenterY),
+                  tween: Tween<double>(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 420),
+                  curve: Curves.easeInOutCubic,
+                  builder: (context, t, child) {
+                    final double animatedY =
+                        fromY + (targetCenterY - fromY) * t;
+                    final bool isMoving = (targetCenterY - fromY).abs() > 1.0;
+                    final double midPop =
+                        isMoving ? math.sin(t * math.pi) : 0.0;
+                    final double activeX = circleCenterX + midPop * 2.5;
+
+                    return CustomPaint(
+                      painter: CollapsedRailPainter(
+                        railColor: sidebarBg,
+                        activeCenterY: animatedY,
+                        pillLeft: pillLeft,
+                        pillRight: pillRight,
+                        circleCenterX: activeX,
+                        pocketRadius:
+                            circleRadius + pocketGap - (midPop * 1.5),
+                        filletRadius: 12.0,
+                      ),
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          // Separated circular highlight badge nestled inside the concave pocket
+                          Positioned(
+                            top: animatedY - circleRadius,
+                            left: activeX - circleRadius,
+                            child: Container(
+                              width: circleRadius * 2,
+                              height: circleRadius * 2,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: highlightBg,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(
+                                        isDarkMode ? 0.30 : 0.10),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // Rail Items Column
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Top hamburger icon centered inside the vertical pill
+                              SizedBox(
+                                height: topPadding,
+                                width: 64,
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: pillCenterX - 18),
+                                    child: SizedBox(
+                                      width: 36,
+                                      height: 36,
+                                      child: IconButton(
+                                        padding: EdgeInsets.zero,
+                                        tooltip: 'Expand navigation',
+                                        icon: Icon(
+                                          Icons.menu,
+                                          size: 20,
+                                          color: isDarkMode
+                                              ? Colors.white70
+                                              : const Color(0xFF4A433A),
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _isSidebarCollapsed = false;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              // List of navigation icons
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children:
+                                        List.generate(treeNav.length, (idx) {
+                                      final cat = treeNav[idx];
+                                      final String catTitle =
+                                          cat['category'] as String;
+                                      final IconData catIcon =
+                                          cat['icon'] as IconData;
+                                      final bool isDirect =
+                                          cat.containsKey('index');
+                                      final int? directIndex = isDirect
+                                          ? (cat['index'] as int)
+                                          : null;
+                                      final bool isSelected =
+                                          idx == selectedNavIndex;
+                                      final double iconCenterX = isSelected
+                                          ? circleCenterX
+                                          : pillCenterX;
+
+                                      return SizedBox(
+                                        height: itemHeight,
+                                        width: 64,
+                                        child: AnimatedPadding(
+                                          duration: const Duration(
+                                              milliseconds: 360),
+                                          curve: Curves.easeOutBack,
+                                          padding: EdgeInsets.only(
+                                              left: iconCenterX - 18),
+                                          child: Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: Tooltip(
+                                              message: catTitle,
+                                              preferBelow: false,
+                                              child: InkWell(
+                                                onTap: () {
+                                                  if (isDirect &&
+                                                      directIndex != null) {
+                                                    ref
+                                                        .read(
+                                                            navigationNotifierProvider
+                                                                .notifier)
+                                                        .selectTab(directIndex);
+                                                  } else {
+                                                    setState(() {
+                                                      _isSidebarCollapsed =
+                                                          false;
+                                                    });
+                                                  }
+                                                },
+                                                borderRadius:
+                                                    BorderRadius.circular(18),
+                                                child: SizedBox(
+                                                  width: 36,
+                                                  height: 36,
+                                                  child: Center(
+                                                    child: Icon(
+                                                      catIcon,
+                                                      size: 19,
+                                                      color: isSelected
+                                                          ? activeIconColor
+                                                          : unselectedIconColor,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                                ),
+                              ),
+
+                              // Bottom profile avatar & logout centered on pillCenterX
+                              const SizedBox(height: 6),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: pillCenterX - 14),
+                                child: Tooltip(
+                                  message: '$username ($activeRole)',
+                                  child: InkWell(
+                                    onTap: () => _showUserProfileModal(
+                                        context,
+                                        username,
+                                        activeRole,
+                                        isDarkMode),
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: CircleAvatar(
+                                      radius: 14,
+                                      backgroundColor: highlightBg,
+                                      child: Text(
+                                        username.isNotEmpty
+                                            ? username
+                                                .substring(0, 1)
+                                                .toUpperCase()
+                                            : 'A',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: activeIconColor,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: pillCenterX - 18),
+                                child: SizedBox(
+                                  width: 36,
+                                  height: 36,
+                                  child: IconButton(
+                                    padding: EdgeInsets.zero,
+                                    tooltip: 'Sign out',
+                                    icon: Icon(
+                                      Icons.logout,
+                                      size: 18,
+                                      color: isDarkMode
+                                          ? Colors.white54
+                                          : const Color(0xFF5C5247),
+                                    ),
+                                    onPressed: () {
+                                      ref.read(authProvider.notifier).signOut();
+                                    },
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(themeModeProvider);
@@ -621,7 +1009,6 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     final String username = authSession?.username ?? 'GUEST';
     final bool isMobile = MediaQuery.sizeOf(context).width < 900;
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double sidebarWidth = _isSidebarCollapsed ? 64.0 : 200.0;
 
     final hasCriticalThreats =
         securityState.anomalies.any((anm) => !anm.isMitigated);
@@ -640,368 +1027,349 @@ class _MainLayoutState extends ConsumerState<MainLayout>
         backgroundColor: Colors.transparent,
         drawer: isMobile
             ? Drawer(
+                backgroundColor: isDarkMode
+                    ? const Color(0xFF101114)
+                    : const Color(0xFFE6DAC8),
                 child: SafeArea(
                     child: Column(children: [
-                Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: SizedBox(
-                        width: 142,
-                        height: 32,
-                        child: AutoPolicyWordmark(dark: isDarkMode))),
-                Expanded(
-                    child: _buildTreeSidebar(
-                        context, isDarkMode, activeRole, unreadCount)),
-                _buildBottomProfileSection(
-                    context, username, activeRole, isDarkMode),
-              ])))
+                  Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: SizedBox(
+                          width: 170,
+                          height: 42,
+                          child: AutoPolicyWordmark(dark: isDarkMode))),
+                  Expanded(
+                      child: _buildTreeSidebar(
+                          context, isDarkMode, activeRole, unreadCount)),
+                  _buildBottomProfileSection(
+                      context, username, activeRole, isDarkMode),
+                ])))
             : null,
         body: Stack(
           children: [
-            // Base background color (Solid Feather White #FAF9F6 in Light Mode, Pure Black in Dark Mode)
-            Container(
+            // Base background color: when collapsed, provide clean contrasting backdrop
+            // so the floating pill rail and separated circular pocket are crisp in both themes
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 260),
               decoration: BoxDecoration(
-                color: isDarkMode
-                    ? const Color(0xFF000000)
-                    : const Color(0xFFFAF9F6),
+                color: _isSidebarCollapsed
+                    ? (isDarkMode
+                        ? const Color(0xFF1C1E26)
+                        : const Color(0xFFFAF8F4))
+                    : (isDarkMode
+                        ? const Color(0xFF0B0C0E)
+                        : const Color(0xFFE6DAC8)),
               ),
             ),
 
-            // Main Layout Grid & Elements
+            // Main Layout Row
             CyberGrid(
               child: Stack(
                 children: [
                   Positioned.fill(
-                      child: Row(children: [
-                    if (!isMobile)
-                      AnimatedSize(
-                          duration: const Duration(milliseconds: 260),
-                          curve: Curves.easeInOutCubic,
-                          alignment: Alignment.centerLeft,
-                          clipBehavior: Clip.hardEdge,
+                    child: Row(
+                      children: [
+                        if (!isMobile)
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 260),
+                            curve: Curves.easeInOutCubic,
+                            alignment: Alignment.centerLeft,
+                            clipBehavior: Clip.none,
+                            child: _isSidebarCollapsed
+                                ? _buildCollapsedSidebar(
+                                    context,
+                                    isDarkMode,
+                                    activeRole,
+                                    unreadCount,
+                                    username)
+                                : _buildExpandedSidebar(
+                                    context,
+                                    isDarkMode,
+                                    activeRole,
+                                    unreadCount,
+                                    username),
+                          ),
+                        Expanded(
                           child: Container(
-                            width: sidebarWidth,
+                            margin: isMobile
+                                ? EdgeInsets.zero
+                                : const EdgeInsets.only(
+                                    top: 10, bottom: 10, right: 12, left: 6),
                             decoration: BoxDecoration(
                               color: isDarkMode
-                                  ? const Color(0xFF0F0F0F)
-                                  : const Color(0xFFFAF9F6),
-                              border: Border(
-                                right: BorderSide(
-                                  color: isDarkMode
-                                      ? const Color(0xFF337418)
-                                          .withOpacity(0.45)
-                                      : const Color(0xFF80A416)
-                                          .withOpacity(0.20),
-                                  width: 1,
-                                ),
-                              ),
-                              boxShadow: isDarkMode
+                                  ? const Color(0xFF141518)
+                                  : Colors.white,
+                              borderRadius: isMobile
+                                  ? BorderRadius.zero
+                                  : BorderRadius.circular(24),
+                              border: null,
+                              boxShadow: isMobile
                                   ? null
                                   : [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.02),
-                                        blurRadius: 4,
-                                        offset: const Offset(1, 0),
+                                        color: Colors.black.withOpacity(
+                                            isDarkMode ? 0.35 : 0.05),
+                                        blurRadius: 16,
+                                        offset: const Offset(0, 4),
                                       ),
                                     ],
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SizedBox(
-                                    height: _isSidebarCollapsed ? 92 : 58,
-                                    child: _isSidebarCollapsed
-                                        ? Column(children: [
-                                            const SizedBox(height: 8),
-                                            SizedBox(
-                                                width: 32,
-                                                height: 32,
-                                                child: ClipRect(
-                                                    child: OverflowBox(
-                                                        alignment: Alignment
-                                                            .centerLeft,
-                                                        minWidth: 142,
-                                                        maxWidth: 142,
-                                                        child: SizedBox(
-                                                            width: 142,
-                                                            height: 32,
-                                                            child: AutoPolicyWordmark(
-                                                                dark:
-                                                                    isDarkMode))))),
-                                            IconButton(
-                                                tooltip: 'Expand sidebar',
-                                                icon: const Icon(
-                                                    Icons.menu_open,
-                                                    size: 18,
-                                                    color: Color(0xFFC4E320)),
-                                                onPressed: () => setState(() =>
-                                                    _isSidebarCollapsed =
-                                                        false)),
-                                          ])
-                                        : Row(children: [
-                                            Expanded(
-                                                child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            left: 12),
-                                                    child: SizedBox(
-                                                        height: 32,
-                                                        child: AutoPolicyWordmark(
-                                                            dark:
-                                                                isDarkMode)))),
-                                            IconButton(
-                                                tooltip: 'Collapse sidebar',
-                                                icon: const Icon(Icons.menu,
-                                                    size: 18,
-                                                    color: Color(0xFFC4E320)),
-                                                onPressed: () => setState(() =>
-                                                    _isSidebarCollapsed =
-                                                        true)),
-                                          ])),
-                                Expanded(
-                                  child: _buildTreeSidebar(context, isDarkMode,
-                                      activeRole, unreadCount),
-                                ),
-                                _buildBottomProfileSection(
-                                    context, username, activeRole, isDarkMode),
-                              ],
-                            ),
-                          )),
-                    Expanded(
-                        child: Column(children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? const Color(0xFF0F0F0F)
-                              : const Color(0xFFFAF9F6),
-                          border: Border(
-                            bottom: BorderSide(
-                              color: isDarkMode
-                                  ? const Color(0xFF337418).withOpacity(0.45)
-                                  : const Color(0xFF80A416).withOpacity(0.20),
-                              width: 1,
-                            ),
-                          ),
-                          boxShadow: isDarkMode
-                              ? null
-                              : [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.03),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ],
-                        ),
-                        child: ConsoleRow(
-                          compact: true,
-                          minimumWidth: 360,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // Branding & Collapse Switch
-                            if (isMobile)
-                              Row(
+                            child: ClipRRect(
+                              borderRadius: isMobile
+                                  ? BorderRadius.zero
+                                  : BorderRadius.circular(24),
+                              child: Column(
                                 children: [
-                                  if (isMobile)
-                                    Builder(
-                                        builder: (ctx) => IconButton(
-                                            tooltip: 'Open navigation',
-                                            icon: const Icon(Icons.menu,
-                                                size: 20),
-                                            onPressed: () =>
-                                                Scaffold.of(ctx).openDrawer())),
-                                  if (!isMobile)
-                                    IconButton(
-                                      icon: Icon(
-                                        _isSidebarCollapsed
-                                            ? Icons.menu_open
-                                            : Icons.menu,
-                                        color: isDarkMode
-                                            ? CyberColors.neonCyan
-                                            : const Color(0xFF80A416),
-                                        size: 18,
-                                      ),
-                                      onPressed: () => setState(() =>
-                                          _isSidebarCollapsed =
-                                              !_isSidebarCollapsed),
-                                    ),
-                                  SizedBox(
-                                      width: screenWidth < 450 ? 108 : 142,
-                                      height: 32,
-                                      child:
-                                          AutoPolicyWordmark(dark: isDarkMode)),
-                                ],
-                              ),
-
-                            // Telemetry Health Status
-                            if (!isMobile && screenWidth > 1200)
-                              Builder(builder: (context) {
-                                final Color hudStatusColor = hasCriticalThreats
-                                    ? CyberColors.alertRed
-                                    : const Color(0xFF80A416);
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 14, vertical: 7),
-                                  decoration: BoxDecoration(
-                                    color: Colors.transparent,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                        width: 9,
-                                        height: 9,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: hudStatusColor,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: hudStatusColor,
-                                              blurRadius: 6,
-                                              spreadRadius: 1,
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(width: 9),
-                                      Text(
-                                        hasCriticalThreats
-                                            ? 'ALERT: INCIDENT ACTIVE'
-                                            : 'SYSTEM SHIELD: PROTECTED',
-                                        style: CyberTextStyles.technical(
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.w900,
-                                          color: hudStatusColor,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }),
-
-                            // Clock & Active User Scopes
-                            Row(
-                              children: [
-                                // Theme Mode Switcher Pill (Dark / Light)
-                                InkWell(
-                                  onTap: () {
-                                    ref.read(themeModeProvider.notifier).state =
-                                        !isDarkMode;
-                                  },
-                                  borderRadius: BorderRadius.circular(20),
-                                  child: Container(
+                                  Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 4),
+                                        horizontal: 14, vertical: 8),
                                     decoration: BoxDecoration(
                                       color: isDarkMode
-                                          ? const Color(0xFF141428)
-                                          : const Color(0xFFF1F5F9),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: isDarkMode
-                                            ? const Color(0xFFC4E320)
-                                            : const Color(0xFF80A416),
-                                        width: 1.2,
+                                          ? const Color(0xFF141518)
+                                          : Colors.white,
+                                      border: Border(
+                                        bottom: BorderSide(
+                                          color: isDarkMode
+                                              ? const Color(0xFF22242A)
+                                              : const Color(0xFFEFE8DD),
+                                          width: 1,
+                                        ),
                                       ),
                                     ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
+                                    child: ConsoleRow(
+                                      compact: true,
+                                      minimumWidth: 360,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
-                                        Icon(
-                                          isDarkMode
-                                              ? Icons.dark_mode_outlined
-                                              : Icons.light_mode_outlined,
-                                          size: 13,
-                                          color: isDarkMode
-                                              ? const Color(0xFFC4E320)
-                                              : const Color(0xFF80A416),
-                                        ),
-                                        const SizedBox(width: 5),
-                                        Text(
-                                          isDarkMode ? 'DARK' : 'LIGHT',
-                                          style: TextStyle(
-                                            fontFamily: 'monospace',
-                                            fontSize: 10.5,
-                                            fontWeight: FontWeight.bold,
-                                            color: isDarkMode
-                                                ? const Color(0xFFC4E320)
-                                                : const Color(0xFF80A416),
+                                        // Branding & Drawer toggle for mobile
+                                        if (isMobile)
+                                          Row(
+                                            children: [
+                                              Builder(
+                                                builder: (ctx) => IconButton(
+                                                  tooltip: 'Open navigation',
+                                                  icon: const Icon(Icons.menu,
+                                                      size: 20),
+                                                  onPressed: () =>
+                                                      Scaffold.of(ctx)
+                                                          .openDrawer(),
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                width: screenWidth < 450
+                                                    ? 130
+                                                    : 170,
+                                                height: 42,
+                                                child: AutoPolicyWordmark(
+                                                    dark: isDarkMode),
+                                              ),
+                                            ],
                                           ),
+
+                                        // Telemetry Health Status
+                                        if (!isMobile && screenWidth > 1150)
+                                          Builder(builder: (context) {
+                                            final Color hudStatusColor =
+                                                hasCriticalThreats
+                                                    ? CyberColors.alertRed
+                                                    : const Color(0xFF16A34A);
+                                            return Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 12, vertical: 6),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Container(
+                                                    width: 8,
+                                                    height: 8,
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      color: hudStatusColor,
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: hudStatusColor
+                                                              .withOpacity(0.5),
+                                                          blurRadius: 4,
+                                                          spreadRadius: 1,
+                                                        )
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                    hasCriticalThreats
+                                                        ? 'ALERT: INCIDENT ACTIVE'
+                                                        : 'SYSTEM SHIELD: PROTECTED',
+                                                    style: CyberTextStyles
+                                                        .technical(
+                                                      fontSize: 12.0,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: hudStatusColor,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          }),
+
+                                        // Clock & Active User Controls
+                                        Row(
+                                          children: [
+                                            // Theme Mode Switcher Pill (Dark / Light)
+                                            InkWell(
+                                              onTap: () {
+                                                ref
+                                                    .read(themeModeProvider
+                                                        .notifier)
+                                                    .state = !isDarkMode;
+                                              },
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 10,
+                                                        vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: isDarkMode
+                                                      ? const Color(0xFF22242A)
+                                                      : const Color(0xFFEFE8DD),
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                  border: Border.all(
+                                                    color: isDarkMode
+                                                        ? const Color(0xFF333640)
+                                                        : const Color(0xFFD4C5B3),
+                                                    width: 1,
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      isDarkMode
+                                                          ? Icons
+                                                              .dark_mode_outlined
+                                                          : Icons
+                                                              .light_mode_outlined,
+                                                      size: 13,
+                                                      color: isDarkMode
+                                                          ? Colors.white
+                                                          : const Color(
+                                                              0xFF4A433A),
+                                                    ),
+                                                    const SizedBox(width: 5),
+                                                    Text(
+                                                      isDarkMode
+                                                          ? 'DARK'
+                                                          : 'LIGHT',
+                                                      style: TextStyle(
+                                                        fontFamily: 'monospace',
+                                                        fontSize: 10.5,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: isDarkMode
+                                                            ? Colors.white
+                                                            : const Color(
+                                                                0xFF4A433A),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            // Developer Live Role Switcher Pill
+                                            if (screenWidth > 700)
+                                              _buildDevRoleSwitcher(
+                                                  context,
+                                                  activeRole,
+                                                  isDarkMode),
+                                            const SizedBox(width: 12),
+                                            // Clock
+                                            if (screenWidth > 1050) ...[
+                                              Text(
+                                                _currentTimeString,
+                                                style:
+                                                    CyberTextStyles.technical(
+                                                  color: isDarkMode
+                                                      ? const Color(0xFF9E9EA8)
+                                                      : const Color(0xFF4A433A),
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 16),
+                                            ],
+                                            // Notifications Bell
+                                            Stack(
+                                              clipBehavior: Clip.none,
+                                              children: [
+                                                IconButton(
+                                                  icon: Icon(
+                                                    Icons
+                                                        .notifications_outlined,
+                                                    color: isDarkMode
+                                                        ? const Color(
+                                                            0xFF9E9EA8)
+                                                        : const Color(
+                                                            0xFF4A433A),
+                                                    size: 20,
+                                                  ),
+                                                  onPressed: () {
+                                                    ref
+                                                        .read(
+                                                            navigationTabProvider
+                                                                .notifier)
+                                                        .state = 11;
+                                                  },
+                                                ),
+                                                if (unreadCount > 0)
+                                                  Positioned(
+                                                    top: 6,
+                                                    right: 6,
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              4),
+                                                      decoration:
+                                                          const BoxDecoration(
+                                                        shape: BoxShape.circle,
+                                                        color: CyberColors
+                                                            .alertRed,
+                                                      ),
+                                                      child: Text(
+                                                        '$unreadCount',
+                                                        style: const TextStyle(
+                                                            fontSize: 8,
+                                                            color: Colors.white,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 10),
-                                // Developer Live Role Switcher Pill
-                                if (screenWidth > 700)
-                                  _buildDevRoleSwitcher(
-                                      context, activeRole, isDarkMode),
-                                const SizedBox(width: 12),
-                                // Clock
-                                if (screenWidth > 1050) ...[
-                                  Text(
-                                    _currentTimeString,
-                                    style: CyberTextStyles.technical(
-                                      color: isDarkMode
-                                          ? CyberColors.neonCyan
-                                          : const Color(0xFF80A416),
-                                      fontSize: 13,
-                                    ),
+                                  Expanded(
+                                    child: _buildCentralContentArea(
+                                        context, isDarkMode),
                                   ),
-                                  const SizedBox(width: 16),
                                 ],
-                                // Notifications Bell
-                                Stack(
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    IconButton(
-                                      icon: Icon(
-                                        Icons.notifications_outlined,
-                                        color: isDarkMode
-                                            ? CyberColors.neonCyan
-                                            : const Color(0xFF80A416),
-                                        size: 20,
-                                      ),
-                                      onPressed: () {
-                                        // Navigate directly to dedicated Notifications full-page view
-                                        ref
-                                            .read(
-                                                navigationTabProvider.notifier)
-                                            .state = 11;
-                                      },
-                                    ),
-                                    if (unreadCount > 0)
-                                      Positioned(
-                                        top: 6,
-                                        right: 6,
-                                        child: Container(
-                                          padding: const EdgeInsets.all(4),
-                                          decoration: const BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: CyberColors.alertRed,
-                                          ),
-                                          child: Text(
-                                            '$unreadCount',
-                                            style: const TextStyle(
-                                                fontSize: 8,
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold),
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ],
+                              ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                      Expanded(
-                          child: _buildCentralContentArea(context, isDarkMode)),
-                    ])),
-                  ])),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -1013,13 +1381,13 @@ class _MainLayoutState extends ConsumerState<MainLayout>
             ? Container(
                 decoration: BoxDecoration(
                   color: isDarkMode
-                      ? const Color(0xFF0F0F0F)
-                      : const Color(0xFFFAF9F6),
+                      ? const Color(0xFF101114)
+                      : const Color(0xFFE6DAC8),
                   border: Border(
                     top: BorderSide(
                       color: isDarkMode
-                          ? const Color(0xFF337418).withOpacity(0.45)
-                          : const Color(0xFF0F1530).withOpacity(0.08),
+                          ? const Color(0xFF22242A)
+                          : const Color(0xFFDDD0BD),
                       width: 1,
                     ),
                   ),
@@ -1068,14 +1436,14 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                             mobileMenuItems[navIdx]['index'] as int;
                       },
                       backgroundColor: isDarkMode
-                          ? const Color(0xFF0F0F0F)
-                          : const Color(0xFFFAF9F6),
+                          ? const Color(0xFF101114)
+                          : const Color(0xFFE6DAC8),
                       selectedItemColor: isDarkMode
-                          ? const Color(0xFFC4E320)
-                          : const Color(0xFF1E3A8A),
+                          ? Colors.white
+                          : const Color(0xFF1A1612),
                       unselectedItemColor: isDarkMode
-                          ? const Color(0xFF888888)
-                          : const Color(0xFF64748B),
+                          ? const Color(0xFF8E929E)
+                          : const Color(0xFF5C5247),
                       selectedLabelStyle:
                           CyberTextStyles.technical(fontSize: 9.0),
                       unselectedLabelStyle:
@@ -1097,31 +1465,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
   }
 
   Widget _buildContentUI(BuildContext context, bool isDarkMode) {
-    return LayoutBuilder(builder: (context, bounds) {
-      final isOverview = ref.watch(navigationTabProvider) == 0;
-      final density = isOverview
-          ? 1.0
-          : bounds.maxWidth < 600
-              ? .9
-              : bounds.maxWidth < 1000
-                  ? .82
-                  : .88;
-      final virtualSize =
-          Size(bounds.maxWidth / density, bounds.maxHeight / density);
-      return ClipRect(
-          child: OverflowBox(
-              alignment: Alignment.topLeft,
-              minWidth: virtualSize.width,
-              maxWidth: virtualSize.width,
-              minHeight: virtualSize.height,
-              maxHeight: virtualSize.height,
-              child: Transform.scale(
-                  scale: density,
-                  alignment: Alignment.topLeft,
-                  child: MediaQuery(
-                      data: MediaQuery.of(context).copyWith(size: virtualSize),
-                      child: _getActiveScreen()))));
-    });
+    return _getActiveScreen();
   }
 
   Widget _buildCentralContentArea(BuildContext context, bool isDarkMode) {
@@ -1185,10 +1529,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF141428) : const Color(0xFFEFF6FF),
+        color: isDarkMode ? const Color(0xFF22242A) : const Color(0xFFEFE8DD),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF3B82F6),
+          color: isDarkMode ? const Color(0xFF333640) : const Color(0xFFD4C5B3),
           width: 1.2,
         ),
       ),
@@ -1196,18 +1540,18 @@ class _MainLayoutState extends ConsumerState<MainLayout>
         child: DropdownButton<String>(
           value: currentRoleVal,
           isDense: true,
-          dropdownColor: isDarkMode ? const Color(0xFF0F0F1A) : Colors.white,
+          dropdownColor: isDarkMode ? const Color(0xFF18191E) : Colors.white,
           icon: Icon(
             Icons.arrow_drop_down,
             color:
-                isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF1E3A8A),
+                isDarkMode ? Colors.white70 : const Color(0xFF4A433A),
             size: 18,
           ),
           style: CyberTextStyles.technical(
             fontSize: 11.0,
             fontWeight: FontWeight.bold,
             color:
-                isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF1E3A8A),
+                isDarkMode ? Colors.white : const Color(0xFF4A433A),
           ),
           items: const [
             DropdownMenuItem(
@@ -1259,127 +1603,49 @@ class _MainLayoutState extends ConsumerState<MainLayout>
 
   Widget _buildBottomProfileSection(
       BuildContext context, String username, String role, bool isDarkMode) {
-    if (!_showSidebarLabels) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(
-              color: isDarkMode
-                  ? const Color(0xFF337418).withOpacity(0.35)
-                  : const Color(0xFF80A416).withOpacity(0.20),
-            ),
-          ),
-        ),
-        child: Center(
-          child: Tooltip(
-            message: '$username ($role)\nClick to view operator profile',
-            child: InkWell(
-              onTap: () =>
-                  _showUserProfileModal(context, username, role, isDarkMode),
-              borderRadius: BorderRadius.circular(20),
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: isDarkMode
-                        ? const Color(0xFFC4E320).withOpacity(0.2)
-                        : const Color(0xFFC4E320).withOpacity(0.35),
-                    child: Icon(
-                      Icons.person,
-                      size: 18,
-                      color: const Color(0xFF80A416),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF5DD62C),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: isDarkMode ? Colors.black : Colors.white,
-                            width: 1.5),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF0A0A0A) : Colors.white,
+        color: isDarkMode ? const Color(0xFF101114) : const Color(0xFFE6DAC8),
         border: Border(
           top: BorderSide(
             color: isDarkMode
-                ? const Color(0xFF337418).withOpacity(0.40)
-                : const Color(0xFF80A416).withOpacity(0.20),
+                ? const Color(0xFF22242A)
+                : const Color(0xFFDDD0BD),
             width: 1,
           ),
         ),
       ),
       child: InkWell(
         onTap: () => _showUserProfileModal(context, username, role, isDarkMode),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(10),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             color:
-                isDarkMode ? const Color(0xFF141414) : const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(
-              color: isDarkMode
-                  ? const Color(0xFF80A416).withOpacity(0.4)
-                  : const Color(0xFF80A416).withOpacity(0.25),
-            ),
+                isDarkMode ? const Color(0xFF18191E) : const Color(0xFFDDD0BD),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: isDarkMode
-                        ? const Color(0xFFC4E320).withOpacity(0.2)
-                        : const Color(0xFFC4E320).withOpacity(0.35),
-                    child: Text(
-                      username.isNotEmpty
-                          ? username.substring(0, 1).toUpperCase()
-                          : 'A',
-                      style: CyberTextStyles.technical(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode
-                            ? const Color(0xFFC4E320)
-                            : const Color(0xFF80A416),
-                      ),
-                    ),
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: isDarkMode
+                    ? const Color(0xFF282A30)
+                    : const Color(0xFFCBB9A4),
+                child: Text(
+                  username.isNotEmpty
+                      ? username.substring(0, 1).toUpperCase()
+                      : 'A',
+                  style: CyberTextStyles.technical(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode
+                        ? Colors.white
+                        : const Color(0xFF1A1612),
                   ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF5DD62C),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: isDarkMode ? Colors.black : Colors.white,
-                            width: 1.5),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -1388,39 +1654,37 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      username,
+                      username.toUpperCase(),
                       style: CyberTextStyles.technical(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
                         color:
-                            isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                            isDarkMode ? Colors.white : const Color(0xFF1A1612),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 1),
-                          decoration: BoxDecoration(
-                            color: isDarkMode
-                                ? const Color(0xFF8B5CF6).withOpacity(0.2)
-                                : const Color(0xFFB1A9DA).withOpacity(0.35),
-                            borderRadius: BorderRadius.circular(3),
-                          ),
-                          child: Text(
-                            role.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 8.5,
-                              fontWeight: FontWeight.bold,
-                              color: isDarkMode
-                                  ? const Color(0xFFA88AED)
-                                  : const Color(0xFF5E7343),
-                            ),
-                          ),
+                    const SizedBox(height: 3),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 1.5),
+                      decoration: BoxDecoration(
+                        color: isDarkMode
+                            ? const Color(0xFF282A30)
+                            : const Color(0xFFCBB9A4),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        role.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.4,
+                          color: isDarkMode
+                              ? Colors.white70
+                              : const Color(0xFF1A1612),
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -1428,7 +1692,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
               Icon(
                 Icons.unfold_more,
                 size: 16,
-                color: isDarkMode ? Colors.white54 : const Color(0xFF64748B),
+                color: isDarkMode ? Colors.white54 : const Color(0xFF5C5247),
               ),
             ],
           ),
@@ -1446,8 +1710,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
           backgroundColor: Colors.transparent,
           child: CyberHudFrame(
             design: CyberFrameDesign.yellowTabNotch,
-            baseBorderColor: const Color(0xFF80A416),
-            surfaceColor: isDarkMode ? const Color(0xEF0F0F0F) : Colors.white,
+            baseBorderColor: isDarkMode
+                ? const Color(0xFF333640)
+                : const Color(0xFFCBB9A4),
+            surfaceColor: isDarkMode ? const Color(0xEF141518) : Colors.white,
             padding: const EdgeInsets.all(24),
             child: SizedBox(
               width: 480,
@@ -1835,3 +2101,112 @@ class ThemeUIWrapper extends StatelessWidget {
     return builder(context);
   }
 }
+
+class CollapsedRailPainter extends CustomPainter {
+  final Color railColor;
+  final double activeCenterY;
+  final double pillLeft;
+  final double pillRight;
+  final double circleCenterX;
+  final double pocketRadius;
+  final double filletRadius;
+
+  CollapsedRailPainter({
+    required this.railColor,
+    required this.activeCenterY,
+    this.pillLeft = 4.0,
+    this.pillRight = 46.0,
+    this.circleCenterX = 43.5,
+    this.pocketRadius = 22.5,
+    this.filletRadius = 12.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = railColor
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+
+    final double h = size.height;
+    final double pillWidth = pillRight - pillLeft;
+    final double r = pillWidth / 2.0; // 21.0 semicircular top/bottom cap
+
+    // Geometry for exact tangent-arc circular pocket on the right edge (x = pillRight)
+    final double xf = pillRight - filletRadius;
+    final double dx = (circleCenterX - xf).clamp(0.0, pocketRadius + filletRadius - 0.5);
+    final double rSum = pocketRadius + filletRadius;
+    final double dy = math.sqrt(rSum * rSum - dx * dx);
+    final double alpha = math.atan2(dy, dx);
+
+    // Clamp y0 so the top/bottom fillets never collide with the pill's top/bottom caps
+    final double y0 = activeCenterY.clamp(r + dy + 1.0, math.max(r + dy + 2.0, h - r - dy - 1.0));
+
+    final path = Path();
+    // Start at top-left after top semicircular cap
+    path.moveTo(pillLeft, r);
+    // Top semicircular cap from (pillLeft, r) to (pillRight, r)
+    path.arcTo(
+      Rect.fromLTWH(pillLeft, 0, pillWidth, pillWidth),
+      math.pi,
+      math.pi,
+      false,
+    );
+
+    // Right edge down to top fillet start
+    path.lineTo(pillRight, y0 - dy);
+
+    // 1. Top convex shoulder fillet arc turning smoothly into the pocket
+    path.arcTo(
+      Rect.fromCircle(center: Offset(xf, y0 - dy), radius: filletRadius),
+      0.0,
+      alpha,
+      false,
+    );
+
+    // 2. Central concentric concave pocket wrapping around the active circle with uniform gap
+    path.arcTo(
+      Rect.fromCircle(center: Offset(circleCenterX, y0), radius: pocketRadius),
+      alpha - math.pi,
+      -2.0 * alpha,
+      false,
+    );
+
+    // 3. Bottom convex shoulder fillet arc returning smoothly to the vertical right edge
+    path.arcTo(
+      Rect.fromCircle(center: Offset(xf, y0 + dy), radius: filletRadius),
+      -alpha,
+      alpha,
+      false,
+    );
+
+    // Right edge down to bottom semicircular cap
+    path.lineTo(pillRight, h - r);
+
+    // Bottom semicircular cap from (pillRight, h - r) to (pillLeft, h - r)
+    path.arcTo(
+      Rect.fromLTWH(pillLeft, h - pillWidth, pillWidth, pillWidth),
+      0.0,
+      math.pi,
+      false,
+    );
+
+    // Left vertical edge back to start
+    path.lineTo(pillLeft, r);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CollapsedRailPainter oldDelegate) =>
+      oldDelegate.railColor != railColor ||
+      oldDelegate.activeCenterY != activeCenterY ||
+      oldDelegate.pillLeft != pillLeft ||
+      oldDelegate.pillRight != pillRight ||
+      oldDelegate.circleCenterX != circleCenterX ||
+      oldDelegate.pocketRadius != pocketRadius ||
+      oldDelegate.filletRadius != filletRadius;
+}
+
+

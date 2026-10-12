@@ -93,7 +93,7 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
     ].join('\n');
 
     final modalBorder =
-        isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2);
+        isDarkMode ? const Color(0xFF333640) : const Color(0xFFCBB9A4);
 
     showDialog(
       context: context,
@@ -256,26 +256,34 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ConsoleRow(
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text('LIVE TELEMETRY TRAFFIC',
                                 style: CyberTextStyles.heading2For(isDarkMode)),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 12),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
+                                  horizontal: 10, vertical: 3),
                               decoration: BoxDecoration(
-                                color:
-                                    const Color(0xFF5DD62C).withOpacity(0.15),
+                                color: isDarkMode
+                                    ? const Color(0xFF5DD62C).withOpacity(0.12)
+                                    : const Color(0xFF80A416).withOpacity(0.12),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                    color: const Color(0xFF5DD62C), width: 1),
+                                    color: isDarkMode
+                                        ? const Color(0xFF5DD62C).withOpacity(0.6)
+                                        : const Color(0xFF80A416).withOpacity(0.6),
+                                    width: 1),
                               ),
                               child: Text(
                                 'ZEEK / PCAP INGESTION',
                                 style: CyberTextStyles.technical(
-                                    fontSize: 9,
-                                    color: const Color(0xFF5DD62C),
+                                    fontSize: 10,
+                                    color: isDarkMode
+                                        ? const Color(0xFF5DD62C)
+                                        : const Color(0xFF4D660D),
                                     fontWeight: FontWeight.bold),
                               ),
                             ),
@@ -564,8 +572,8 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
     final headerColor =
         isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A);
     final borderColor = isDarkMode
-        ? const Color(0xFF5DD62C).withOpacity(0.40)
-        : const Color(0xFFCDD4B2);
+        ? const Color(0xFF22242A)
+        : const Color(0xFFE2D8CC);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -897,8 +905,8 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
 
     final double estBitrateKbps = (feed.length * 42.6).clamp(120.0, 9400.0);
     final borderColor = isDarkMode
-        ? const Color(0xFF5DD62C).withOpacity(0.40)
-        : const Color(0xFFCDD4B2);
+        ? const Color(0xFF22242A)
+        : const Color(0xFFE2D8CC);
     final titleColor =
         isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A);
 

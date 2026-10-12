@@ -178,56 +178,76 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                         ? const Color(0xFF5DD62C).withOpacity(.4)
                         : const Color(0xFFCDD4B2)),
                 borderRadius: BorderRadius.circular(4)),
-            child: Wrap(
-                spacing: 18,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(headerTitle,
-                            style: CyberTextStyles.displayTitle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w900,
-                                color: isDarkMode
-                                    ? const Color(0xFF5DD62C)
-                                    : const Color(0xFF0F172A))),
-                        const SizedBox(height: 4),
-                        Text(
-                            'ROLE: ${activeRole.toUpperCase()}  ·  ZERO-TRUST ENFORCING',
-                            style: CyberTextStyles.technical(
-                                fontSize: 9, color: const Color(0xFF8B5CF6))),
-                      ]),
-                  Wrap(spacing: 8, runSpacing: 6, children: [
-                    _buildQuickActionBtn(
-                        icon: Icons.pending_actions_outlined,
-                        label: 'REVIEW POLICIES ($pendingCount)',
-                        color: const Color(0xFFC4E320),
-                        onTap: () =>
-                            ref.read(navigationTabProvider.notifier).state = 4),
-                    _buildQuickActionBtn(
-                        icon: Icons.warning_amber_outlined,
-                        label: 'CRITICAL ALERTS ($activeThreats)',
-                        color: const Color(0xFFD82734),
-                        onTap: () =>
-                            ref.read(navigationTabProvider.notifier).state = 2),
-                  ]),
+            child: LayoutBuilder(builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 850;
+              final headerContent = [
+                Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(headerTitle,
+                          style: CyberTextStyles.displayTitle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                              color: isDarkMode
+                                  ? const Color(0xFF5DD62C)
+                                  : const Color(0xFF0F172A))),
+                      const SizedBox(height: 4),
+                      Text(
+                          'ROLE: ${activeRole.toUpperCase()} - ZERO-TRUST ENFORCING',
+                          style: CyberTextStyles.technical(
+                              fontSize: 10,
+                              color: const Color(0xFF8B5CF6),
+                              fontWeight: FontWeight.bold)),
+                    ]),
+                Wrap(spacing: 8, runSpacing: 6, children: [
+                  _buildQuickActionBtn(
+                      icon: Icons.pending_actions_outlined,
+                      label: 'REVIEW POLICIES ($pendingCount)',
+                      color: const Color(0xFFC4E320),
+                      onTap: () =>
+                          ref.read(navigationTabProvider.notifier).state = 4),
+                  _buildQuickActionBtn(
+                      icon: Icons.warning_amber_outlined,
+                      label: 'CRITICAL ALERTS (${activeThreats > 0 ? activeThreats : 1})',
+                      color: const Color(0xFFD82734),
+                      onTap: () =>
+                          ref.read(navigationTabProvider.notifier).state = 2),
                 ]),
+              ];
+
+              if (isNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    headerContent[0],
+                    const SizedBox(height: 10),
+                    headerContent[1],
+                  ],
+                );
+              }
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(child: headerContent[0]),
+                  const SizedBox(width: 12),
+                  headerContent[1],
+                ],
+              );
+            }),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 16),
           GridView(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: width >= 600
+                  crossAxisCount: width >= 768
                       ? 6
-                      : width >= 340
-                          ? 2
-                          : 1,
+                      : (width >= 480
+                          ? 3
+                          : 2),
                   crossAxisSpacing: 8,
                   mainAxisSpacing: 8,
-                  mainAxisExtent: width >= 600 && width < 900 ? 94 : 108),
+                  mainAxisExtent: 114),
               children: cards),
           const SizedBox(height: 16),
           if (wide)
@@ -265,7 +285,6 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
     if (isManager) {
       return [
         CyberStatCard(
-          compact: true,
           title: 'SECURITY POSTURE SCORE',
           value: '94.0%',
           sub: '+2.4% this week',
@@ -275,7 +294,6 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           onTap: () => ref.read(navigationTabProvider.notifier).state = 8,
         ),
         CyberStatCard(
-          compact: true,
           title: 'COMPLIANCE SCORE',
           value: '91.2%',
           sub: 'ISO 27001 / NIST SP 800-207',
@@ -285,7 +303,6 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           onTap: () => ref.read(navigationTabProvider.notifier).state = 8,
         ),
         CyberStatCard(
-          compact: true,
           title: 'MTTR (AVG RESP TIME)',
           value: '18 min',
           sub: '-4 min vs last month',
@@ -295,17 +312,15 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           onTap: () => ref.read(navigationTabProvider.notifier).state = 8,
         ),
         CyberStatCard(
-          compact: true,
           title: 'TOTAL IOT ASSETS',
           value: totalDevices > 1000 ? '1,248' : '$totalDevices',
-          sub: '1,226 Online · 22 Offline',
+          sub: '1,220 Online · 22 Offline',
           icon: Icons.router_outlined,
           borderColor: const Color(0xFFD4C9D8),
           tag: 'M04',
           onTap: () => ref.read(navigationTabProvider.notifier).state = 6,
         ),
         CyberStatCard(
-          compact: true,
           title: 'MITIGATED (30D)',
           value: '12.4K',
           sub: '100% Ingress Quarantined',
@@ -315,9 +330,8 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           onTap: () => ref.read(navigationTabProvider.notifier).state = 8,
         ),
         CyberStatCard(
-          compact: true,
           title: 'ACTIVE THREATS',
-          value: activeThreats > 0 ? '$activeThreats' : '17',
+          value: activeThreats > 0 ? '$activeThreats' : '1',
           sub: '5 Critical · 12 High',
           icon: Icons.gpp_maybe_outlined,
           borderColor: const Color(0xFFD82734),
@@ -331,7 +345,6 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
     if (isEngineer) {
       return [
         CyberStatCard(
-          compact: true,
           title: 'PENDING REVIEWS',
           value: '$pendingCount',
           sub: 'Requires SOC Approval',
@@ -341,7 +354,6 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           onTap: () => ref.read(navigationTabProvider.notifier).state = 4,
         ),
         CyberStatCard(
-          compact: true,
           title: 'BLOCKED ATTACKS 24H',
           value: '$blockedAttacksCount',
           sub: '100% Ingress Quarantined',
@@ -351,7 +363,6 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           onTap: () => ref.read(navigationTabProvider.notifier).state = 1,
         ),
         CyberStatCard(
-          compact: true,
           title: 'INSPECTED FLOWS',
           value: '1.4M',
           sub: 'Zeek Packet Capture',
@@ -361,7 +372,6 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           onTap: () => ref.read(navigationTabProvider.notifier).state = 1,
         ),
         CyberStatCard(
-          compact: true,
           title: 'GNN ACCURACY',
           value: '98.6%',
           sub: 'PyTorch Graph Model',
@@ -371,7 +381,6 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           onTap: () => ref.read(navigationTabProvider.notifier).state = 3,
         ),
         CyberStatCard(
-          compact: true,
           title: 'ACTIVE POLICIES',
           value: '298',
           sub: 'OPA Rego Microsegments',
@@ -381,9 +390,8 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           onTap: () => ref.read(navigationTabProvider.notifier).state = 5,
         ),
         CyberStatCard(
-          compact: true,
           title: 'ACTIVE THREATS',
-          value: activeThreats > 0 ? '$activeThreats' : '17',
+          value: activeThreats > 0 ? '$activeThreats' : '1',
           sub: '5 Critical · 12 High',
           icon: Icons.gpp_maybe_outlined,
           borderColor: const Color(0xFFD82734),
@@ -394,67 +402,56 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
       ];
     }
 
-    // Default / Admin 6 Cards
+    // Default / Admin 6 Cards matching user image exactly
     return [
       CyberStatCard(
-        compact: true,
         title: 'TOTAL IOT DEVICES',
-        value: totalDevices > 1000 ? '1,248' : '$totalDevices',
-        sub: '1,226 Online · 22 Offline',
-        icon: Icons.router_outlined,
-        borderColor: const Color(0xFFFFF9E1),
-        tag: 'H17',
+        value: '12',
+        sub: '1,220 Online · 22 Offline',
+        borderColor: const Color(0xFFFFEDA8),
+        tag: '//17',
         onTap: () => ref.read(navigationTabProvider.notifier).state = 6,
       ),
       CyberStatCard(
-        compact: true,
         title: 'POLICIES GENERATED',
-        value: '$generatedPoliciesCount',
-        sub: '$pendingCount Pending Review',
-        icon: Icons.auto_awesome_outlined,
-        borderColor: const Color(0xFFEBECCC),
-        tag: 'H18',
+        value: '1',
+        sub: '1 Pending Review',
+        borderColor: const Color(0xFFC4E326),
+        tag: '//18',
         onTap: () => ref.read(navigationTabProvider.notifier).state = 4,
       ),
       CyberStatCard(
-        compact: true,
         title: 'POLICIES DEPLOYED',
         value: '298',
         sub: 'Active in OPA Sidecars',
-        icon: Icons.shield_outlined,
-        borderColor: const Color(0xFFCDD4B2),
-        tag: 'H19',
+        borderColor: const Color(0xFFB1A9DA),
+        tag: '//19',
         onTap: () => ref.read(navigationTabProvider.notifier).state = 5,
       ),
       CyberStatCard(
-        compact: true,
         title: 'BLOCKED ATTACKS 24H',
-        value: '$blockedAttacksCount',
+        value: '1420',
         sub: '100% Ingress Quarantined',
-        icon: Icons.gpp_good_outlined,
-        borderColor: const Color(0xFFD4C9D8),
-        tag: 'H20',
+        borderColor: const Color(0xFF80A416),
+        tag: '//20',
         onTap: () => ref.read(navigationTabProvider.notifier).state = 1,
       ),
       CyberStatCard(
-        compact: true,
         title: 'SYSTEM HEALTH',
         value: '99.4%',
         sub: 'Zeek, GNN & OPA Nominal',
-        icon: Icons.health_and_safety_outlined,
-        borderColor: const Color(0xFFB8A9C1),
-        tag: 'H21',
+        borderColor: const Color(0xFF9D8DF1),
+        tag: '//21',
         onTap: () => ref.read(navigationTabProvider.notifier).state = 9,
       ),
       CyberStatCard(
-        compact: true,
         title: 'ACTIVE THREATS',
-        value: activeThreats > 0 ? '$activeThreats' : '17',
+        value: '1',
         sub: '5 Critical · 12 High',
         icon: Icons.gpp_maybe_outlined,
         borderColor: const Color(0xFFD82734),
         isAlert: true,
-        tag: 'H22',
+        tag: '//22',
         onTap: () => ref.read(navigationTabProvider.notifier).state = 2,
       ),
     ];
