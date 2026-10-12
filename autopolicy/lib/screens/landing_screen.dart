@@ -12,6 +12,7 @@ import '../landing/visual_polish.dart';
 import '../landing/landing_route_observer.dart';
 import '../landing/renderer_host.dart';
 import '../providers/theme_provider.dart';
+import '../widgets/system_loader.dart';
 
 class LandingScreen extends ConsumerStatefulWidget {
   final String initialChapter;
@@ -28,8 +29,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
   Key _rendererKey = UniqueKey();
   late LandingComposition _layout;
   String? _sentViewport;
-  String? _lastRailStage;
-  final _stageKeys = List.generate(9, (_) => GlobalKey());
+  final ScrollController _copyScroll = ScrollController();
   Color get _accent => ref.read(themeModeProvider)
       ? const Color(0xFF94B51A)
       : const Color(0xFF708B0E);
@@ -60,21 +60,6 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
       _syncRouteVisibility();
     }
     setState(() {});
-    final railStage =
-        '${_layout.width}:${_story.chapter}:${_story.activeStage}';
-    if (_lastRailStage != railStage) {
-      _lastRailStage = railStage;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || _layout.verticalStages) return;
-        final target = _stageKeys[_story.activeStage].currentContext;
-        if (target != null) {
-          Scrollable.ensureVisible(target,
-              alignment: .5,
-              duration: Duration(milliseconds: _reduced ? 0 : 180),
-              curve: Curves.easeOut);
-        }
-      });
-    }
   }
 
   void _syncSettings() {
@@ -147,6 +132,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
   void dispose() {
     landingRouteObserver.unsubscribe(this);
     _story.removeListener(_updated);
+    _copyScroll.dispose();
     _story.dispose();
     super.dispose();
   }
@@ -156,7 +142,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
           label: label,
           onPressed: action,
           filled: filled,
-          compact: _layout.phone,
+          compact: _layout.compact,
           angular: true);
   List<dynamic> get _stages =>
       _content?[_story.chapter] as List<dynamic>? ?? [];
@@ -167,53 +153,58 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
               ? 'Security'
               : 'Explore',
       active: _story.chapter == chapter,
+      compact: _layout.width < 900,
       foreground: fg,
       onPressed: () => _chapter(chapter));
   Widget _header(bool narrow, Color foreground) => Container(
       height: _layout.header,
-      padding: EdgeInsets.symmetric(horizontal: _layout.phone ? 16 : 28),
-      decoration: BoxDecoration(
-          color: ref.read(themeModeProvider)
-              ? const Color(0xFF000000)
-              : const Color(0xFFFAF9F6),
-          border: Border(bottom: BorderSide(color: _accent.withOpacity(.18)))),
-      child: Stack(alignment: Alignment.center, children: [
-        Align(
-            alignment: Alignment.centerLeft,
-            child: Semantics(
-                label: 'AutoPolicy',
-                image: true,
-                child: SizedBox(
-                    width: _layout.phone ? 154 : 236,
-                    height: _layout.phone ? 38 : 56,
-                    child: AutoPolicyWordmark(
-                        dark: ref.read(themeModeProvider))))),
+      padding: EdgeInsets.symmetric(horizontal: _layout.width < 900 ? 16 : 24),
+      child: Row(children: [
+        Semantics(
+            label: 'AutoPolicy',
+            image: true,
+            child: SizedBox(
+                width: _layout.phone
+                    ? 120
+                    : _layout.width < 900
+                        ? 132
+                        : 166,
+                height: _layout.width < 900 ? 34 : 38,
+                child: AutoPolicyWordmark(dark: ref.read(themeModeProvider)))),
+        const Spacer(),
         if (!narrow)
-          Center(
-              child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: ['explore', 'arch', 'sec']
-                      .map((c) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: _navLink(c, foreground)))
-                      .toList())),
-        Align(
-            alignment: Alignment.centerRight,
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              CinematicButton(
-                  label: 'Sign in',
-                  compact: true,
-                  filled: true,
-                  onPressed: () =>
-                      Navigator.pushReplacementNamed(context, '/login')),
-              if (narrow)
-                IconButton(
-                    tooltip:
-                        'Chapter menu · ${_story.chapter == 'arch' ? 'Architecture' : _story.chapter == 'sec' ? 'Security' : 'Explore'}',
-                    onPressed: () => setState(() => _menu = !_menu),
-                    icon:
-                        Icon(_menu ? Icons.close : Icons.menu, color: _accent))
-            ]))
+          Row(
+              mainAxisSize: MainAxisSize.min,
+              children: ['explore', 'arch', 'sec']
+                  .map((c) => _navLink(c, foreground))
+                  .toList()),
+        if (!narrow) const Spacer(),
+        Row(mainAxisSize: MainAxisSize.min, children: [
+          IconButton(
+              tooltip:
+                  ref.read(themeModeProvider) ? 'Light theme' : 'Dark theme',
+              onPressed: _toggleTheme,
+              icon: Icon(
+                  ref.read(themeModeProvider)
+                      ? Icons.light_mode_outlined
+                      : Icons.dark_mode_outlined,
+                  size: 15,
+                  color: foreground)),
+          CinematicButton(
+              label: 'Sign in',
+              compact: true,
+              navbar: true,
+              filled: true,
+              angular: true,
+              onPressed: () =>
+                  Navigator.pushReplacementNamed(context, '/login')),
+          if (narrow)
+            IconButton(
+                tooltip:
+                    'Chapter menu · ${_story.chapter == 'arch' ? 'Architecture' : _story.chapter == 'sec' ? 'Security' : 'Explore'}',
+                onPressed: () => setState(() => _menu = !_menu),
+                icon: Icon(_menu ? Icons.close : Icons.menu, color: _accent))
+        ])
       ]));
 
   Widget _brandRail() => LayoutBuilder(builder: (context, constraints) {
@@ -237,13 +228,19 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
               width: mainWidth,
               child: Container(
                   decoration: BoxDecoration(
-                      color: fill,
+                      gradient: const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Color(0xFFB4CC40), fill, Color(0xFF68861A)]),
+                      border: Border.all(
+                          color: const Color(0xFFD1E678).withOpacity(.3),
+                          width: .6),
                       borderRadius: BorderRadius.circular(mainWidth / 2),
                       boxShadow: [
                     BoxShadow(
-                        color: fill.withOpacity(.3),
-                        blurRadius: 24,
-                        spreadRadius: 2)
+                        color: fill.withOpacity(.19),
+                        blurRadius: 22,
+                        spreadRadius: 1)
                   ]))),
           Positioned(
               left: 0,
@@ -281,6 +278,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
       });
 
   Widget _copy(bool portrait, Color fg, Color muted) {
+    if (!_story.ready) return const SizedBox.shrink();
     final hero = _story.hero;
     final darkAccent = ref.read(themeModeProvider)
         ? const Color(0xFFC5C764)
@@ -309,45 +307,53 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
             _story.activeStage == 6 ||
             chapter == 'sec' &&
                 (_story.activeStage == 2 || _story.activeStage == 3));
-    return StaggeredCopy(
-        key: ValueKey('$chapter/$hero/${_story.activeStage}'),
-        children: [
-          Text(
-              hero
-                  ? (chapter == 'explore'
-                      ? 'ANOMALY DETECTION · ZERO TRUST · POLICY AUTOMATION'
-                      : chapter == 'arch'
-                          ? 'SYSTEM ARCHITECTURE'
-                          : 'SECURITY')
-                  : '0${_story.activeStage + 1} / ${stage?[0] ?? ''}',
-              style: TextStyle(
-                  fontFamily: 'Orbitron',
-                  color: _accent,
-                  fontSize: 9,
-                  letterSpacing: 1.6)),
-          const SizedBox(height: 22),
-          HeroHeading(
-              text: heading,
-              foreground: fg,
-              accent: darkAccent,
-              size: _layout.headingSize,
-              emphasize: hero),
-          const SizedBox(height: 26),
-          Text(description,
-              style: TextStyle(
-                  fontFamily: 'SpaceGrotesk',
-                  color: muted,
-                  fontSize: _layout.phone ? 14 : 16,
-                  height: 1.65)),
-          const SizedBox(height: 24),
-          if (hero)
-            Wrap(spacing: 10, runSpacing: 16, children: [
+    Widget entrance(Widget child, int delay) =>
+        hero ? HeroEntrance(delay: delay, child: child) : child;
+    final children = <Widget>[
+      entrance(
+          hero && chapter == 'explore'
+              ? ExploreEyebrow(dark: ref.read(themeModeProvider))
+              : Text(
+                  hero
+                      ? (chapter == 'explore'
+                          ? 'ANOMALY DETECTION · ZERO TRUST · POLICY AUTOMATION'
+                          : chapter == 'arch'
+                              ? 'SYSTEM ARCHITECTURE'
+                              : 'SECURITY')
+                      : '0${_story.activeStage + 1} / ${stage?[0] ?? ''}',
+                  style: TextStyle(
+                      fontFamily: 'Orbitron',
+                      color: _accent,
+                      fontSize: 9,
+                      letterSpacing: 1.6)),
+          520),
+      SizedBox(height: _layout.gap),
+      HeroHeading(
+          text: heading,
+          foreground: fg,
+          accent: darkAccent,
+          size: _layout.headingSize,
+          emphasize: hero,
+          delay: hero ? 700 : 0),
+      SizedBox(height: _layout.gap),
+      TypingParagraph(
+          text: description,
+          delay: hero ? 1080 : 180,
+          style: TextStyle(
+              fontFamily: 'SpaceGrotesk',
+              color: muted,
+              fontSize: _layout.phone ? 14 : 16,
+              height: _layout.compact ? 1.5 : 1.65)),
+      SizedBox(height: _layout.gap + 4),
+      if (hero)
+        entrance(
+            Wrap(spacing: 14, runSpacing: 16, children: [
               _button(
-                  _layout.phone
-                      ? (chapter == 'sec' ? 'SECURITY →' : 'EXPLORE →')
+                  _layout.compact
+                      ? (chapter == 'sec' ? 'SECURITY >' : 'EXPLORE >')
                       : chapter == 'sec'
-                          ? 'EXPLORE SECURITY →'
-                          : 'EXPLORE SYSTEM →',
+                          ? 'EXPLORE SECURITY >'
+                          : 'EXPLORE SYSTEM >',
                   () => _story.progress(.4 / (_story.stageCount - 1)),
                   filled: true),
               _button(
@@ -357,56 +363,61 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
                           ? 'VIEW SECURITY'
                           : 'VIEW ARCHITECTURE',
                   () => _chapter(chapter == 'arch' ? 'sec' : 'arch'))
-            ])
-          else
-            Text(stage?[3].toString() ?? '',
+            ]),
+            1080 + description.characters.length * 22 + 100)
+      else
+        Text(stage?[3].toString() ?? '',
+            style: TextStyle(color: _accent, fontSize: 10, letterSpacing: 1.3)),
+      if (showPolicy) ...[const SizedBox(height: 22), _policy(gen, fg)],
+      if (_story.chapter == 'sec') ...[const SizedBox(height: 24), _workflow()],
+      if (_story.chapter == 'sec')
+        ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            dense: true,
+            iconColor: _accent,
+            collapsedIconColor: _accent,
+            title: Text('THREAT CATEGORIES',
                 style: TextStyle(
-                    color: _accent, fontSize: 10, letterSpacing: 1.3)),
-          if (showPolicy) ...[const SizedBox(height: 22), _policy(gen, fg)],
-          if (_story.chapter == 'sec') ...[
-            const SizedBox(height: 24),
-            _workflow()
-          ],
-          if (_story.chapter == 'sec')
-            ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                dense: true,
-                iconColor: _accent,
-                collapsedIconColor: _accent,
-                title: Text('THREAT CATEGORIES',
-                    style: TextStyle(
-                        fontFamily: 'Orbitron',
-                        color: muted,
-                        fontSize: 9,
-                        letterSpacing: 1)),
-                children: (_content?['threats'] as List? ?? [])
-                    .map((t) => Align(
-                        alignment: Alignment.centerLeft,
-                        child: Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Text((t as List)[0].toString(),
-                                style: TextStyle(
-                                    fontFamily: 'SpaceGrotesk',
-                                    color: muted,
-                                    fontSize: 12)))))
-                    .toList()),
-          if (_story.device != null) ...[
-            const SizedBox(height: 12),
-            Row(children: [
-              Expanded(
-                  child: Text('${_story.device} · ${_story.deviceStatus}',
-                      style: TextStyle(
-                          color: _story.deviceStatus == 'anomalous'
-                              ? const Color(0xFFD92949)
-                              : _accent,
-                          fontSize: 12))),
-              IconButton(
-                  tooltip: 'Dismiss device details',
-                  onPressed: _story.dismissDevice,
-                  icon: const Icon(Icons.close, size: 16))
-            ])
-          ]
-        ]);
+                    fontFamily: 'Orbitron',
+                    color: muted,
+                    fontSize: 9,
+                    letterSpacing: 1)),
+            children: (_content?['threats'] as List? ?? [])
+                .map((t) => Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text((t as List)[0].toString(),
+                            style: TextStyle(
+                                fontFamily: 'SpaceGrotesk',
+                                color: muted,
+                                fontSize: 12)))))
+                .toList()),
+      if (_story.device != null) ...[
+        const SizedBox(height: 12),
+        Row(children: [
+          Expanded(
+              child: Text('${_story.device} · ${_story.deviceStatus}',
+                  style: TextStyle(
+                      color: _story.deviceStatus == 'anomalous'
+                          ? const Color(0xFFD92949)
+                          : _accent,
+                      fontSize: 12))),
+          IconButton(
+              tooltip: 'Dismiss device details',
+              onPressed: _story.dismissDevice,
+              icon: const Icon(Icons.close, size: 16))
+        ])
+      ]
+    ];
+    final copyKey = ValueKey('$chapter/$hero/${_story.activeStage}');
+    return hero
+        ? Column(
+            key: copyKey,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: children)
+        : StaggeredCopy(key: copyKey, children: children);
   }
 
   Widget _policy(double gen, Color foreground) {
@@ -444,43 +455,6 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
         ]));
   }
 
-  Widget _rail(Color foreground) {
-    return Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: _stages
-            .asMap()
-            .entries
-            .map((entry) => TextButton(
-                onPressed: () => _story.gotoStage(entry.key),
-                child: Text('0${entry.key + 1}  ${(entry.value as List)[0]}',
-                    style: TextStyle(
-                        color: entry.key == _story.activeStage
-                            ? _accent
-                            : foreground.withOpacity(.45),
-                        fontSize: 10,
-                        letterSpacing: .7))))
-            .toList());
-  }
-
-  Widget _mobileRail(Color foreground) => SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-          children: _stages
-              .asMap()
-              .entries
-              .map((entry) => TextButton(
-                    key: _stageKeys[entry.key],
-                    onPressed: () => _story.gotoStage(entry.key),
-                    child: Text('0${entry.key + 1} ${(entry.value as List)[0]}',
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: entry.key == _story.activeStage
-                                ? _accent
-                                : foreground.withOpacity(.65))),
-                  ))
-              .toList()));
-
   Widget _workflow() {
     final f = _story.displayProgress * 4;
     final active = f < .5
@@ -515,13 +489,24 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
     final dark = ref.watch(themeModeProvider);
     final fg = dark ? const Color(0xFFEDF3E8) : const Color(0xFF1F2418);
     final muted = dark ? const Color(0xFFB0B8A6) : const Color(0xFF5F6552);
-    final bg = dark ? const Color(0xFF000000) : const Color(0xFFFAF9F6);
+    final bg = dark ? const Color(0xFF050A08) : const Color(0xFFFAF9F6);
     return Scaffold(
         backgroundColor: bg,
         body: SafeArea(child: LayoutBuilder(builder: (context, constraints) {
           final width = constraints.maxWidth, height = constraints.maxHeight;
           _layout = LandingComposition(width, height);
           final area = _layout.sceneRect;
+          final towerAnchors = _story.annotations
+              .where((a) => a['id'] == '_tower-anchor')
+              .toList();
+          final glowCenter = towerAnchors.isEmpty
+              ? null
+              : Offset(
+                  area.left +
+                      (towerAnchors.first['x'] as num).toDouble() * area.width,
+                  area.top +
+                      (towerAnchors.first['y'] as num).toDouble() *
+                          area.height);
           final viewport = _layout.kind.name;
           if (_story.ready && _sentViewport != viewport) {
             _sentViewport = viewport;
@@ -532,13 +517,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
               }
             });
           }
-          final alert = _story.parameter('roq') > .1 &&
-              _story.parameter('enf') < .6 &&
-              _story.parameter('iso') < .9 &&
-              _story.parameter('zt') < .5;
-          final copyTop = _layout.stacked
-              ? area.bottom + 8
-              : _layout.header + (height - _layout.header - 80) * .18;
+          final copyArea = _layout.copyRect;
           return CallbackShortcuts(
               bindings: {
                 const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
@@ -555,18 +534,18 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
                   child: Listener(
                       onPointerSignal: (event) {
                         if (event is PointerScrollEvent &&
-                            !Rect.fromLTWH(
-                                    _layout.contentLeft,
-                                    copyTop,
-                                    _layout.copyWidth,
-                                    height -
-                                        copyTop -
-                                        (_layout.stacked ? 72 : 100))
-                                .contains(event.localPosition)) {
+                            (!copyArea.contains(event.localPosition) ||
+                                !_copyScroll.hasClients ||
+                                _copyScroll.position.maxScrollExtent <= 0)) {
                           _scroll(event.scrollDelta.dy);
                         }
                       },
                       child: Stack(children: [
+                        Positioned.fill(
+                            child: HeroAtmosphere(
+                                scene: area,
+                                dark: dark,
+                                glowCenter: glowCenter)),
                         Positioned.fromRect(
                             rect: area,
                             child: RendererHost(
@@ -579,37 +558,34 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
                             width: _layout.brandWidth,
                             height: _layout.phone
                                 ? 132
-                                : height - _layout.header - 98,
-                            child: IgnorePointer(child: _brandRail())),
-                        if (_layout.verticalStages)
-                          Positioned(
-                              left: _layout.brandWidth + 24,
-                              top: _layout.header + 42,
-                              bottom: 108,
-                              width: _layout.railWidth,
-                              child: PointerInterceptor(child: _rail(fg))),
-                        if (!_layout.verticalStages)
-                          Positioned(
-                              top: _layout.header + 7,
-                              left: _layout.brandWidth + 20,
-                              right: 14,
-                              height: 38,
-                              child:
-                                  PointerInterceptor(child: _mobileRail(fg))),
-                        Positioned(
-                            left: _layout.contentLeft,
-                            top: copyTop,
-                            bottom: _layout.stacked ? 72 : 100,
-                            width: _layout.copyWidth,
+                                : height - _layout.header - 48,
+                            child: IgnorePointer(
+                                child: HeroEntrance(
+                                    delay: 160,
+                                    distance: 8,
+                                    child: _brandRail()))),
+                        Positioned.fromRect(
+                            rect: copyArea,
                             child: PointerInterceptor(
-                                child: SizedBox.expand(
-                                    child: SingleChildScrollView(
-                                        child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 12),
-                                            child: _copy(_layout.stacked, fg,
-                                                muted)))))),
+                                child: LayoutBuilder(
+                                    builder: (context, bounds) => SingleChildScrollView(
+                                        controller: _copyScroll,
+                                        child: ConstrainedBox(
+                                            constraints: BoxConstraints(
+                                                minHeight: bounds.maxHeight),
+                                            child: Align(
+                                                alignment: _layout.stacked
+                                                    ? Alignment.topLeft
+                                                    : Alignment.centerLeft,
+                                                child: Padding(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(vertical: 8),
+                                                    child: _copy(
+                                                        _layout.stacked,
+                                                        fg,
+                                                        muted)))))))),
                         ..._story.annotations
+                            .where((a) => a['id'] != '_tower-anchor')
                             .where((a) =>
                                 !_layout.phone ||
                                 (_story.parameter('dash') > .3
@@ -649,7 +625,9 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
                             left: 0,
                             right: 0,
                             child: PointerInterceptor(
-                                child: _header(_layout.menu, fg))),
+                                child: HeroEntrance(
+                                    distance: -8,
+                                    child: _header(_layout.menu, fg)))),
                         if (_menu)
                           Positioned(
                               top: _layout.header,
@@ -680,41 +658,6 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
                                                         fontSize: 12)),
                                                 onTap: () => _chapter(c))),
                                           ])))),
-                        Positioned(
-                            bottom: 12,
-                            left: _layout.brandWidth + 24,
-                            right: 20,
-                            child: PointerInterceptor(
-                                child: Column(children: [
-                              LinearProgressIndicator(
-                                  value: _story.displayProgress,
-                                  minHeight: 2,
-                                  color: _accent,
-                                  backgroundColor: fg.withOpacity(.1)),
-                              const SizedBox(height: 6),
-                              Row(children: [
-                                Expanded(
-                                    child: Text(
-                                        'DEMONSTRATION · ${alert ? 'ALERT' : 'PROTECTED'}${width > 600 ? ' · ${_story.parameter('zt') > .5 ? 'ZERO TRUST ACTIVE' : 'MONITORING'} · THREATS ${alert ? 1 : 0} · POLICIES ${_story.parameter('gen') > .9 ? 1 : 0} · BLOCKED ${_story.parameter('enf') > .6 ? 1 : 0}' : ''}',
-                                        style: TextStyle(
-                                            fontFamily: 'SpaceGrotesk',
-                                            color: alert
-                                                ? const Color(0xFFD92949)
-                                                : muted,
-                                            fontSize: 9,
-                                            letterSpacing: .5))),
-                                IconButton(
-                                    tooltip:
-                                        dark ? 'Light theme' : 'Dark theme',
-                                    onPressed: _toggleTheme,
-                                    icon: Icon(
-                                        dark
-                                            ? Icons.light_mode_outlined
-                                            : Icons.dark_mode_outlined,
-                                        size: 17,
-                                        color: fg))
-                              ])
-                            ]))),
                         if (!_story.ready)
                           Positioned.fill(
                               child: PointerInterceptor(
@@ -725,11 +668,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                             if (_story.error == null) ...[
-                                              CircularProgressIndicator(
-                                                  color: _accent),
-                                              const SizedBox(height: 20),
-                                              Text('Loading AutoPolicy system…',
-                                                  style: TextStyle(color: fg))
+                                              const SystemLoader()
                                             ] else ...[
                                               Padding(
                                                   padding:

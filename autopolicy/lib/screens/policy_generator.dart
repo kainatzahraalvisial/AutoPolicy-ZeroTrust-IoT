@@ -1,3 +1,4 @@
+import '../widgets/console_stat_strip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/policy.dart';
@@ -44,7 +45,9 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
     final securityState = ref.watch(securityProvider);
     final isDarkMode = ref.watch(themeModeProvider);
     final pendingPolicies = securityState.policies
-        .where((p) => p.status == PolicyStatus.pending || p.status == PolicyStatus.approved)
+        .where((p) =>
+            p.status == PolicyStatus.pending ||
+            p.status == PolicyStatus.approved)
         .toList();
 
     if (_selectedPolicy == null && pendingPolicies.isNotEmpty) {
@@ -72,7 +75,10 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
               children: [
                 Text(
                   'TRANSFORMER POLICY WORKSTATION',
-                  style: CyberTextStyles.heading2.copyWith(color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A)),
+                  style: CyberTextStyles.heading2.copyWith(
+                      color: isDarkMode
+                          ? const Color(0xFF5DD62C)
+                          : const Color(0xFF0F172A)),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -84,7 +90,7 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
             const SizedBox(height: 14),
 
             // Top Stat Cards Row
-            Row(
+            ConsoleStatStrip(
               children: [
                 Expanded(
                   child: CyberStatCard(
@@ -99,7 +105,8 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                 Expanded(
                   child: CyberStatCard(
                     title: 'ENFORCED POLICIES',
-                    value: '${securityState.policies.where((p) => p.status == PolicyStatus.deployed).length}',
+                    value:
+                        '${securityState.policies.where((p) => p.status == PolicyStatus.deployed).length}',
                     sub: 'Active OPA Sidecars',
                     borderColor: const Color(0xFFEBECCC), // 2. #EBECCC (H18)
                     tag: 'H18',
@@ -135,19 +142,29 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                   ? Container(
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
-                        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+                        color: isDarkMode
+                            ? const Color(0xFF0F0F0F)
+                            : const Color(0xFFFAF9F6),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.3) : const Color(0xFFCDD4B2)),
+                        border: Border.all(
+                            color: isDarkMode
+                                ? const Color(0xFF5DD62C).withOpacity(0.3)
+                                : const Color(0xFFCDD4B2)),
                       ),
                       child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.verified, color: Color(0xFF5DD62C), size: 48),
+                            const Icon(Icons.verified,
+                                color: Color(0xFF5DD62C), size: 48),
                             const SizedBox(height: 16),
                             Text(
                               'ALL TELEMETRIES CLEAR. NO POLICIES PENDING DEPLOYMENT.',
-                              style: CyberTextStyles.technical(color: isDarkMode ? Colors.white : const Color(0xFF0F172A), fontSize: 13),
+                              style: CyberTextStyles.technical(
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : const Color(0xFF0F172A),
+                                  fontSize: 13),
                             ),
                           ],
                         ),
@@ -165,7 +182,8 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                                 // Left Panel: Pending Deploys List (flex 3)
                                 Expanded(
                                   flex: 3,
-                                  child: _buildPendingPoliciesSidebar(pendingPolicies, isDarkMode),
+                                  child: _buildPendingPoliciesSidebar(
+                                      pendingPolicies, isDarkMode),
                                 ),
                                 const SizedBox(width: 14),
 
@@ -173,7 +191,8 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                                 Expanded(
                                   flex: 4,
                                   child: _selectedPolicy != null
-                                      ? _buildIncidentAnalysisCard(_selectedPolicy!, isDarkMode)
+                                      ? _buildIncidentAnalysisCard(
+                                          _selectedPolicy!, isDarkMode)
                                       : const SizedBox(),
                                 ),
                                 const SizedBox(width: 14),
@@ -182,7 +201,8 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                                 Expanded(
                                   flex: 5,
                                   child: _selectedPolicy != null
-                                      ? _buildRegoEditorCard(_selectedPolicy!, isDarkMode)
+                                      ? _buildRegoEditorCard(
+                                          _selectedPolicy!, isDarkMode)
                                       : const SizedBox(),
                                 ),
                               ],
@@ -192,7 +212,8 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
 
                           // Unified Sticky Footer Action Bar Across Workstation
                           if (_selectedPolicy != null)
-                            _buildUnifiedWorkstationFooter(_selectedPolicy!, isDarkMode),
+                            _buildUnifiedWorkstationFooter(
+                                _selectedPolicy!, isDarkMode),
                         ],
                       ),
                     ),
@@ -212,12 +233,23 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
           padding: const EdgeInsets.only(bottom: 12.0),
           child: CyberHudCard(
             tag: 'POL-${idx + 1}',
-            borderColor: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2),
+            borderColor:
+                isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(policy.deviceName.toUpperCase(), style: CyberTextStyles.technical(fontSize: 13, color: isDarkMode ? Colors.white : const Color(0xFF0F172A))),
-                Text('ID: ${policy.id}', style: CyberTextStyles.techMuted.copyWith(fontSize: 10, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
+                Text(policy.deviceName.toUpperCase(),
+                    style: CyberTextStyles.technical(
+                        fontSize: 13,
+                        color: isDarkMode
+                            ? Colors.white
+                            : const Color(0xFF0F172A))),
+                Text('ID: ${policy.id}',
+                    style: CyberTextStyles.techMuted.copyWith(
+                        fontSize: 10,
+                        color: isDarkMode
+                            ? Colors.white60
+                            : const Color(0xFF64748B))),
                 const SizedBox(height: 12),
                 _buildIncidentAnalysisCard(policy, isDarkMode),
                 const SizedBox(height: 12),
@@ -230,14 +262,17 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
     );
   }
 
-  Widget _buildPendingPoliciesSidebar(List<SecurityPolicy> policies, bool isDarkMode) {
+  Widget _buildPendingPoliciesSidebar(
+      List<SecurityPolicy> policies, bool isDarkMode) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.40) : const Color(0xFFCDD4B2),
+          color: isDarkMode
+              ? const Color(0xFF5DD62C).withOpacity(0.40)
+              : const Color(0xFFCDD4B2),
           width: 1.0,
         ),
       ),
@@ -249,40 +284,58 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.pending_actions, size: 15, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416)),
+                  Icon(Icons.pending_actions,
+                      size: 15,
+                      color: isDarkMode
+                          ? const Color(0xFF5DD62C)
+                          : const Color(0xFF80A416)),
                   const SizedBox(width: 6),
                   Text(
                     'PENDING APPROVALS',
                     style: CyberTextStyles.technical(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                      color: isDarkMode
+                          ? const Color(0xFF5DD62C)
+                          : const Color(0xFF0F172A),
                     ).copyWith(letterSpacing: 1.1),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                 decoration: BoxDecoration(
-                  color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.18) : const Color(0xFFEBECCC),
+                  color: isDarkMode
+                      ? const Color(0xFF5DD62C).withOpacity(0.18)
+                      : const Color(0xFFEBECCC),
                   borderRadius: BorderRadius.circular(3),
-                  border: Border.all(color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2), width: 1.0),
+                  border: Border.all(
+                      color: isDarkMode
+                          ? const Color(0xFF5DD62C)
+                          : const Color(0xFFCDD4B2),
+                      width: 1.0),
                 ),
                 child: Text(
                   '${policies.length} READY',
                   style: CyberTextStyles.technical(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w800,
-                    color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                    color: isDarkMode
+                        ? const Color(0xFF5DD62C)
+                        : const Color(0xFF0F172A),
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Divider(color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.35) : const Color(0xFFCDD4B2), height: 1),
+          Divider(
+              color: isDarkMode
+                  ? const Color(0xFF5DD62C).withOpacity(0.35)
+                  : const Color(0xFFCDD4B2),
+              height: 1),
           const SizedBox(height: 10),
-
           Expanded(
             child: ListView.builder(
               itemCount: policies.length,
@@ -299,16 +352,25 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                       });
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? (isDarkMode ? const Color(0xFF142416) : const Color(0xFFEBECCC))
-                            : (isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6)),
+                            ? (isDarkMode
+                                ? const Color(0xFF142416)
+                                : const Color(0xFFEBECCC))
+                            : (isDarkMode
+                                ? const Color(0xFF141414)
+                                : const Color(0xFFFAF9F6)),
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(
                           color: isSelected
-                              ? (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416))
-                              : (isDarkMode ? Colors.white12 : const Color(0xFFCDD4B2)),
+                              ? (isDarkMode
+                                  ? const Color(0xFF5DD62C)
+                                  : const Color(0xFF80A416))
+                              : (isDarkMode
+                                  ? Colors.white12
+                                  : const Color(0xFFCDD4B2)),
                           width: isSelected ? 1.5 : 0.8,
                         ),
                       ),
@@ -326,22 +388,33 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w700,
                                     color: isSelected
-                                        ? (isDarkMode ? Colors.white : const Color(0xFF0F172A))
-                                        : (isDarkMode ? Colors.white70 : const Color(0xFF334155)),
+                                        ? (isDarkMode
+                                            ? Colors.white
+                                            : const Color(0xFF0F172A))
+                                        : (isDarkMode
+                                            ? Colors.white70
+                                            : const Color(0xFF334155)),
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 5, vertical: 1.5),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFFA500).withOpacity(0.15),
+                                  color:
+                                      const Color(0xFFFFA500).withOpacity(0.15),
                                   borderRadius: BorderRadius.circular(3),
-                                  border: Border.all(color: const Color(0xFFFFA500), width: 0.6),
+                                  border: Border.all(
+                                      color: const Color(0xFFFFA500),
+                                      width: 0.6),
                                 ),
                                 child: Text(
                                   'REVIEW',
-                                  style: CyberTextStyles.technical(fontSize: 8.5, color: const Color(0xFFFFA500), fontWeight: FontWeight.bold),
+                                  style: CyberTextStyles.technical(
+                                      fontSize: 8.5,
+                                      color: const Color(0xFFFFA500),
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ],
@@ -352,8 +425,12 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                             style: CyberTextStyles.technical(
                               fontSize: 10,
                               color: isSelected
-                                  ? (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416))
-                                  : (isDarkMode ? Colors.white38 : const Color(0xFF64748B)),
+                                  ? (isDarkMode
+                                      ? const Color(0xFF5DD62C)
+                                      : const Color(0xFF80A416))
+                                  : (isDarkMode
+                                      ? Colors.white38
+                                      : const Color(0xFF64748B)),
                             ),
                           ),
                         ],
@@ -376,7 +453,9 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
         color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: isDarkMode ? const Color(0xFFA88AED).withOpacity(0.40) : const Color(0xFFCDD4B2),
+          color: isDarkMode
+              ? const Color(0xFFA88AED).withOpacity(0.40)
+              : const Color(0xFFCDD4B2),
           width: 1.0,
         ),
       ),
@@ -388,47 +467,67 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.troubleshoot, size: 15, color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFFB8A9C1)),
+                  Icon(Icons.troubleshoot,
+                      size: 15,
+                      color: isDarkMode
+                          ? const Color(0xFFA88AED)
+                          : const Color(0xFFB8A9C1)),
                   const SizedBox(width: 6),
                   Text(
                     'INCIDENT ANALYSIS DIAGNOSTIC',
                     style: CyberTextStyles.technical(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF0F172A),
+                      color: isDarkMode
+                          ? const Color(0xFFA88AED)
+                          : const Color(0xFF0F172A),
                     ).copyWith(letterSpacing: 1.1),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                 decoration: BoxDecoration(
-                  color: isDarkMode ? const Color(0xFFA88AED).withOpacity(0.18) : const Color(0xFFD4C9D8).withOpacity(0.5),
+                  color: isDarkMode
+                      ? const Color(0xFFA88AED).withOpacity(0.18)
+                      : const Color(0xFFD4C9D8).withOpacity(0.5),
                   borderRadius: BorderRadius.circular(3),
-                  border: Border.all(color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFFB8A9C1), width: 1.0),
+                  border: Border.all(
+                      color: isDarkMode
+                          ? const Color(0xFFA88AED)
+                          : const Color(0xFFB8A9C1),
+                      width: 1.0),
                 ),
                 child: Text(
                   'GNN TRIAGE',
                   style: CyberTextStyles.technical(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w800,
-                    color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF0F172A),
+                    color: isDarkMode
+                        ? const Color(0xFFA88AED)
+                        : const Color(0xFF0F172A),
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Divider(color: isDarkMode ? const Color(0xFFA88AED).withOpacity(0.35) : const Color(0xFFCDD4B2), height: 1),
+          Divider(
+              color: isDarkMode
+                  ? const Color(0xFFA88AED).withOpacity(0.35)
+                  : const Color(0xFFCDD4B2),
+              height: 1),
           const SizedBox(height: 12),
-
           Text(
             policy.deviceName.toUpperCase(),
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 17,
               fontWeight: FontWeight.w900,
-              color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF0F172A),
+              color: isDarkMode
+                  ? const Color(0xFFA88AED)
+                  : const Color(0xFF0F172A),
             ),
           ),
           const SizedBox(height: 2),
@@ -436,23 +535,34 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
             'TARGET DEVICE ID: ${policy.deviceId}',
             style: CyberTextStyles.technical(
               fontSize: 10.5,
-              color: isDarkMode ? const Color(0xFFFFE997) : const Color(0xFF80A416),
+              color: isDarkMode
+                  ? const Color(0xFFFFE997)
+                  : const Color(0xFF80A416),
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 12),
-
           Expanded(
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildDiagItem('CONFIDENCE LEVEL', '${(policy.confidence * 100).toStringAsFixed(1)}% (Transformer DNN & GraphSAGE)', isDarkMode),
-                  _buildDiagItem('AI RATIONALE', policy.explanation, isDarkMode),
-                  _buildDiagItem('SEGMENTATION PROTOCOL', 'Zero-Trust OPA Microsegmentation Rule', isDarkMode),
-                  _buildDiagItem('DEPLOYMENT SCOPE', 'Kubernetes Envoy Gateway Edge Sidecars (Port 8181)', isDarkMode),
-                  _buildDiagItem('INGESTED TELEMETRY FLOW', 'Zeek Conformer Feature Vector #4892', isDarkMode),
-                  _buildDiagItem('SYNTHESIS LATENCY', '1.4ms (TorchScript JIT Model)', isDarkMode),
+                  _buildDiagItem(
+                      'CONFIDENCE LEVEL',
+                      '${(policy.confidence * 100).toStringAsFixed(1)}% (Transformer DNN & GraphSAGE)',
+                      isDarkMode),
+                  _buildDiagItem(
+                      'AI RATIONALE', policy.explanation, isDarkMode),
+                  _buildDiagItem('SEGMENTATION PROTOCOL',
+                      'Zero-Trust OPA Microsegmentation Rule', isDarkMode),
+                  _buildDiagItem(
+                      'DEPLOYMENT SCOPE',
+                      'Kubernetes Envoy Gateway Edge Sidecars (Port 8181)',
+                      isDarkMode),
+                  _buildDiagItem('INGESTED TELEMETRY FLOW',
+                      'Zeek Conformer Feature Vector #4892', isDarkMode),
+                  _buildDiagItem('SYNTHESIS LATENCY',
+                      '1.4ms (TorchScript JIT Model)', isDarkMode),
                 ],
               ),
             ),
@@ -472,7 +582,9 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
             header,
             style: CyberTextStyles.technical(
               fontSize: 10,
-              color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
+              color: isDarkMode
+                  ? const Color(0xFF5DD62C)
+                  : const Color(0xFF80A416),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -499,7 +611,9 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
         color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.40) : const Color(0xFFCDD4B2),
+          color: isDarkMode
+              ? const Color(0xFF5DD62C).withOpacity(0.40)
+              : const Color(0xFFCDD4B2),
           width: 1.0,
         ),
       ),
@@ -511,38 +625,57 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.code, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416), size: 15),
+                  Icon(Icons.code,
+                      color: isDarkMode
+                          ? const Color(0xFF5DD62C)
+                          : const Color(0xFF80A416),
+                      size: 15),
                   const SizedBox(width: 6),
                   Text(
                     'REGO POLICY BUILDER',
                     style: CyberTextStyles.technical(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
-                      color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                      color: isDarkMode
+                          ? const Color(0xFF5DD62C)
+                          : const Color(0xFF0F172A),
                     ).copyWith(letterSpacing: 1.1),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                 decoration: BoxDecoration(
-                  color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.18) : const Color(0xFFEBECCC),
+                  color: isDarkMode
+                      ? const Color(0xFF5DD62C).withOpacity(0.18)
+                      : const Color(0xFFEBECCC),
                   borderRadius: BorderRadius.circular(3),
-                  border: Border.all(color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2), width: 1.0),
+                  border: Border.all(
+                      color: isDarkMode
+                          ? const Color(0xFF5DD62C)
+                          : const Color(0xFFCDD4B2),
+                      width: 1.0),
                 ),
                 child: Text(
                   'OPA v0.68',
                   style: CyberTextStyles.technical(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w800,
-                    color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                    color: isDarkMode
+                        ? const Color(0xFF5DD62C)
+                        : const Color(0xFF0F172A),
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Divider(color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.35) : const Color(0xFFCDD4B2), height: 1),
+          Divider(
+              color: isDarkMode
+                  ? const Color(0xFF5DD62C).withOpacity(0.35)
+                  : const Color(0xFFCDD4B2),
+              height: 1),
           const SizedBox(height: 10),
 
           // Code text editor panel
@@ -550,10 +683,14 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF050608) : const Color(0xFFFAF9F6),
+                color: isDarkMode
+                    ? const Color(0xFF050608)
+                    : const Color(0xFFFAF9F6),
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(
-                  color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.30) : const Color(0xFFCDD4B2),
+                  color: isDarkMode
+                      ? const Color(0xFF5DD62C).withOpacity(0.30)
+                      : const Color(0xFFCDD4B2),
                   width: 1.0,
                 ),
               ),
@@ -561,17 +698,23 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                 controller: _codeController,
                 maxLines: null,
                 keyboardType: TextInputType.multiline,
-                cursorColor: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                cursorColor: isDarkMode
+                    ? const Color(0xFF5DD62C)
+                    : const Color(0xFF0F172A),
                 style: TextStyle(
                   fontFamily: 'monospace',
-                  color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                  color: isDarkMode
+                      ? const Color(0xFF5DD62C)
+                      : const Color(0xFF0F172A),
                   fontSize: 12.5,
                   height: 1.4,
                   fontWeight: FontWeight.w600,
                 ),
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: isDarkMode ? const Color(0xFF050608) : const Color(0xFFFAF9F6),
+                  fillColor: isDarkMode
+                      ? const Color(0xFF050608)
+                      : const Color(0xFFFAF9F6),
                   isDense: true,
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
@@ -586,7 +729,8 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
     );
   }
 
-  Widget _buildUnifiedWorkstationFooter(SecurityPolicy policy, bool isDarkMode) {
+  Widget _buildUnifiedWorkstationFooter(
+      SecurityPolicy policy, bool isDarkMode) {
     final bool isDeploying = policy.status == PolicyStatus.approved;
 
     return Container(
@@ -595,7 +739,9 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
         color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.40) : const Color(0xFFCDD4B2),
+          color: isDarkMode
+              ? const Color(0xFF5DD62C).withOpacity(0.40)
+              : const Color(0xFFCDD4B2),
           width: 1.0,
         ),
       ),
@@ -607,7 +753,9 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                   height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416)),
+                    valueColor: AlwaysStoppedAnimation<Color>(isDarkMode
+                        ? const Color(0xFF5DD62C)
+                        : const Color(0xFF80A416)),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -617,7 +765,9 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                     style: CyberTextStyles.technical(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w700,
-                      color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                      color: isDarkMode
+                          ? const Color(0xFF5DD62C)
+                          : const Color(0xFF0F172A),
                     ),
                   ),
                 ),
@@ -633,7 +783,8 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                       _selectedPolicy = null;
                     });
                   },
-                  icon: const Icon(Icons.close, size: 14, color: Color(0xFFDF2531)),
+                  icon: const Icon(Icons.close,
+                      size: 14, color: Color(0xFFDF2531)),
                   label: Text(
                     'REJECT RECOMMENDATION',
                     style: CyberTextStyles.technical(
@@ -644,30 +795,44 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                   ),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFFDF2531), width: 1),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4)),
                   ),
                 ),
                 const Spacer(),
 
                 // Active Target Chip
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                   decoration: BoxDecoration(
-                    color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
+                    color: isDarkMode
+                        ? const Color(0xFF141414)
+                        : const Color(0xFFFAF9F6),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.40) : const Color(0xFFCDD4B2)),
+                    border: Border.all(
+                        color: isDarkMode
+                            ? const Color(0xFF5DD62C).withOpacity(0.40)
+                            : const Color(0xFFCDD4B2)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.terminal, size: 15, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416)),
+                      Icon(Icons.terminal,
+                          size: 15,
+                          color: isDarkMode
+                              ? const Color(0xFF5DD62C)
+                              : const Color(0xFF80A416)),
                       const SizedBox(width: 8),
                       Text(
                         'ENVOY SIDECAR : PORT 8181 · OPA REGO V0.68',
                         style: CyberTextStyles.technical(
                           fontSize: 12.0,
                           fontWeight: FontWeight.w800,
-                          color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                          color: isDarkMode
+                              ? Colors.white
+                              : const Color(0xFF0F172A),
                         ),
                       ),
                     ],
@@ -680,19 +845,31 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                   onPressed: () {
                     ref.read(navigationNotifierProvider.notifier).selectTab(7);
                   },
-                  icon: Icon(Icons.science_outlined, size: 14, color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFFB8A9C1)),
+                  icon: Icon(Icons.science_outlined,
+                      size: 14,
+                      color: isDarkMode
+                          ? const Color(0xFFA88AED)
+                          : const Color(0xFFB8A9C1)),
                   label: Text(
                     'TEST IN SIMULATION',
                     style: CyberTextStyles.technical(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF0F172A),
+                      color: isDarkMode
+                          ? const Color(0xFFA88AED)
+                          : const Color(0xFF0F172A),
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFFCDD4B2), width: 1),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                    side: BorderSide(
+                        color: isDarkMode
+                            ? const Color(0xFFA88AED)
+                            : const Color(0xFFCDD4B2),
+                        width: 1),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4)),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -700,21 +877,31 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
                 // Approve & Deploy to OPA Button
                 ElevatedButton.icon(
                   onPressed: () {
-                    ref.read(securityProvider.notifier).deployPolicy(policy.id, _codeController.text);
+                    ref
+                        .read(securityProvider.notifier)
+                        .deployPolicy(policy.id, _codeController.text);
                   },
-                  icon: Icon(Icons.rocket_launch, size: 14, color: isDarkMode ? Colors.black : const Color(0xFF0F172A)),
+                  icon: Icon(Icons.rocket_launch,
+                      size: 14,
+                      color:
+                          isDarkMode ? Colors.black : const Color(0xFF0F172A)),
                   label: Text(
                     'APPROVE & DEPLOY TO OPA',
                     style: CyberTextStyles.technical(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w900,
-                      color: isDarkMode ? Colors.black : const Color(0xFF0F172A),
+                      color:
+                          isDarkMode ? Colors.black : const Color(0xFF0F172A),
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFB8A9C1),
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                    backgroundColor: isDarkMode
+                        ? const Color(0xFF5DD62C)
+                        : const Color(0xFFB8A9C1),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4)),
                   ),
                 ),
               ],
@@ -722,4 +909,3 @@ class _PolicyGeneratorState extends ConsumerState<PolicyGenerator> {
     );
   }
 }
-

@@ -1,3 +1,5 @@
+import '../widgets/console_stat_strip.dart';
+import '../widgets/console_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,7 +13,8 @@ class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
+  ConsumerState<NotificationsScreen> createState() =>
+      _NotificationsScreenState();
 }
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
@@ -40,7 +43,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Page Header & Actions Bar
-            Row(
+            ConsoleRow(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
@@ -51,7 +54,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       style: CyberTextStyles.displayTitle(
                         fontSize: 18.0,
                         fontWeight: FontWeight.w900,
-                        color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                        color: isDarkMode
+                            ? const Color(0xFF5DD62C)
+                            : const Color(0xFF0F172A),
                       ).copyWith(letterSpacing: 1.5),
                     ),
                     const SizedBox(height: 4),
@@ -59,7 +64,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       'REAL-TIME LOG STREAM, THREAT DETECTIONS & DEPLOYMENT INCIDENTS',
                       style: GoogleFonts.inter(
                         fontSize: 12.0,
-                        color: isDarkMode ? Colors.white60 : const Color(0xFF64748B),
+                        color: isDarkMode
+                            ? Colors.white60
+                            : const Color(0xFF64748B),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -72,13 +79,18 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   icon: const Icon(Icons.cleaning_services_outlined, size: 16),
                   label: Text(
                     'CLEAR ALL LOGS',
-                    style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: CyberTextStyles.technical(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFD82734),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6)),
                     elevation: 0,
                   ),
                 ),
@@ -87,7 +99,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             const SizedBox(height: 16),
 
             // Top Stat Row for Alert Metrics (HUD Frames & Color Order Aligned)
-            Row(
+            ConsoleStatStrip(
               children: [
                 Expanded(
                   child: CyberStatCard(
@@ -104,7 +116,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 Expanded(
                   child: CyberStatCard(
                     title: 'REGO DEPLOYMENTS',
-                    value: '${notifications.where((n) => n.type == 'deploy').length}',
+                    value:
+                        '${notifications.where((n) => n.type == 'deploy').length}',
                     sub: 'OPA Active Enforcements',
                     icon: Icons.rocket_launch_outlined,
                     borderColor: const Color(0xFFEBECCC),
@@ -116,7 +129,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 Expanded(
                   child: CyberStatCard(
                     title: 'WARNING ALERTS',
-                    value: '${notifications.where((n) => n.type == 'warning').length}',
+                    value:
+                        '${notifications.where((n) => n.type == 'warning').length}',
                     sub: 'Triaged Anomaly Warnings',
                     icon: Icons.warning_amber_outlined,
                     borderColor: const Color(0xFFDCA278), // Clay Color
@@ -128,7 +142,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 Expanded(
                   child: CyberStatCard(
                     title: 'CRITICAL THREATS',
-                    value: '${notifications.where((n) => n.type == 'threat').length}',
+                    value:
+                        '${notifications.where((n) => n.type == 'threat').length}',
                     sub: 'Immediate Blast Radius',
                     icon: Icons.gpp_bad_outlined,
                     borderColor: const Color(0xFFD82734), // Threat Red at end
@@ -142,12 +157,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             const SizedBox(height: 16),
 
             // Category Filter Buttons (Solid fill with white text when selected)
-            Row(
+            ConsoleRow(
               children: [
                 _buildFilterButton('ALL', const Color(0xFFCDD4B2), isDarkMode),
-                _buildFilterButton('DEPLOY', const Color(0xFF08652C), isDarkMode),
-                _buildFilterButton('WARNINGS', const Color(0xFFDCA278), isDarkMode),
-                _buildFilterButton('THREATS', const Color(0xFFD82734), isDarkMode),
+                _buildFilterButton(
+                    'DEPLOY', const Color(0xFF08652C), isDarkMode),
+                _buildFilterButton(
+                    'WARNINGS', const Color(0xFFDCA278), isDarkMode),
+                _buildFilterButton(
+                    'THREATS', const Color(0xFFD82734), isDarkMode),
               ],
             ),
             const SizedBox(height: 16),
@@ -162,7 +180,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                         final n = filteredList[idx];
                         final isHovered = _hoveredNotificationIdx == idx;
 
-                        Color statusColor = const Color(0xFF08652C); // default info
+                        Color statusColor =
+                            const Color(0xFF08652C); // default info
                         IconData iconData = Icons.info_outline;
 
                         if (n.type == 'threat') {
@@ -180,12 +199,16 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                             '${n.timestamp.hour.toString().padLeft(2, '0')}:${n.timestamp.minute.toString().padLeft(2, '0')}:${n.timestamp.second.toString().padLeft(2, '0')}';
 
                         return MouseRegion(
-                          onEnter: (_) => setState(() => _hoveredNotificationIdx = idx),
-                          onExit: (_) => setState(() => _hoveredNotificationIdx = null),
+                          onEnter: (_) =>
+                              setState(() => _hoveredNotificationIdx = idx),
+                          onExit: (_) =>
+                              setState(() => _hoveredNotificationIdx = null),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 150),
                             margin: const EdgeInsets.only(bottom: 10),
-                            transform: isHovered ? Matrix4.translationValues(0, -2, 0) : Matrix4.identity(),
+                            transform: isHovered
+                                ? Matrix4.translationValues(0, -2, 0)
+                                : Matrix4.identity(),
                             decoration: BoxDecoration(
                               color: isDarkMode
                                   ? const Color(0xFF111116)
@@ -193,13 +216,19 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                               borderRadius: BorderRadius.circular(6),
                               border: Border.all(
                                 color: isDarkMode
-                                    ? (isHovered ? statusColor : const Color(0xFF222233))
-                                    : (isHovered ? statusColor : const Color(0xFFCDD4B2)),
+                                    ? (isHovered
+                                        ? statusColor
+                                        : const Color(0xFF222233))
+                                    : (isHovered
+                                        ? statusColor
+                                        : const Color(0xFFCDD4B2)),
                                 width: isHovered ? 1.5 : 1.0,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(isDarkMode ? 0.25 : (isHovered ? 0.08 : 0.03)),
+                                  color: Colors.black.withOpacity(isDarkMode
+                                      ? 0.25
+                                      : (isHovered ? 0.08 : 0.03)),
                                   blurRadius: isHovered ? 8 : 4,
                                   offset: const Offset(0, 2),
                                 ),
@@ -223,19 +252,23 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                   const SizedBox(width: 12),
                                   // Icon in tinted box
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 12.0),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12.0),
                                     child: Center(
                                       child: Container(
                                         padding: const EdgeInsets.all(9),
                                         decoration: BoxDecoration(
-                                          color: statusColor.withOpacity(isDarkMode ? 0.20 : 0.12),
-                                          borderRadius: BorderRadius.circular(6),
+                                          color: statusColor.withOpacity(
+                                              isDarkMode ? 0.20 : 0.12),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
                                           border: Border.all(
                                             color: statusColor.withOpacity(0.3),
                                             width: 1,
                                           ),
                                         ),
-                                        child: Icon(iconData, color: statusColor, size: 20),
+                                        child: Icon(iconData,
+                                            color: statusColor, size: 20),
                                       ),
                                     ),
                                   ),
@@ -243,20 +276,33 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                   // Content Column
                                   Expanded(
                                     child: Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4.0),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12.0, horizontal: 4.0),
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
                                               Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 3),
                                                 decoration: BoxDecoration(
-                                                  color: statusColor.withOpacity(isDarkMode ? 0.22 : 0.12),
-                                                  borderRadius: BorderRadius.circular(4),
-                                                  border: Border.all(color: statusColor.withOpacity(0.4), width: 0.8),
+                                                  color: statusColor
+                                                      .withOpacity(isDarkMode
+                                                          ? 0.22
+                                                          : 0.12),
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                  border: Border.all(
+                                                      color: statusColor
+                                                          .withOpacity(0.4),
+                                                      width: 0.8),
                                                 ),
                                                 child: Text(
                                                   n.type.toUpperCase(),
@@ -270,13 +316,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                                 ),
                                               ),
                                               Padding(
-                                                padding: const EdgeInsets.only(right: 14.0),
+                                                padding: const EdgeInsets.only(
+                                                    right: 14.0),
                                                 child: Row(
                                                   children: [
                                                     Icon(
                                                       Icons.access_time,
                                                       size: 11,
-                                                      color: isDarkMode ? Colors.white54 : const Color(0xFF64748B),
+                                                      color: isDarkMode
+                                                          ? Colors.white54
+                                                          : const Color(
+                                                              0xFF64748B),
                                                     ),
                                                     const SizedBox(width: 4),
                                                     Text(
@@ -284,8 +334,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                                       style: TextStyle(
                                                         fontFamily: 'monospace',
                                                         fontSize: 10.5,
-                                                        color: isDarkMode ? Colors.white60 : const Color(0xFF64748B),
-                                                        fontWeight: FontWeight.bold,
+                                                        color: isDarkMode
+                                                            ? Colors.white60
+                                                            : const Color(
+                                                                0xFF64748B),
+                                                        fontWeight:
+                                                            FontWeight.bold,
                                                       ),
                                                     ),
                                                   ],
@@ -295,12 +349,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                           ),
                                           const SizedBox(height: 6),
                                           Padding(
-                                            padding: const EdgeInsets.only(right: 14.0),
+                                            padding: const EdgeInsets.only(
+                                                right: 14.0),
                                             child: Text(
                                               n.message,
                                               style: GoogleFonts.inter(
                                                 fontSize: 13.0,
-                                                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                                color: isDarkMode
+                                                    ? Colors.white
+                                                    : const Color(0xFF0F172A),
                                                 fontWeight: FontWeight.w600,
                                                 height: 1.4,
                                               ),
@@ -325,7 +382,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   // ── FILTER BUTTON BUILDER ──────────────────────────────────────────────────
-  Widget _buildFilterButton(String label, Color activeFillColor, bool isDarkMode) {
+  Widget _buildFilterButton(
+      String label, Color activeFillColor, bool isDarkMode) {
     final bool isSelected = _selectedFilter == label;
 
     return Padding(
@@ -340,7 +398,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             decoration: BoxDecoration(
               color: isSelected
                   ? activeFillColor
-                  : (isDarkMode ? const Color(0xFF14141E) : const Color(0xFFFAF9F6)),
+                  : (isDarkMode
+                      ? const Color(0xFF14141E)
+                      : const Color(0xFFFAF9F6)),
               borderRadius: BorderRadius.circular(4),
               border: Border.all(
                 color: isSelected
@@ -385,7 +445,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           color: isDarkMode ? const Color(0xFF0F0F14) : const Color(0xFFFAF9F6),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isDarkMode ? const Color(0xFF222233) : const Color(0xFFCDD4B2),
+            color:
+                isDarkMode ? const Color(0xFF222233) : const Color(0xFFCDD4B2),
             width: 1.2,
           ),
           boxShadow: [
@@ -404,15 +465,21 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isDarkMode ? const Color(0xFF162316) : const Color(0xFFEBECCC),
+                color: isDarkMode
+                    ? const Color(0xFF162316)
+                    : const Color(0xFFEBECCC),
                 border: Border.all(
-                  color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.5) : const Color(0xFFCDD4B2),
+                  color: isDarkMode
+                      ? const Color(0xFF5DD62C).withOpacity(0.5)
+                      : const Color(0xFFCDD4B2),
                   width: 1.2,
                 ),
               ),
               child: Icon(
                 Icons.verified_user_outlined,
-                color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF08652C),
+                color: isDarkMode
+                    ? const Color(0xFF5DD62C)
+                    : const Color(0xFF08652C),
                 size: 38,
               ),
             ),
@@ -442,7 +509,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFF08652C).withOpacity(0.12),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF08652C).withOpacity(0.4)),
+                border:
+                    Border.all(color: const Color(0xFF08652C).withOpacity(0.4)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -462,7 +530,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       fontFamily: 'monospace',
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                      color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF08652C),
+                      color: isDarkMode
+                          ? const Color(0xFF5DD62C)
+                          : const Color(0xFF08652C),
                     ),
                   ),
                 ],

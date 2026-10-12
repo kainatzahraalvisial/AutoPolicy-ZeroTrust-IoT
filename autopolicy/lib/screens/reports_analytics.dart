@@ -1,3 +1,4 @@
+import '../widgets/console_row.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,7 +40,8 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
   final List<Map<String, dynamic>> _hubTiles = [
     {
       'title': 'Security Audit Logs',
-      'desc': 'View all security-related actions, logins and operational events',
+      'desc':
+          'View all security-related actions, logins and operational events',
       'icon': Icons.shield_outlined,
       'darkColor': const Color(0xFF5DD62C),
       'lightColor': const Color(0xFFFFF9E1),
@@ -48,7 +50,8 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
     },
     {
       'title': 'Policy Change History',
-      'desc': 'Track policy approvals, rejections and deployments across sidecars',
+      'desc':
+          'Track policy approvals, rejections and deployments across sidecars',
       'icon': Icons.history_toggle_off,
       'darkColor': const Color(0xFFC4E320),
       'lightColor': const Color(0xFFEBECCC),
@@ -57,7 +60,8 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
     },
     {
       'title': 'Alert & Threat Archive',
-      'desc': 'Historical record of all detected anomalies, vectors and mitigations',
+      'desc':
+          'Historical record of all detected anomalies, vectors and mitigations',
       'icon': Icons.archive_outlined,
       'darkColor': const Color(0xFFDF2531),
       'lightColor': const Color(0xFFDCA278), // Clay color
@@ -66,7 +70,8 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
     },
     {
       'title': 'Export Center',
-      'desc': 'Generate, compile and download cryptographic PDF and CSV reports',
+      'desc':
+          'Generate, compile and download cryptographic PDF and CSV reports',
       'icon': Icons.file_download_outlined,
       'darkColor': const Color(0xFF80A416),
       'lightColor': const Color(0xFFCDD4B2),
@@ -226,7 +231,8 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
         if (_exportProgress >= 1.0) {
           _exportProgress = 1.0;
           _isExporting = false;
-          _exportFeedback = 'SUCCESS: AutoPolicy_${format.toUpperCase()}_Report_Generated.sha256 (Ready for Download)';
+          _exportFeedback =
+              'SUCCESS: AutoPolicy_${format.toUpperCase()}_Report_Generated.sha256 (Ready for Download)';
           t.cancel();
         }
       });
@@ -260,7 +266,7 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
 
   // ── PAGE HEADER ────────────────────────────────────────────────────────────
   Widget _buildPageHeader(bool isDarkMode) {
-    return Row(
+    return ConsoleRow(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -272,7 +278,9 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
               style: CyberTextStyles.displayTitle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
-                color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                color: isDarkMode
+                    ? const Color(0xFF5DD62C)
+                    : const Color(0xFF0F172A),
               ).copyWith(letterSpacing: 2.0),
             ),
             const SizedBox(height: 3),
@@ -289,16 +297,30 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
         if (_activeSectionIndex != null)
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: isDarkMode ? const Color(0xFF1A1A1A) : const Color(0xFFFAF9F6),
-              foregroundColor: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
-              side: BorderSide(color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2), width: 1.0),
+              backgroundColor: isDarkMode
+                  ? const Color(0xFF1A1A1A)
+                  : const Color(0xFFFAF9F6),
+              foregroundColor: isDarkMode
+                  ? const Color(0xFF5DD62C)
+                  : const Color(0xFF0F172A),
+              side: BorderSide(
+                  color: isDarkMode
+                      ? const Color(0xFF5DD62C)
+                      : const Color(0xFFCDD4B2),
+                  width: 1.0),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4)),
             ),
             icon: const Icon(Icons.arrow_back, size: 16),
             label: Text(
               'BACK TO LOGS & REPORTS',
-              style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A)),
+              style: CyberTextStyles.technical(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode
+                      ? const Color(0xFF5DD62C)
+                      : const Color(0xFF0F172A)),
             ),
             onPressed: () => setState(() {
               _activeSectionIndex = null;
@@ -329,10 +351,13 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
           ),
           itemBuilder: (context, idx) {
             final tile = _hubTiles[idx];
-            final Color darkColor = tile['darkColor'] as Color? ?? tile['color'] as Color;
-            final Color lightColor = tile['lightColor'] as Color? ?? const Color(0xFFFAF9F6);
+            final Color darkColor =
+                tile['darkColor'] as Color? ?? tile['color'] as Color;
+            final Color lightColor =
+                tile['lightColor'] as Color? ?? const Color(0xFFFAF9F6);
             final Color cardColor = isDarkMode ? darkColor : lightColor;
-            final Color accentColor = isDarkMode ? darkColor : const Color(0xFF0A0A0E);
+            final Color accentColor =
+                isDarkMode ? darkColor : const Color(0xFF0A0A0E);
             final bool isHovered = _hoveredHubIdx == idx;
 
             return MouseRegion(
@@ -342,13 +367,17 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOutCubic,
-                transform: isHovered ? Matrix4.translationValues(0, -4, 0) : Matrix4.identity(),
+                transform: isHovered
+                    ? Matrix4.translationValues(0, -4, 0)
+                    : Matrix4.identity(),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(6),
                   boxShadow: isHovered
                       ? [
                           BoxShadow(
-                            color: (isDarkMode ? darkColor : const Color(0xFF0A0A0E))
+                            color: (isDarkMode
+                                    ? darkColor
+                                    : const Color(0xFF0A0A0E))
                                 .withOpacity(isDarkMode ? 0.45 : 0.16),
                             blurRadius: 18,
                             offset: const Offset(0, 6),
@@ -374,10 +403,13 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                   borderRadius: BorderRadius.circular(6),
                   child: CyberHudCard(
                     tag: tile['tag'] as String,
-                    backgroundColor: isDarkMode ? const Color(0xFF0F0F0F) : cardColor,
-                    borderColor: isHovered 
+                    backgroundColor:
+                        isDarkMode ? const Color(0xFF0F0F0F) : cardColor,
+                    borderColor: isHovered
                         ? (isDarkMode ? darkColor : const Color(0xFF0A0A0E))
-                        : (isDarkMode ? darkColor.withOpacity(0.7) : const Color(0xFF0A0A0E).withOpacity(0.22)),
+                        : (isDarkMode
+                            ? darkColor.withOpacity(0.7)
+                            : const Color(0xFF0A0A0E).withOpacity(0.22)),
                     borderWidth: isHovered ? 2.0 : 1.2,
                     child: Padding(
                       padding: const EdgeInsets.all(14),
@@ -392,29 +424,40 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   color: isDarkMode
-                                      ? darkColor.withOpacity(isHovered ? 0.30 : 0.15)
-                                      : Colors.black.withOpacity(isHovered ? 0.12 : 0.06),
+                                      ? darkColor
+                                          .withOpacity(isHovered ? 0.30 : 0.15)
+                                      : Colors.black
+                                          .withOpacity(isHovered ? 0.12 : 0.06),
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
                                     color: isDarkMode
-                                        ? darkColor.withOpacity(isHovered ? 0.9 : 0.5)
-                                        : const Color(0xFF0A0A0E).withOpacity(0.2),
+                                        ? darkColor
+                                            .withOpacity(isHovered ? 0.9 : 0.5)
+                                        : const Color(0xFF0A0A0E)
+                                            .withOpacity(0.2),
                                   ),
                                 ),
-                                child: Icon(tile['icon'] as IconData, color: accentColor, size: 22),
+                                child: Icon(tile['icon'] as IconData,
+                                    color: accentColor, size: 22),
                               ),
                               Row(
                                 children: [
                                   Text(
                                     'OPEN SECTION',
                                     style: CyberTextStyles.technical(
-                                      fontSize: 10, 
-                                      color: isDarkMode ? darkColor : const Color(0xFF0A0A0E), 
+                                      fontSize: 10,
+                                      color: isDarkMode
+                                          ? darkColor
+                                          : const Color(0xFF0A0A0E),
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   const SizedBox(width: 4),
-                                  Icon(Icons.arrow_forward_ios, size: 10, color: isDarkMode ? darkColor : const Color(0xFF0A0A0E)),
+                                  Icon(Icons.arrow_forward_ios,
+                                      size: 10,
+                                      color: isDarkMode
+                                          ? darkColor
+                                          : const Color(0xFF0A0A0E)),
                                 ],
                               ),
                             ],
@@ -428,7 +471,9 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                                 style: CyberTextStyles.technical(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  color: isDarkMode ? Colors.white : const Color(0xFF0A0A0E),
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : const Color(0xFF0A0A0E),
                                 ).copyWith(letterSpacing: 0.8),
                               ),
                               const SizedBox(height: 4),
@@ -436,7 +481,9 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                                 tile['desc'] as String,
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
-                                  color: isDarkMode ? Colors.white70 : const Color(0xFF1E293B),
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : const Color(0xFF1E293B),
                                   fontWeight: FontWeight.w600,
                                 ),
                                 maxLines: 2,
@@ -465,7 +512,8 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
       if (color == const Color(0xFFFFE997)) {
         color = const Color(0xFFB45309); // High contrast amber in light mode
       } else if (color == const Color(0xFFC4E320)) {
-        color = const Color(0xFF15803D); // High contrast deep green in light mode
+        color =
+            const Color(0xFF15803D); // High contrast deep green in light mode
       }
     }
     final String activeTitle = activeTile['title'] as String;
@@ -474,14 +522,21 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
     final filtered = _allLogs.where((log) {
       if (_activeSectionIndex! < 5 && log['type'] != activeTitle) {
         // Show matching category logs, or all logs in general
-        if (_activeSectionIndex == 0 && log['type'] != 'Security Audit Logs') return false;
-        if (_activeSectionIndex == 1 && log['type'] != 'Policy Change History') return false;
-        if (_activeSectionIndex == 2 && log['type'] != 'Alert & Threat Archive') return false;
-        if (_activeSectionIndex == 3 && log['type'] != 'System Health Logs') return false;
-        if (_activeSectionIndex == 4 && log['type'] != 'Compliance Reports') return false;
+        if (_activeSectionIndex == 0 && log['type'] != 'Security Audit Logs')
+          return false;
+        if (_activeSectionIndex == 1 && log['type'] != 'Policy Change History')
+          return false;
+        if (_activeSectionIndex == 2 && log['type'] != 'Alert & Threat Archive')
+          return false;
+        if (_activeSectionIndex == 3 && log['type'] != 'System Health Logs')
+          return false;
+        if (_activeSectionIndex == 4 && log['type'] != 'Compliance Reports')
+          return false;
       }
-      if (_userFilter != 'All Operators' && !log['user']!.contains(_userFilter.split(' ').first)) return false;
-      if (_actionFilter != 'All Actions' && !log['action']!.contains(_actionFilter.toUpperCase())) return false;
+      if (_userFilter != 'All Operators' &&
+          !log['user']!.contains(_userFilter.split(' ').first)) return false;
+      if (_actionFilter != 'All Actions' &&
+          !log['action']!.contains(_actionFilter.toUpperCase())) return false;
       if (_searchQuery.isNotEmpty) {
         final q = _searchQuery.toLowerCase();
         final match = log['action']!.toLowerCase().contains(q) ||
@@ -515,23 +570,31 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                   children: [
                     Row(
                       children: [
-                        Icon(activeTile['icon'] as IconData, color: color, size: 22),
+                        Icon(activeTile['icon'] as IconData,
+                            color: color, size: 22),
                         const SizedBox(width: 10),
                         Text(
                           activeTitle.toUpperCase(),
                           style: CyberTextStyles.technical(
-                            fontSize: 16, 
-                            fontWeight: FontWeight.bold, 
-                            color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                       ],
                     ),
                     Row(
                       children: [
-                        _buildExportBtn('EXPORT PDF', Icons.picture_as_pdf_outlined, () => _triggerExport('PDF'), isDarkMode),
+                        _buildExportBtn(
+                            'EXPORT PDF',
+                            Icons.picture_as_pdf_outlined,
+                            () => _triggerExport('PDF'),
+                            isDarkMode),
                         const SizedBox(width: 10),
-                        _buildExportBtn('EXPORT CSV', Icons.table_view_outlined, () => _triggerExport('CSV'), isDarkMode),
+                        _buildExportBtn('EXPORT CSV', Icons.table_view_outlined,
+                            () => _triggerExport('CSV'), isDarkMode),
                       ],
                     ),
                   ],
@@ -540,11 +603,17 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                   const SizedBox(height: 12),
                   LinearProgressIndicator(
                     value: _exportProgress,
-                    backgroundColor: isDarkMode ? const Color(0xFF222222) : const Color(0xFFE2E8F0),
+                    backgroundColor: isDarkMode
+                        ? const Color(0xFF222222)
+                        : const Color(0xFFE2E8F0),
                     valueColor: AlwaysStoppedAnimation<Color>(color),
                   ),
                   const SizedBox(height: 6),
-                  Text(_exportFeedback, style: CyberTextStyles.technical(fontSize: 11, color: isDarkMode ? color : const Color(0xFF0F172A), fontWeight: FontWeight.bold)),
+                  Text(_exportFeedback,
+                      style: CyberTextStyles.technical(
+                          fontSize: 11,
+                          color: isDarkMode ? color : const Color(0xFF0F172A),
+                          fontWeight: FontWeight.bold)),
                 ],
               ],
             ),
@@ -556,9 +625,11 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+            color:
+                isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: isDarkMode ? Colors.white12 : const Color(0xFFCDD4B2)),
+            border: Border.all(
+                color: isDarkMode ? Colors.white12 : const Color(0xFFCDD4B2)),
           ),
           child: Wrap(
             spacing: 12,
@@ -566,15 +637,33 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               // Date Range Filter
-              _buildDropdownFilter('RANGE', _dateRange, ['Last 24 Hours', 'Last 7 Days', 'Last 30 Days', 'All Time'], (v) {
+              _buildDropdownFilter('RANGE', _dateRange, [
+                'Last 24 Hours',
+                'Last 7 Days',
+                'Last 30 Days',
+                'All Time'
+              ], (v) {
                 if (v != null) setState(() => _dateRange = v);
               }, isDarkMode),
               // User Filter
-              _buildDropdownFilter('USER', _userFilter, ['All Operators', 'kainat.alvi', 'system', 'analyst', 'zeek'], (v) {
+              _buildDropdownFilter('USER', _userFilter, [
+                'All Operators',
+                'kainat.alvi',
+                'system',
+                'analyst',
+                'zeek'
+              ], (v) {
                 if (v != null) setState(() => _userFilter = v);
               }, isDarkMode),
               // Action Type Filter
-              _buildDropdownFilter('ACTION', _actionFilter, ['All Actions', 'Policy', 'Threat', 'Engine', 'Login', 'Audit'], (v) {
+              _buildDropdownFilter('ACTION', _actionFilter, [
+                'All Actions',
+                'Policy',
+                'Threat',
+                'Engine',
+                'Login',
+                'Audit'
+              ], (v) {
                 if (v != null) setState(() => _actionFilter = v);
               }, isDarkMode),
               // Search Input Box
@@ -582,21 +671,45 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                 width: 240,
                 child: TextField(
                   controller: _searchCtrl,
-                  style: GoogleFonts.inter(fontSize: 12.5, color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
+                  style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      color:
+                          isDarkMode ? Colors.white : const Color(0xFF0F172A)),
                   onChanged: (v) => setState(() {
                     _searchQuery = v.trim();
                     _currentPage = 1;
                   }),
                   decoration: InputDecoration(
                     hintText: 'Search logs, IPs, actions...',
-                    hintStyle: TextStyle(fontSize: 12, color: isDarkMode ? Colors.white38 : const Color(0xFF94A3B8)),
-                    prefixIcon: Icon(Icons.search, size: 16, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A)),
+                    hintStyle: TextStyle(
+                        fontSize: 12,
+                        color: isDarkMode
+                            ? Colors.white38
+                            : const Color(0xFF94A3B8)),
+                    prefixIcon: Icon(Icons.search,
+                        size: 16,
+                        color: isDarkMode
+                            ? const Color(0xFF5DD62C)
+                            : const Color(0xFF0F172A)),
                     isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     filled: true,
-                    fillColor: isDarkMode ? const Color(0xFF161616) : const Color(0xFFFAF9F6),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(4), borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2))),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(4), borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2))),
+                    fillColor: isDarkMode
+                        ? const Color(0xFF161616)
+                        : const Color(0xFFFAF9F6),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: BorderSide(
+                            color: isDarkMode
+                                ? Colors.white24
+                                : const Color(0xFFCDD4B2))),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: BorderSide(
+                            color: isDarkMode
+                                ? Colors.white24
+                                : const Color(0xFFCDD4B2))),
                   ),
                 ),
               ),
@@ -610,9 +723,13 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
           width: double.infinity,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF0A0A0A) : const Color(0xFFFAF9F6),
+            color:
+                isDarkMode ? const Color(0xFF0A0A0A) : const Color(0xFFFAF9F6),
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: isDarkMode ? color.withOpacity(0.35) : const Color(0xFFCDD4B2)),
+            border: Border.all(
+                color: isDarkMode
+                    ? color.withOpacity(0.35)
+                    : const Color(0xFFCDD4B2)),
           ),
           child: Column(
             children: [
@@ -620,16 +737,69 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: isDarkMode ? const Color(0xFF222222) : const Color(0xFFE2E8F0), width: 1)),
+                  border: Border(
+                      bottom: BorderSide(
+                          color: isDarkMode
+                              ? const Color(0xFF222222)
+                              : const Color(0xFFE2E8F0),
+                          width: 1)),
                 ),
                 child: Row(
                   children: [
-                    Expanded(flex: 3, child: Text('TIMESTAMP', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: isDarkMode ? color : const Color(0xFF0F172A)))),
-                    Expanded(flex: 3, child: Text('OPERATOR / ACTOR', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: isDarkMode ? color : const Color(0xFF0F172A)))),
-                    Expanded(flex: 4, child: Text('ACTION DESCRIPTION', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: isDarkMode ? color : const Color(0xFF0F172A)))),
-                    Expanded(flex: 4, child: Text('TARGET RESOURCE', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: isDarkMode ? color : const Color(0xFF0F172A)))),
-                    Expanded(flex: 2, child: Text('SOURCE IP', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: isDarkMode ? color : const Color(0xFF0F172A)))),
-                    Expanded(flex: 2, child: Text('STATUS', style: CyberTextStyles.technical(fontSize: 11.5, fontWeight: FontWeight.bold, color: isDarkMode ? color : const Color(0xFF0F172A)))),
+                    Expanded(
+                        flex: 3,
+                        child: Text('TIMESTAMP',
+                            style: CyberTextStyles.technical(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: isDarkMode
+                                    ? color
+                                    : const Color(0xFF0F172A)))),
+                    Expanded(
+                        flex: 3,
+                        child: Text('OPERATOR / ACTOR',
+                            style: CyberTextStyles.technical(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: isDarkMode
+                                    ? color
+                                    : const Color(0xFF0F172A)))),
+                    Expanded(
+                        flex: 4,
+                        child: Text('ACTION DESCRIPTION',
+                            style: CyberTextStyles.technical(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: isDarkMode
+                                    ? color
+                                    : const Color(0xFF0F172A)))),
+                    Expanded(
+                        flex: 4,
+                        child: Text('TARGET RESOURCE',
+                            style: CyberTextStyles.technical(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: isDarkMode
+                                    ? color
+                                    : const Color(0xFF0F172A)))),
+                    Expanded(
+                        flex: 2,
+                        child: Text('SOURCE IP',
+                            style: CyberTextStyles.technical(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: isDarkMode
+                                    ? color
+                                    : const Color(0xFF0F172A)))),
+                    Expanded(
+                        flex: 2,
+                        child: Text('STATUS',
+                            style: CyberTextStyles.technical(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: isDarkMode
+                                    ? color
+                                    : const Color(0xFF0F172A)))),
                   ],
                 ),
               ),
@@ -639,36 +809,91 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                 Padding(
                   padding: const EdgeInsets.all(28.0),
                   child: Center(
-                    child: Text('NO LOG RECORDS MATCH CURRENT FILTERS', style: GoogleFonts.inter(fontSize: 13, color: isDarkMode ? Colors.white38 : const Color(0xFF94A3B8))),
+                    child: Text('NO LOG RECORDS MATCH CURRENT FILTERS',
+                        style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: isDarkMode
+                                ? Colors.white38
+                                : const Color(0xFF94A3B8))),
                   ),
                 )
               else
                 ...pagedItems.map((log) {
-                  final bool isOk = log['status']!.contains('SUCCESS') || log['status']!.contains('PASS') || log['status']!.contains('NOMINAL') || log['status']!.contains('HEALTHY');
-                  final Color stColor = isOk 
-                      ? (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF15803D))
-                      : (log['status']!.contains('DETECTED') 
-                          ? const Color(0xFFDF2531) 
-                          : (isDarkMode ? const Color(0xFFFFE997) : const Color(0xFFB45309)));
+                  final bool isOk = log['status']!.contains('SUCCESS') ||
+                      log['status']!.contains('PASS') ||
+                      log['status']!.contains('NOMINAL') ||
+                      log['status']!.contains('HEALTHY');
+                  final Color stColor = isOk
+                      ? (isDarkMode
+                          ? const Color(0xFF5DD62C)
+                          : const Color(0xFF15803D))
+                      : (log['status']!.contains('DETECTED')
+                          ? const Color(0xFFDF2531)
+                          : (isDarkMode
+                              ? const Color(0xFFFFE997)
+                              : const Color(0xFFB45309)));
 
                   return Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
-                      border: Border(bottom: BorderSide(color: isDarkMode ? const Color(0xFF181818) : const Color(0xFFF1F5F9), width: 1)),
+                      border: Border(
+                          bottom: BorderSide(
+                              color: isDarkMode
+                                  ? const Color(0xFF181818)
+                                  : const Color(0xFFF1F5F9),
+                              width: 1)),
                     ),
                     child: Row(
                       children: [
-                        Expanded(flex: 3, child: Text(log['time']!, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF80A416)))),
-                        Expanded(flex: 3, child: Text(log['user']!, style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: isDarkMode ? Colors.white : const Color(0xFF0F172A)))),
-                        Expanded(flex: 4, child: Text(log['action']!, style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: isDarkMode ? Colors.white70 : const Color(0xFF334155)))),
-                        Expanded(flex: 4, child: Text(log['resource']!, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B)))),
-                        Expanded(flex: 2, child: Text(log['ip']!, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF7C3AED)))),
+                        Expanded(
+                            flex: 3,
+                            child: Text(log['time']!,
+                                style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 12,
+                                    color: isDarkMode
+                                        ? const Color(0xFFC5C764)
+                                        : const Color(0xFF80A416)))),
+                        Expanded(
+                            flex: 3,
+                            child: Text(log['user']!,
+                                style: GoogleFonts.inter(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDarkMode
+                                        ? Colors.white
+                                        : const Color(0xFF0F172A)))),
+                        Expanded(
+                            flex: 4,
+                            child: Text(log['action']!,
+                                style: GoogleFonts.inter(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDarkMode
+                                        ? Colors.white70
+                                        : const Color(0xFF334155)))),
+                        Expanded(
+                            flex: 4,
+                            child: Text(log['resource']!,
+                                style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 12,
+                                    color: isDarkMode
+                                        ? Colors.white60
+                                        : const Color(0xFF64748B)))),
+                        Expanded(
+                            flex: 2,
+                            child: Text(log['ip']!,
+                                style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 12,
+                                    color: isDarkMode
+                                        ? const Color(0xFFA88AED)
+                                        : const Color(0xFF7C3AED)))),
                         Expanded(
                           flex: 2,
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: stColor.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(3),
@@ -676,7 +901,10 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                               ),
                               child: Text(
                                 log['status']!,
-                                style: GoogleFonts.spaceGrotesk(fontSize: 10.5, fontWeight: FontWeight.bold, color: stColor),
+                                style: GoogleFonts.spaceGrotesk(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: stColor),
                               ),
                             ),
                           ),
@@ -694,28 +922,59 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                 children: [
                   Text(
                     'Showing ${filtered.isEmpty ? 0 : startIdx + 1}–$endIdx of ${filtered.length} entries',
-                    style: GoogleFonts.inter(fontSize: 12, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B)),
+                    style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: isDarkMode
+                            ? Colors.white54
+                            : const Color(0xFF64748B)),
                   ),
                   Row(
                     children: [
                       OutlinedButton(
-                        onPressed: _currentPage > 1 ? () => setState(() => _currentPage--) : null,
+                        onPressed: _currentPage > 1
+                            ? () => setState(() => _currentPage--)
+                            : null,
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          side: BorderSide(
+                              color: isDarkMode
+                                  ? Colors.white24
+                                  : const Color(0xFFCDD4B2)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
                         ),
-                        child: Text('‹ PREV', style: CyberTextStyles.technical(fontSize: 11, color: isDarkMode ? Colors.white : const Color(0xFF0F172A))),
+                        child: Text('‹ PREV',
+                            style: CyberTextStyles.technical(
+                                fontSize: 11,
+                                color: isDarkMode
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A))),
                       ),
                       const SizedBox(width: 8),
-                      Text('PAGE $_currentPage OF $totalPages', style: CyberTextStyles.technical(fontSize: 11, color: isDarkMode ? color : const Color(0xFF0F172A))),
+                      Text('PAGE $_currentPage OF $totalPages',
+                          style: CyberTextStyles.technical(
+                              fontSize: 11,
+                              color: isDarkMode
+                                  ? color
+                                  : const Color(0xFF0F172A))),
                       const SizedBox(width: 8),
                       OutlinedButton(
-                        onPressed: _currentPage < totalPages ? () => setState(() => _currentPage++) : null,
+                        onPressed: _currentPage < totalPages
+                            ? () => setState(() => _currentPage++)
+                            : null,
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          side: BorderSide(
+                              color: isDarkMode
+                                  ? Colors.white24
+                                  : const Color(0xFFCDD4B2)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
                         ),
-                        child: Text('NEXT ›', style: CyberTextStyles.technical(fontSize: 11, color: isDarkMode ? Colors.white : const Color(0xFF0F172A))),
+                        child: Text('NEXT ›',
+                            style: CyberTextStyles.technical(
+                                fontSize: 11,
+                                color: isDarkMode
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A))),
                       ),
                     ],
                   ),
@@ -728,27 +987,43 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
     );
   }
 
-  Widget _buildDropdownFilter(String label, String value, List<String> items, ValueChanged<String?> onChanged, bool isDarkMode) {
+  Widget _buildDropdownFilter(String label, String value, List<String> items,
+      ValueChanged<String?> onChanged, bool isDarkMode) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text('$label: ', style: CyberTextStyles.technical(fontSize: 11, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B))),
+        Text('$label: ',
+            style: CyberTextStyles.technical(
+                fontSize: 11,
+                color: isDarkMode ? Colors.white54 : const Color(0xFF64748B))),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF161616) : const Color(0xFFFAF9F6),
+            color:
+                isDarkMode ? const Color(0xFF161616) : const Color(0xFFFAF9F6),
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+            border: Border.all(
+                color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: value,
-              dropdownColor: isDarkMode ? const Color(0xFF161616) : const Color(0xFFFAF9F6),
-              style: GoogleFonts.inter(fontSize: 12, color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
-              items: items.map((i) => DropdownMenuItem(
-                value: i, 
-                child: Text(i, style: TextStyle(color: isDarkMode ? Colors.white : const Color(0xFF0F172A))),
-              )).toList(),
+              dropdownColor: isDarkMode
+                  ? const Color(0xFF161616)
+                  : const Color(0xFFFAF9F6),
+              style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
+              items: items
+                  .map((i) => DropdownMenuItem(
+                        value: i,
+                        child: Text(i,
+                            style: TextStyle(
+                                color: isDarkMode
+                                    ? Colors.white
+                                    : const Color(0xFF0F172A))),
+                      ))
+                  .toList(),
               onChanged: onChanged,
             ),
           ),
@@ -757,15 +1032,23 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
     );
   }
 
-  Widget _buildExportBtn(String label, IconData icon, VoidCallback onTap, bool isDarkMode) {
-    final btnColor = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416);
+  Widget _buildExportBtn(
+      String label, IconData icon, VoidCallback onTap, bool isDarkMode) {
+    final btnColor =
+        isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416);
     return OutlinedButton.icon(
       onPressed: onTap,
       icon: Icon(icon, size: 14, color: btnColor),
-      label: Text(label, style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: btnColor)),
+      label: Text(label,
+          style: CyberTextStyles.technical(
+              fontSize: 11, fontWeight: FontWeight.bold, color: btnColor)),
       style: OutlinedButton.styleFrom(
-        side: BorderSide(color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2), width: 1.0),
-        backgroundColor: isDarkMode ? Colors.transparent : const Color(0xFFFAF9F6),
+        side: BorderSide(
+            color:
+                isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2),
+            width: 1.0),
+        backgroundColor:
+            isDarkMode ? Colors.transparent : const Color(0xFFFAF9F6),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
       ),

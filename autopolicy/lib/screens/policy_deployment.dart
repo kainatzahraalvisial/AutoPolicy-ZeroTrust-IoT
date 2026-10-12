@@ -1,3 +1,5 @@
+import '../widgets/console_stat_strip.dart';
+import '../widgets/console_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -34,7 +36,9 @@ class PolicyDeployment extends ConsumerWidget {
                 Text(
                   'OPA POLICY PIPELINE STATUS',
                   style: CyberTextStyles.heading2.copyWith(
-                    color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                    color: isDarkMode
+                        ? const Color(0xFF5DD62C)
+                        : const Color(0xFF0F172A),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -47,7 +51,7 @@ class PolicyDeployment extends ConsumerWidget {
             const SizedBox(height: 14),
 
             // Top Stat Cards Row
-            Row(
+            ConsoleStatStrip(
               children: [
                 Expanded(
                   child: CyberStatCard(
@@ -101,7 +105,9 @@ class PolicyDeployment extends ConsumerWidget {
               child: ResponsiveLayout(
                 mobile: Column(
                   children: [
-                    Expanded(child: _buildDeployedPoliciesCard(deployedPolicies, isDarkMode)),
+                    Expanded(
+                        child: _buildDeployedPoliciesCard(
+                            deployedPolicies, isDarkMode)),
                     const SizedBox(height: 16),
                     Expanded(child: _buildOpaLogsCard(opaLogs, isDarkMode)),
                   ],
@@ -111,7 +117,8 @@ class PolicyDeployment extends ConsumerWidget {
                     // Deployed Policies Directory list
                     Expanded(
                       flex: 4,
-                      child: _buildDeployedPoliciesCard(deployedPolicies, isDarkMode),
+                      child: _buildDeployedPoliciesCard(
+                          deployedPolicies, isDarkMode),
                     ),
                     const SizedBox(width: 16),
                     // Live OPA Compiler Logs Feed
@@ -145,7 +152,9 @@ class PolicyDeployment extends ConsumerWidget {
         color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.40) : const Color(0xFFCDD4B2),
+          color: isDarkMode
+              ? const Color(0xFF5DD62C).withOpacity(0.40)
+              : const Color(0xFFCDD4B2),
           width: 1.0,
         ),
         boxShadow: isDarkMode
@@ -164,13 +173,19 @@ class PolicyDeployment extends ConsumerWidget {
           Text(
             'OPA RULES BUNDLE ENFORCEMENT PATHWAY',
             style: CyberTextStyles.technical(
-              color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+              color: isDarkMode
+                  ? const Color(0xFF5DD62C)
+                  : const Color(0xFF0F172A),
               fontSize: 11,
               fontWeight: FontWeight.w800,
             ).copyWith(letterSpacing: 1.1),
           ),
           const SizedBox(height: 8),
-          Divider(color: isDarkMode ? const Color(0xFF222222) : const Color(0xFFE2E8F0), height: 1),
+          Divider(
+              color: isDarkMode
+                  ? const Color(0xFF222222)
+                  : const Color(0xFFE2E8F0),
+              height: 1),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -189,15 +204,21 @@ class PolicyDeployment extends ConsumerWidget {
                             padding: const EdgeInsets.all(9),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: isDarkMode ? const Color(0xFF142416) : const Color(0xFFEBECCC),
+                              color: isDarkMode
+                                  ? const Color(0xFF142416)
+                                  : const Color(0xFFEBECCC),
                               border: Border.all(
-                                color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
+                                color: isDarkMode
+                                    ? const Color(0xFF5DD62C)
+                                    : const Color(0xFF80A416),
                                 width: 1.5,
                               ),
                             ),
                             child: Icon(
                               stage['icon'] as IconData,
-                              color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
+                              color: isDarkMode
+                                  ? const Color(0xFF5DD62C)
+                                  : const Color(0xFF80A416),
                               size: 16,
                             ),
                           ),
@@ -206,7 +227,9 @@ class PolicyDeployment extends ConsumerWidget {
                             stage['label'] as String,
                             style: CyberTextStyles.technical(
                               fontSize: 9.5,
-                              color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A),
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -217,7 +240,9 @@ class PolicyDeployment extends ConsumerWidget {
                       Container(
                         width: 24,
                         height: 1.5,
-                        color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.4) : const Color(0xFFCDD4B2),
+                        color: isDarkMode
+                            ? const Color(0xFF5DD62C).withOpacity(0.4)
+                            : const Color(0xFFCDD4B2),
                       ),
                   ],
                 ),
@@ -229,14 +254,17 @@ class PolicyDeployment extends ConsumerWidget {
     );
   }
 
-  Widget _buildDeployedPoliciesCard(List<SecurityPolicy> policies, bool isDarkMode) {
+  Widget _buildDeployedPoliciesCard(
+      List<SecurityPolicy> policies, bool isDarkMode) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.40) : const Color(0xFFCDD4B2),
+          color: isDarkMode
+              ? const Color(0xFF5DD62C).withOpacity(0.40)
+              : const Color(0xFFCDD4B2),
           width: 1.0,
         ),
         boxShadow: isDarkMode
@@ -252,14 +280,20 @@ class PolicyDeployment extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          ConsoleRow(
             children: [
-              Icon(Icons.verified, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416), size: 15),
+              Icon(Icons.verified,
+                  color: isDarkMode
+                      ? const Color(0xFF5DD62C)
+                      : const Color(0xFF80A416),
+                  size: 15),
               const SizedBox(width: 6),
               Text(
                 'ENFORCED ACTIVE POLICIES',
                 style: CyberTextStyles.technical(
-                  color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                  color: isDarkMode
+                      ? const Color(0xFF5DD62C)
+                      : const Color(0xFF0F172A),
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                 ).copyWith(letterSpacing: 1.1),
@@ -267,7 +301,11 @@ class PolicyDeployment extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Divider(color: isDarkMode ? const Color(0xFF222222) : const Color(0xFFE2E8F0), height: 1),
+          Divider(
+              color: isDarkMode
+                  ? const Color(0xFF222222)
+                  : const Color(0xFFE2E8F0),
+              height: 1),
           const SizedBox(height: 10),
           Expanded(
             child: policies.isEmpty
@@ -275,7 +313,9 @@ class PolicyDeployment extends ConsumerWidget {
                     child: Text(
                       'NO ACTIVE ENFORCED POLICIES',
                       style: CyberTextStyles.technical(
-                        color: isDarkMode ? Colors.white38 : const Color(0xFF64748B),
+                        color: isDarkMode
+                            ? Colors.white38
+                            : const Color(0xFF64748B),
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
@@ -285,16 +325,21 @@ class PolicyDeployment extends ConsumerWidget {
                     itemCount: policies.length,
                     itemBuilder: (context, idx) {
                       final policy = policies[idx];
-                      final timeStr = '${policy.timestamp.hour.toString().padLeft(2, '0')}:${policy.timestamp.minute.toString().padLeft(2, '0')}:${policy.timestamp.second.toString().padLeft(2, '0')}';
+                      final timeStr =
+                          '${policy.timestamp.hour.toString().padLeft(2, '0')}:${policy.timestamp.minute.toString().padLeft(2, '0')}:${policy.timestamp.second.toString().padLeft(2, '0')}';
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
+                          color: isDarkMode
+                              ? const Color(0xFF141414)
+                              : const Color(0xFFFAF9F6),
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
-                            color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.3) : const Color(0xFFCDD4B2),
+                            color: isDarkMode
+                                ? const Color(0xFF5DD62C).withOpacity(0.3)
+                                : const Color(0xFFCDD4B2),
                             width: 1.0,
                           ),
                         ),
@@ -310,7 +355,9 @@ class PolicyDeployment extends ConsumerWidget {
                                     style: TextStyle(
                                       fontFamily: 'Inter',
                                       fontSize: 12.0,
-                                      color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : const Color(0xFF0F172A),
                                       fontWeight: FontWeight.bold,
                                     ),
                                     overflow: TextOverflow.ellipsis,
@@ -320,7 +367,9 @@ class PolicyDeployment extends ConsumerWidget {
                                     'TARGET: ${policy.deviceId} | IP: ${policy.rawJsonPolicy.contains('ip_address') ? '10.128.4.X' : 'LOCAL'}',
                                     style: GoogleFonts.spaceGrotesk(
                                       fontSize: 10,
-                                      color: isDarkMode ? Colors.white60 : const Color(0xFF64748B),
+                                      color: isDarkMode
+                                          ? Colors.white60
+                                          : const Color(0xFF64748B),
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -331,21 +380,28 @@ class PolicyDeployment extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: isDarkMode
-                                        ? const Color(0xFF5DD62C).withOpacity(0.15)
-                                        : const Color(0xFF15803D).withOpacity(0.12),
+                                        ? const Color(0xFF5DD62C)
+                                            .withOpacity(0.15)
+                                        : const Color(0xFF15803D)
+                                            .withOpacity(0.12),
                                     borderRadius: BorderRadius.circular(2),
                                     border: Border.all(
-                                      color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF15803D),
+                                      color: isDarkMode
+                                          ? const Color(0xFF5DD62C)
+                                          : const Color(0xFF15803D),
                                       width: 0.8,
                                     ),
                                   ),
                                   child: Text(
                                     'ACTIVE',
                                     style: CyberTextStyles.technical(
-                                      color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF15803D),
+                                      color: isDarkMode
+                                          ? const Color(0xFF5DD62C)
+                                          : const Color(0xFF15803D),
                                       fontSize: 8.5,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -354,7 +410,9 @@ class PolicyDeployment extends ConsumerWidget {
                                 const SizedBox(height: 4),
                                 Text(
                                   timeStr,
-                                  style: CyberTextStyles.techMutedFor(isDarkMode).copyWith(fontSize: 8.5),
+                                  style:
+                                      CyberTextStyles.techMutedFor(isDarkMode)
+                                          .copyWith(fontSize: 8.5),
                                 ),
                               ],
                             ),
@@ -376,7 +434,9 @@ class PolicyDeployment extends ConsumerWidget {
         color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(
-          color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.40) : const Color(0xFFCDD4B2),
+          color: isDarkMode
+              ? const Color(0xFF5DD62C).withOpacity(0.40)
+              : const Color(0xFFCDD4B2),
           width: 1.0,
         ),
         boxShadow: isDarkMode
@@ -392,14 +452,20 @@ class PolicyDeployment extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          ConsoleRow(
             children: [
-              Icon(Icons.terminal, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416), size: 15),
+              Icon(Icons.terminal,
+                  color: isDarkMode
+                      ? const Color(0xFF5DD62C)
+                      : const Color(0xFF80A416),
+                  size: 15),
               const SizedBox(width: 6),
               Text(
                 'OPA EDGE RULES COMPILER LOGS',
                 style: CyberTextStyles.technical(
-                  color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                  color: isDarkMode
+                      ? const Color(0xFF5DD62C)
+                      : const Color(0xFF0F172A),
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                 ).copyWith(letterSpacing: 1.1),
@@ -407,7 +473,11 @@ class PolicyDeployment extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Divider(color: isDarkMode ? const Color(0xFF222222) : const Color(0xFFE2E8F0), height: 1),
+          Divider(
+              color: isDarkMode
+                  ? const Color(0xFF222222)
+                  : const Color(0xFFE2E8F0),
+              height: 1),
           const SizedBox(height: 10),
           Expanded(
             child: logs.isEmpty
@@ -415,7 +485,9 @@ class PolicyDeployment extends ConsumerWidget {
                     child: Text(
                       'LOG FEED IS EMPTY',
                       style: CyberTextStyles.technical(
-                        color: isDarkMode ? Colors.white38 : const Color(0xFF64748B),
+                        color: isDarkMode
+                            ? Colors.white38
+                            : const Color(0xFF64748B),
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
@@ -426,17 +498,22 @@ class PolicyDeployment extends ConsumerWidget {
                     itemBuilder: (context, idx) {
                       final log = logs[idx];
                       final isError = log.level == 'ERROR';
-                      final timeStr = '${log.timestamp.hour.toString().padLeft(2, '0')}:${log.timestamp.minute.toString().padLeft(2, '0')}:${log.timestamp.second.toString().padLeft(2, '0')}';
+                      final timeStr =
+                          '${log.timestamp.hour.toString().padLeft(2, '0')}:${log.timestamp.minute.toString().padLeft(2, '0')}:${log.timestamp.second.toString().padLeft(2, '0')}';
                       final Color levelColor = isError
                           ? const Color(0xFFDF2531)
-                          : (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF15803D));
+                          : (isDarkMode
+                              ? const Color(0xFF5DD62C)
+                              : const Color(0xFF15803D));
 
                       return Container(
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         decoration: BoxDecoration(
                           border: Border(
                             bottom: BorderSide(
-                              color: isDarkMode ? const Color(0xFF181818) : const Color(0xFFF1F5F9),
+                              color: isDarkMode
+                                  ? const Color(0xFF181818)
+                                  : const Color(0xFFF1F5F9),
                               width: 1,
                             ),
                           ),
@@ -449,7 +526,9 @@ class PolicyDeployment extends ConsumerWidget {
                               '[$timeStr]',
                               style: GoogleFonts.spaceGrotesk(
                                 fontSize: 10,
-                                color: isDarkMode ? const Color(0xFFC5C764) : const Color(0xFF80A416),
+                                color: isDarkMode
+                                    ? const Color(0xFFC5C764)
+                                    : const Color(0xFF80A416),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -469,7 +548,9 @@ class PolicyDeployment extends ConsumerWidget {
                               child: Text(
                                 log.message.toUpperCase(),
                                 style: GoogleFonts.inter(
-                                  color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                  color: isDarkMode
+                                      ? Colors.white
+                                      : const Color(0xFF0F172A),
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w500,
                                 ),

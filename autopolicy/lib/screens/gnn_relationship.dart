@@ -1,3 +1,4 @@
+import '../widgets/console_row.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,7 @@ import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
 
 enum GraphLayoutMode { forceDirected, hierarchical, circular }
+
 enum GraphFilter { all, criticalOnly, warningOnly, lateralOnly }
 
 class GNNRelationship extends ConsumerStatefulWidget {
@@ -133,7 +135,9 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
 
   bool _isGateway(IoTDevice d) {
     final type = d.deviceType.toLowerCase();
-    return type.contains('gateway') || type.contains('router') || d.id == 'DEV-001';
+    return type.contains('gateway') ||
+        type.contains('router') ||
+        d.id == 'DEV-001';
   }
 
   bool _isHighValue(IoTDevice d) {
@@ -152,7 +156,9 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
   }
 
   bool _isWarning(IoTDevice d) {
-    return d.riskScore >= 0.35 && d.riskScore < 0.70 && d.status != DeviceStatus.warning;
+    return d.riskScore >= 0.35 &&
+        d.riskScore < 0.70 &&
+        d.status != DeviceStatus.warning;
   }
 
   bool _isNodeVisible(IoTDevice d) {
@@ -226,7 +232,8 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
     if (_isDraggingNode && _draggedDeviceId != null) {
       setState(() {
         final currentCoord = _nodeCoords[_draggedDeviceId!] ?? Offset.zero;
-        _nodeCoords[_draggedDeviceId!] = currentCoord + (details.delta / _zoomScale);
+        _nodeCoords[_draggedDeviceId!] =
+            currentCoord + (details.delta / _zoomScale);
       });
     } else {
       if (_dragStart == null) return;
@@ -273,9 +280,13 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
     }
 
     final totalNodes = securityState.devices.length;
-    final criticalNodes = securityState.devices.where((d) => _isCritical(d)).length;
-    final isolatedNodes = securityState.devices.where((d) => d.status == DeviceStatus.isolated).length;
-    final lateralPaths = securityState.anomalies.where((a) => !a.isMitigated).length;
+    final criticalNodes =
+        securityState.devices.where((d) => _isCritical(d)).length;
+    final isolatedNodes = securityState.devices
+        .where((d) => d.status == DeviceStatus.isolated)
+        .length;
+    final lateralPaths =
+        securityState.anomalies.where((a) => !a.isMitigated).length;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -285,14 +296,17 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
           Positioned.fill(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final canvasSize = Size(constraints.maxWidth, constraints.maxHeight);
+                final canvasSize =
+                    Size(constraints.maxWidth, constraints.maxHeight);
 
                 return MouseRegion(
                   onHover: (event) => _handleMouseHover(event, canvasSize),
                   onExit: (_) => setState(() => _hoveredDevice = null),
                   child: GestureDetector(
-                    onTapUp: (details) => _handleCanvasTap(details.localPosition, canvasSize),
-                    onPanStart: (details) => _handlePanStart(details.localPosition, canvasSize),
+                    onTapUp: (details) =>
+                        _handleCanvasTap(details.localPosition, canvasSize),
+                    onPanStart: (details) =>
+                        _handlePanStart(details.localPosition, canvasSize),
                     onPanUpdate: _handlePanUpdate,
                     onPanEnd: (_) => _handlePanEnd(),
                     child: AnimatedBuilder(
@@ -329,33 +343,44 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                ConsoleRow(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+                        color: isDarkMode
+                            ? const Color(0xFF0F0F0F)
+                            : const Color(0xFFFAF9F6),
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(
-                          color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.40) : const Color(0xFFCDD4B2),
+                          color: isDarkMode
+                              ? const Color(0xFF5DD62C).withOpacity(0.40)
+                              : const Color(0xFFCDD4B2),
                           width: 1,
                         ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          ConsoleRow(
                             children: [
-                              Icon(Icons.hub_outlined, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416), size: 18),
+                              Icon(Icons.hub_outlined,
+                                  color: isDarkMode
+                                      ? const Color(0xFF5DD62C)
+                                      : const Color(0xFF80A416),
+                                  size: 18),
                               const SizedBox(width: 8),
                               Text(
                                 'GNN DEVICE TOPOLOGY & LATERAL MOVEMENT GRAPH',
                                 style: CyberTextStyles.displayTitle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w900,
-                                  color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                                  color: isDarkMode
+                                      ? const Color(0xFF5DD62C)
+                                      : const Color(0xFF0F172A),
                                 ).copyWith(letterSpacing: 1.2),
                               ),
                             ],
@@ -365,7 +390,9 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                             'GRAPH NEURAL NETWORK (GraphSAGE) EMBEDDINGS · REAL-TIME THREAT PROPAGATION',
                             style: CyberTextStyles.technical(
                               fontSize: 9.5,
-                              color: isDarkMode ? Colors.white70 : const Color(0xFF64748B),
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : const Color(0xFF64748B),
                             ),
                           ),
                         ],
@@ -376,13 +403,23 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                     if (!isMobile)
                       Row(
                         children: [
-                          _buildMiniSwatchStatCard('TOTAL NODES', '$totalNodes', const Color(0xFFFFEDA8), Icons.router_outlined),
+                          _buildMiniSwatchStatCard('TOTAL NODES', '$totalNodes',
+                              const Color(0xFFFFEDA8), Icons.router_outlined),
                           const SizedBox(width: 8),
-                          _buildMiniSwatchStatCard('HIGH RISK', '$criticalNodes', const Color(0xFFC4E326), Icons.warning_amber_outlined),
+                          _buildMiniSwatchStatCard(
+                              'HIGH RISK',
+                              '$criticalNodes',
+                              const Color(0xFFC4E326),
+                              Icons.warning_amber_outlined),
                           const SizedBox(width: 8),
-                          _buildMiniSwatchStatCard('ISOLATED', '$isolatedNodes', const Color(0xFFB1A9DA), Icons.lock_outline),
+                          _buildMiniSwatchStatCard('ISOLATED', '$isolatedNodes',
+                              const Color(0xFFB1A9DA), Icons.lock_outline),
                           const SizedBox(width: 8),
-                          _buildMiniSwatchStatCard('ATTACK PATHS', '$lateralPaths', const Color(0xFF80A416), Icons.alt_route),
+                          _buildMiniSwatchStatCard(
+                              'ATTACK PATHS',
+                              '$lateralPaths',
+                              const Color(0xFF80A416),
+                              Icons.alt_route),
                         ],
                       ),
                   ],
@@ -391,18 +428,25 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
 
                 // Sub-Row: Layout Switcher + Filters + Search Box
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+                    color: isDarkMode
+                        ? const Color(0xFF0F0F0F)
+                        : const Color(0xFFFAF9F6),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: isDarkMode ? Colors.white12 : const Color(0xFFCDD4B2), width: 1),
+                    border: Border.all(
+                        color: isDarkMode
+                            ? Colors.white12
+                            : const Color(0xFFCDD4B2),
+                        width: 1),
                   ),
                   child: Wrap(
                     spacing: 12,
                     runSpacing: 8,
                     crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      Row(
+                      ConsoleRow(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
@@ -410,19 +454,29 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                             style: CyberTextStyles.technical(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: isDarkMode ? Colors.white70 : const Color(0xFF475569),
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(width: 8),
-                          _buildLayoutBtn('FORCE-DIRECTED', GraphLayoutMode.forceDirected, Icons.bubble_chart_outlined, isDarkMode),
+                          _buildLayoutBtn(
+                              'FORCE-DIRECTED',
+                              GraphLayoutMode.forceDirected,
+                              Icons.bubble_chart_outlined,
+                              isDarkMode),
                           const SizedBox(width: 6),
-                          _buildLayoutBtn('HIERARCHICAL', GraphLayoutMode.hierarchical, Icons.account_tree_outlined, isDarkMode),
+                          _buildLayoutBtn(
+                              'HIERARCHICAL',
+                              GraphLayoutMode.hierarchical,
+                              Icons.account_tree_outlined,
+                              isDarkMode),
                           const SizedBox(width: 6),
-                          _buildLayoutBtn('CIRCULAR', GraphLayoutMode.circular, Icons.radio_button_checked, isDarkMode),
+                          _buildLayoutBtn('CIRCULAR', GraphLayoutMode.circular,
+                              Icons.radio_button_checked, isDarkMode),
                         ],
                       ),
-
-                      Row(
+                      ConsoleRow(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
@@ -430,34 +484,64 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                             style: CyberTextStyles.technical(
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
-                              color: isDarkMode ? Colors.white70 : const Color(0xFF475569),
+                              color: isDarkMode
+                                  ? Colors.white70
+                                  : const Color(0xFF475569),
                             ),
                           ),
                           const SizedBox(width: 8),
-                          _buildFilterBtn('ALL', GraphFilter.all, isDarkMode: isDarkMode),
+                          _buildFilterBtn('ALL', GraphFilter.all,
+                              isDarkMode: isDarkMode),
                           const SizedBox(width: 6),
-                          _buildFilterBtn('CRITICAL ONLY', GraphFilter.criticalOnly, color: const Color(0xFFDF2531), isDarkMode: isDarkMode),
+                          _buildFilterBtn(
+                              'CRITICAL ONLY', GraphFilter.criticalOnly,
+                              color: const Color(0xFFDF2531),
+                              isDarkMode: isDarkMode),
                           const SizedBox(width: 6),
-                          _buildFilterBtn('WARNING ONLY', GraphFilter.warningOnly, color: const Color(0xFFFF9F43), isDarkMode: isDarkMode),
+                          _buildFilterBtn(
+                              'WARNING ONLY', GraphFilter.warningOnly,
+                              color: const Color(0xFFFF9F43),
+                              isDarkMode: isDarkMode),
                           const SizedBox(width: 6),
-                          _buildFilterBtn('LATERAL PATHS ONLY', GraphFilter.lateralOnly, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416), isDarkMode: isDarkMode),
+                          _buildFilterBtn(
+                              'LATERAL PATHS ONLY', GraphFilter.lateralOnly,
+                              color: isDarkMode
+                                  ? const Color(0xFF5DD62C)
+                                  : const Color(0xFF80A416),
+                              isDarkMode: isDarkMode),
                         ],
                       ),
-
                       SizedBox(
                         width: 220,
                         height: 32,
                         child: TextField(
                           controller: _searchController,
-                          onChanged: (val) => setState(() => _searchQuery = val),
-                          style: CyberTextStyles.technical(fontSize: 11.5, color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
+                          onChanged: (val) =>
+                              setState(() => _searchQuery = val),
+                          style: CyberTextStyles.technical(
+                              fontSize: 11.5,
+                              color: isDarkMode
+                                  ? Colors.white
+                                  : const Color(0xFF0F172A)),
                           decoration: InputDecoration(
                             hintText: 'SEARCH ASSET / IP...',
-                            hintStyle: CyberTextStyles.technical(fontSize: 10.5, color: isDarkMode ? Colors.white38 : const Color(0xFF94A3B8)),
-                            prefixIcon: Icon(Icons.search, size: 15, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A)),
+                            hintStyle: CyberTextStyles.technical(
+                                fontSize: 10.5,
+                                color: isDarkMode
+                                    ? Colors.white38
+                                    : const Color(0xFF94A3B8)),
+                            prefixIcon: Icon(Icons.search,
+                                size: 15,
+                                color: isDarkMode
+                                    ? const Color(0xFF5DD62C)
+                                    : const Color(0xFF0F172A)),
                             suffixIcon: _searchQuery.isNotEmpty
                                 ? IconButton(
-                                    icon: Icon(Icons.clear, size: 14, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B)),
+                                    icon: Icon(Icons.clear,
+                                        size: 14,
+                                        color: isDarkMode
+                                            ? Colors.white54
+                                            : const Color(0xFF64748B)),
                                     onPressed: () {
                                       _searchController.clear();
                                       setState(() => _searchQuery = '');
@@ -465,19 +549,31 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                                   )
                                 : null,
                             filled: true,
-                            fillColor: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                            fillColor: isDarkMode
+                                ? const Color(0xFF141414)
+                                : const Color(0xFFFAF9F6),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 0),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(3),
-                              borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+                              borderSide: BorderSide(
+                                  color: isDarkMode
+                                      ? Colors.white24
+                                      : const Color(0xFFCDD4B2)),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(3),
-                              borderSide: BorderSide(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2)),
+                              borderSide: BorderSide(
+                                  color: isDarkMode
+                                      ? Colors.white24
+                                      : const Color(0xFFCDD4B2)),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(3),
-                              borderSide: BorderSide(color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFB8A9C1)),
+                              borderSide: BorderSide(
+                                  color: isDarkMode
+                                      ? const Color(0xFF5DD62C)
+                                      : const Color(0xFFB8A9C1)),
                             ),
                           ),
                         ),
@@ -496,12 +592,19 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+                color: isDarkMode
+                    ? const Color(0xFF0F0F0F)
+                    : const Color(0xFFFAF9F6),
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: isDarkMode ? Colors.white30 : const Color(0xFFCDD4B2), width: 1.2),
+                border: Border.all(
+                    color:
+                        isDarkMode ? Colors.white30 : const Color(0xFFCDD4B2),
+                    width: 1.2),
                 boxShadow: [
                   BoxShadow(
-                    color: isDarkMode ? Colors.black.withOpacity(0.85) : Colors.black.withOpacity(0.08),
+                    color: isDarkMode
+                        ? Colors.black.withOpacity(0.85)
+                        : Colors.black.withOpacity(0.08),
                     blurRadius: 16,
                   ),
                 ],
@@ -515,16 +618,39 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                     style: CyberTextStyles.technical(
                       fontSize: 13.0,
                       fontWeight: FontWeight.w900,
-                      color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                      color: isDarkMode
+                          ? const Color(0xFF5DD62C)
+                          : const Color(0xFF0F172A),
                     ).copyWith(letterSpacing: 1.0),
                   ),
                   const SizedBox(height: 10),
-                  _legendItem(const Color(0xFF00B4D8), 'Gateway / Router (Hexagon)', Icons.router_outlined, isDarkMode),
-                  _legendItem(const Color(0xFF9D8DF1), 'High-Value Asset (Diamond)', Icons.dns_outlined, isDarkMode),
-                  _legendItem(const Color(0xFF5DD62C), 'Safe Device (Green Circle)', Icons.check_circle_outline, isDarkMode),
-                  _legendItem(const Color(0xFFFF9F43), 'Warning (Orange Dashed Ring)', Icons.warning_amber_outlined, isDarkMode),
-                  _legendItem(const Color(0xFFDF2531), 'Critical Compromised (Pulsing Red)', Icons.dangerous_outlined, isDarkMode),
-                  _legendItem(const Color(0xFFA88AED), 'Quarantined / Isolated', Icons.lock_outline, isDarkMode),
+                  _legendItem(
+                      const Color(0xFF00B4D8),
+                      'Gateway / Router (Hexagon)',
+                      Icons.router_outlined,
+                      isDarkMode),
+                  _legendItem(
+                      const Color(0xFF9D8DF1),
+                      'High-Value Asset (Diamond)',
+                      Icons.dns_outlined,
+                      isDarkMode),
+                  _legendItem(
+                      const Color(0xFF5DD62C),
+                      'Safe Device (Green Circle)',
+                      Icons.check_circle_outline,
+                      isDarkMode),
+                  _legendItem(
+                      const Color(0xFFFF9F43),
+                      'Warning (Orange Dashed Ring)',
+                      Icons.warning_amber_outlined,
+                      isDarkMode),
+                  _legendItem(
+                      const Color(0xFFDF2531),
+                      'Critical Compromised (Pulsing Red)',
+                      Icons.dangerous_outlined,
+                      isDarkMode),
+                  _legendItem(const Color(0xFFA88AED), 'Quarantined / Isolated',
+                      Icons.lock_outline, isDarkMode),
                   const SizedBox(height: 6),
                   Row(
                     children: [
@@ -533,7 +659,9 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                         height: 3,
                         decoration: const BoxDecoration(
                           color: Color(0xFFFF5722),
-                          boxShadow: [BoxShadow(color: Color(0xFFFF5722), blurRadius: 6)],
+                          boxShadow: [
+                            BoxShadow(color: Color(0xFFFF5722), blurRadius: 6)
+                          ],
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -559,25 +687,44 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+                color: isDarkMode
+                    ? const Color(0xFF0F0F0F)
+                    : const Color(0xFFFAF9F6),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2), width: 1),
+                border: Border.all(
+                    color:
+                        isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2),
+                    width: 1),
               ),
               child: Row(
                 children: [
                   IconButton(
                     tooltip: 'Zoom In',
-                    icon: Icon(Icons.add, size: 17, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416)),
-                    onPressed: () => setState(() => _zoomScale = min(2.5, _zoomScale + 0.15)),
+                    icon: Icon(Icons.add,
+                        size: 17,
+                        color: isDarkMode
+                            ? const Color(0xFF5DD62C)
+                            : const Color(0xFF80A416)),
+                    onPressed: () => setState(
+                        () => _zoomScale = min(2.5, _zoomScale + 0.15)),
                   ),
                   IconButton(
                     tooltip: 'Zoom Out',
-                    icon: Icon(Icons.remove, size: 17, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416)),
-                    onPressed: () => setState(() => _zoomScale = max(0.5, _zoomScale - 0.15)),
+                    icon: Icon(Icons.remove,
+                        size: 17,
+                        color: isDarkMode
+                            ? const Color(0xFF5DD62C)
+                            : const Color(0xFF80A416)),
+                    onPressed: () => setState(
+                        () => _zoomScale = max(0.5, _zoomScale - 0.15)),
                   ),
                   IconButton(
                     tooltip: 'Fit to Screen',
-                    icon: Icon(Icons.fullscreen, size: 17, color: isDarkMode ? Colors.white70 : const Color(0xFF475569)),
+                    icon: Icon(Icons.fullscreen,
+                        size: 17,
+                        color: isDarkMode
+                            ? Colors.white70
+                            : const Color(0xFF475569)),
                     onPressed: () => setState(() {
                       _panOffset = Offset.zero;
                       _zoomScale = 1.0;
@@ -585,7 +732,11 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                   ),
                   IconButton(
                     tooltip: 'Re-Center Canvas',
-                    icon: Icon(Icons.center_focus_strong, size: 17, color: isDarkMode ? Colors.white70 : const Color(0xFF475569)),
+                    icon: Icon(Icons.center_focus_strong,
+                        size: 17,
+                        color: isDarkMode
+                            ? Colors.white70
+                            : const Color(0xFF475569)),
                     onPressed: () => setState(() => _panOffset = Offset.zero),
                   ),
                 ],
@@ -594,7 +745,8 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
           ),
 
           // ── 5. HOLOGRAPHIC MOUSE HOVER TELEMETRY CARD ─────────────────────
-          if (_hoveredDevice != null && _selectedDevice?.id != _hoveredDevice!.id)
+          if (_hoveredDevice != null &&
+              _selectedDevice?.id != _hoveredDevice!.id)
             _buildHoverCard(_hoveredDevice!, isDarkMode),
 
           // ── 6. SLIDE-IN RIGHT SIDE PANEL (WHEN NODE CLICKED) ──────────────
@@ -610,7 +762,8 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
     );
   }
 
-  Widget _buildMiniSwatchStatCard(String label, String value, Color color, IconData icon) {
+  Widget _buildMiniSwatchStatCard(
+      String label, String value, Color color, IconData icon) {
     return Container(
       width: 125,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -630,7 +783,8 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
+          ConsoleRow(
+            compact: true,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
@@ -659,19 +813,27 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
     );
   }
 
-  Widget _buildLayoutBtn(String label, GraphLayoutMode mode, IconData icon, [bool isDarkMode = true]) {
+  Widget _buildLayoutBtn(String label, GraphLayoutMode mode, IconData icon,
+      [bool isDarkMode = true]) {
     final bool isSelected = _layoutMode == mode;
-    
+
     // Light mode: purple shade from palette (#D4C9D8 fill with #7C3AED purple border)
     // Dark mode: cyber electric purple (#8B5CF6)
-    final Color selectedBg = isDarkMode ? const Color(0xFF8B5CF6).withOpacity(0.32) : const Color(0xFFD4C9D8);
-    final Color unselectedBg = isDarkMode ? const Color(0xFF141414) : const Color(0xFFF1F3EA);
-    
-    final Color selectedBorder = isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF7C3AED);
-    final Color unselectedBorder = isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2);
-    
-    final Color selectedText = isDarkMode ? const Color(0xFFDDD6FE) : const Color(0xFF0F172A);
-    final Color unselectedText = isDarkMode ? Colors.white70 : const Color(0xFF475569);
+    final Color selectedBg = isDarkMode
+        ? const Color(0xFF8B5CF6).withOpacity(0.32)
+        : const Color(0xFFD4C9D8);
+    final Color unselectedBg =
+        isDarkMode ? const Color(0xFF141414) : const Color(0xFFF1F3EA);
+
+    final Color selectedBorder =
+        isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF7C3AED);
+    final Color unselectedBorder =
+        isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2);
+
+    final Color selectedText =
+        isDarkMode ? const Color(0xFFDDD6FE) : const Color(0xFF0F172A);
+    final Color unselectedText =
+        isDarkMode ? Colors.white70 : const Color(0xFF475569);
 
     return GestureDetector(
       onTap: () {
@@ -722,7 +884,8 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
     );
   }
 
-  Widget _buildFilterBtn(String label, GraphFilter filter, {Color? color, bool isDarkMode = true}) {
+  Widget _buildFilterBtn(String label, GraphFilter filter,
+      {Color? color, bool isDarkMode = true}) {
     final bool isSelected = _filterMode == filter;
 
     Color selectedBg;
@@ -730,24 +893,38 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
     Color selectedText;
 
     if (filter == GraphFilter.criticalOnly) {
-      selectedBg = isDarkMode ? const Color(0xFFDF2531).withOpacity(0.32) : const Color(0xFFD82734);
-      selectedBorder = isDarkMode ? const Color(0xFFDF2531) : const Color(0xFF810100);
+      selectedBg = isDarkMode
+          ? const Color(0xFFDF2531).withOpacity(0.32)
+          : const Color(0xFFD82734);
+      selectedBorder =
+          isDarkMode ? const Color(0xFFDF2531) : const Color(0xFF810100);
       selectedText = Colors.white;
     } else if (filter == GraphFilter.warningOnly) {
-      selectedBg = isDarkMode ? const Color(0xFFFF9F43).withOpacity(0.32) : const Color(0xFFDCA278);
-      selectedBorder = isDarkMode ? const Color(0xFFFF9F43) : const Color(0xFFB45309);
-      selectedText = isDarkMode ? const Color(0xFFFF9F43) : const Color(0xFF0F172A);
+      selectedBg = isDarkMode
+          ? const Color(0xFFFF9F43).withOpacity(0.32)
+          : const Color(0xFFDCA278);
+      selectedBorder =
+          isDarkMode ? const Color(0xFFFF9F43) : const Color(0xFFB45309);
+      selectedText =
+          isDarkMode ? const Color(0xFFFF9F43) : const Color(0xFF0F172A);
     } else {
       // Lateral Paths Only & All filter:
       // Green shade from light palette (#DDE69E fill, #80A416 border, #0F172A text)
-      selectedBg = isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.30) : const Color(0xFFDDE69E);
-      selectedBorder = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416);
-      selectedText = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A);
+      selectedBg = isDarkMode
+          ? const Color(0xFF5DD62C).withOpacity(0.30)
+          : const Color(0xFFDDE69E);
+      selectedBorder =
+          isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416);
+      selectedText =
+          isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A);
     }
 
-    final Color unselectedBg = isDarkMode ? const Color(0xFF141414) : const Color(0xFFF1F3EA);
-    final Color unselectedBorder = isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2);
-    final Color unselectedText = isDarkMode ? Colors.white70 : const Color(0xFF475569);
+    final Color unselectedBg =
+        isDarkMode ? const Color(0xFF141414) : const Color(0xFFF1F3EA);
+    final Color unselectedBorder =
+        isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2);
+    final Color unselectedText =
+        isDarkMode ? Colors.white70 : const Color(0xFF475569);
 
     return GestureDetector(
       onTap: () => setState(() => _filterMode = filter),
@@ -782,7 +959,8 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
     );
   }
 
-  Widget _legendItem(Color color, String label, IconData icon, [bool isDarkMode = true]) {
+  Widget _legendItem(Color color, String label, IconData icon,
+      [bool isDarkMode = true]) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6.0),
       child: Row(
@@ -805,7 +983,9 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
 
   Widget _buildHoverCard(IoTDevice device, bool isDarkMode) {
     final bool isCritical = _isCritical(device);
-    final Color color = isCritical ? const Color(0xFFDF2531) : (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416));
+    final Color color = isCritical
+        ? const Color(0xFFDF2531)
+        : (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416));
 
     return Positioned(
       left: (_hoverPos.dx + 16).clamp(16.0, 900.0),
@@ -815,12 +995,17 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
           width: 300,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+            color:
+                isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: isDarkMode ? color : const Color(0xFFCDD4B2), width: 1.5),
+            border: Border.all(
+                color: isDarkMode ? color : const Color(0xFFCDD4B2),
+                width: 1.5),
             boxShadow: [
               BoxShadow(
-                color: isDarkMode ? color.withOpacity(0.35) : Colors.black.withOpacity(0.08),
+                color: isDarkMode
+                    ? color.withOpacity(0.35)
+                    : Colors.black.withOpacity(0.08),
                 blurRadius: 16,
               ),
             ],
@@ -838,7 +1023,8 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                       style: CyberTextStyles.technical(
                         fontSize: 14.0,
                         fontWeight: FontWeight.w900,
-                        color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                        color:
+                            isDarkMode ? Colors.white : const Color(0xFF0F172A),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -846,7 +1032,8 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                   Container(
                     width: 9,
                     height: 9,
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+                    decoration:
+                        BoxDecoration(shape: BoxShape.circle, color: color),
                   ),
                 ],
               ),
@@ -859,11 +1046,20 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                   color: isDarkMode ? Colors.white70 : const Color(0xFF64748B),
                 ),
               ),
-              Divider(color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2), height: 16),
-              _hoverDetailLine('IP ADDRESS', device.ipAddress, isDarkMode: isDarkMode),
-              _hoverDetailLine('RISK SCORE', '${(device.riskScore * 100).toInt()}%', isDarkMode: isDarkMode, valColor: color),
-              _hoverDetailLine('CONNECTIONS', '${device.connections.length} ACTIVE LINKS', isDarkMode: isDarkMode),
-              _hoverDetailLine('BANDWIDTH', '${device.bandwidth.toStringAsFixed(1)} KB/S', isDarkMode: isDarkMode),
+              Divider(
+                  color: isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2),
+                  height: 16),
+              _hoverDetailLine('IP ADDRESS', device.ipAddress,
+                  isDarkMode: isDarkMode),
+              _hoverDetailLine(
+                  'RISK SCORE', '${(device.riskScore * 100).toInt()}%',
+                  isDarkMode: isDarkMode, valColor: color),
+              _hoverDetailLine(
+                  'CONNECTIONS', '${device.connections.length} ACTIVE LINKS',
+                  isDarkMode: isDarkMode),
+              _hoverDetailLine(
+                  'BANDWIDTH', '${device.bandwidth.toStringAsFixed(1)} KB/S',
+                  isDarkMode: isDarkMode),
             ],
           ),
         ),
@@ -871,14 +1067,24 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
     );
   }
 
-  Widget _hoverDetailLine(String k, String v, {required bool isDarkMode, Color? valColor}) {
+  Widget _hoverDetailLine(String k, String v,
+      {required bool isDarkMode, Color? valColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(k, style: CyberTextStyles.technical(fontSize: 11.0, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
-          Text(v, style: CyberTextStyles.technical(fontSize: 12.0, fontWeight: FontWeight.bold, color: valColor ?? (isDarkMode ? Colors.white : const Color(0xFF0F172A)))),
+          Text(k,
+              style: CyberTextStyles.technical(
+                  fontSize: 11.0,
+                  color:
+                      isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
+          Text(v,
+              style: CyberTextStyles.technical(
+                  fontSize: 12.0,
+                  fontWeight: FontWeight.bold,
+                  color: valColor ??
+                      (isDarkMode ? Colors.white : const Color(0xFF0F172A)))),
         ],
       ),
     );
@@ -894,14 +1100,22 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
         ? const Color(0xFFA88AED)
         : (isCritical
             ? const Color(0xFFDF2531)
-            : (isWarning ? const Color(0xFFFF9F43) : (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416))));
+            : (isWarning
+                ? const Color(0xFFFF9F43)
+                : (isDarkMode
+                    ? const Color(0xFF5DD62C)
+                    : const Color(0xFF80A416))));
 
     final String statusLabel = isIsolated
         ? 'QUARANTINED / ISOLATED'
-        : (isCritical ? 'CRITICAL COMPROMISE' : (isWarning ? 'ELEVATED RISK' : 'SECURED & NOMINAL'));
+        : (isCritical
+            ? 'CRITICAL COMPROMISE'
+            : (isWarning ? 'ELEVATED RISK' : 'SECURED & NOMINAL'));
 
-    final relatedAlerts = securityState.anomalies.where((a) => a.deviceId == device.id).toList();
-    final relatedPolicies = securityState.policies.where((p) => p.deviceId == device.id).toList();
+    final relatedAlerts =
+        securityState.anomalies.where((a) => a.deviceId == device.id).toList();
+    final relatedPolicies =
+        securityState.policies.where((p) => p.deviceId == device.id).toList();
 
     return Container(
       width: 380,
@@ -909,13 +1123,16 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
         color: isDarkMode ? const Color(0xFF0A0A0E) : const Color(0xFFFAF9F6),
         border: Border(
           left: BorderSide(
-            color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2),
+            color:
+                isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2),
             width: 1.5,
           ),
         ),
         boxShadow: [
           BoxShadow(
-            color: isDarkMode ? Colors.black.withOpacity(0.8) : Colors.black.withOpacity(0.12),
+            color: isDarkMode
+                ? Colors.black.withOpacity(0.8)
+                : Colors.black.withOpacity(0.12),
             blurRadius: 20,
             spreadRadius: 4,
           ),
@@ -928,10 +1145,14 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
+              color: isDarkMode
+                  ? const Color(0xFF141414)
+                  : const Color(0xFFFAF9F6),
               border: Border(
                 bottom: BorderSide(
-                  color: isDarkMode ? statusColor.withOpacity(0.4) : const Color(0xFFCDD4B2),
+                  color: isDarkMode
+                      ? statusColor.withOpacity(0.4)
+                      : const Color(0xFFCDD4B2),
                   width: 1,
                 ),
               ),
@@ -944,7 +1165,9 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                     Icon(
                       _isGateway(device)
                           ? Icons.router_outlined
-                          : (_isHighValue(device) ? Icons.dns_outlined : Icons.devices_other),
+                          : (_isHighValue(device)
+                              ? Icons.dns_outlined
+                              : Icons.devices_other),
                       color: statusColor,
                       size: 20,
                     ),
@@ -956,14 +1179,18 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                           device.name.toUpperCase(),
                           style: CyberTextStyles.displayTitle(
                             fontSize: 14,
-                            color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                         Text(
                           'ID: ${device.id}',
                           style: CyberTextStyles.technical(
                             fontSize: 10,
-                            color: isDarkMode ? Colors.white54 : const Color(0xFF64748B),
+                            color: isDarkMode
+                                ? Colors.white54
+                                : const Color(0xFF64748B),
                           ),
                         ),
                       ],
@@ -971,7 +1198,10 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                   ],
                 ),
                 IconButton(
-                  icon: Icon(Icons.close, color: isDarkMode ? Colors.white70 : const Color(0xFF0F172A), size: 18),
+                  icon: Icon(Icons.close,
+                      color:
+                          isDarkMode ? Colors.white70 : const Color(0xFF0F172A),
+                      size: 18),
                   onPressed: () => setState(() => _selectedDevice = null),
                 ),
               ],
@@ -1010,9 +1240,14 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
+                      color: isDarkMode
+                          ? const Color(0xFF141414)
+                          : const Color(0xFFFAF9F6),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: isDarkMode ? Colors.white12 : const Color(0xFFCDD4B2)),
+                      border: Border.all(
+                          color: isDarkMode
+                              ? Colors.white12
+                              : const Color(0xFFCDD4B2)),
                     ),
                     child: Row(
                       children: [
@@ -1025,8 +1260,11 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                               CircularProgressIndicator(
                                 value: device.riskScore,
                                 strokeWidth: 7,
-                                backgroundColor: isDarkMode ? Colors.white12 : const Color(0xFFE2E8F0),
-                                valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                                backgroundColor: isDarkMode
+                                    ? Colors.white12
+                                    : const Color(0xFFE2E8F0),
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(statusColor),
                               ),
                               Column(
                                 mainAxisSize: MainAxisSize.min,
@@ -1043,7 +1281,9 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                                     'RISK',
                                     style: CyberTextStyles.technical(
                                       fontSize: 8.5,
-                                      color: isDarkMode ? Colors.white38 : const Color(0xFF64748B),
+                                      color: isDarkMode
+                                          ? Colors.white38
+                                          : const Color(0xFF64748B),
                                     ),
                                   ),
                                 ],
@@ -1061,7 +1301,9 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                                 style: CyberTextStyles.technical(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w800,
-                                  color: isDarkMode ? Colors.white70 : const Color(0xFF0F172A),
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : const Color(0xFF0F172A),
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -1071,7 +1313,9 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                                     : 'Behavior matches baseline Zero-Trust profile.',
                                 style: CyberTextStyles.technical(
                                   fontSize: 10,
-                                  color: isDarkMode ? Colors.white54 : const Color(0xFF64748B),
+                                  color: isDarkMode
+                                      ? Colors.white54
+                                      : const Color(0xFF64748B),
                                 ),
                               ),
                             ],
@@ -1088,27 +1332,46 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                     style: CyberTextStyles.technical(
                       fontSize: 10.5,
                       fontWeight: FontWeight.w800,
-                      color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
+                      color: isDarkMode
+                          ? const Color(0xFF5DD62C)
+                          : const Color(0xFF80A416),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
+                      color: isDarkMode
+                          ? const Color(0xFF141414)
+                          : const Color(0xFFFAF9F6),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: isDarkMode ? Colors.white12 : const Color(0xFFCDD4B2)),
+                      border: Border.all(
+                          color: isDarkMode
+                              ? Colors.white12
+                              : const Color(0xFFCDD4B2)),
                     ),
                     child: Column(
                       children: [
-                        _specRow('TYPE', device.deviceType.toUpperCase(), isDarkMode: isDarkMode),
-                        _specRow('PROTOCOL', device.protocol, isDarkMode: isDarkMode),
-                        _specRow('IP ADDRESS', device.ipAddress, isDarkMode: isDarkMode),
-                        _specRow('MAC ADDRESS', device.macAddress, isDarkMode: isDarkMode),
-                        _specRow('BANDWIDTH', '${device.bandwidth.toStringAsFixed(1)} KB/S', isDarkMode: isDarkMode),
-                        _specRow('CPU LOAD', '${device.cpuUsage.toStringAsFixed(1)}%', isDarkMode: isDarkMode),
-                        _specRow('RAM USAGE', '${device.memoryUsage.toStringAsFixed(1)}%', isDarkMode: isDarkMode),
-                        _specRow('MESH CONNECTIONS', '${device.connections.length} ACTIVE PATHS', isDarkMode: isDarkMode),
+                        _specRow('TYPE', device.deviceType.toUpperCase(),
+                            isDarkMode: isDarkMode),
+                        _specRow('PROTOCOL', device.protocol,
+                            isDarkMode: isDarkMode),
+                        _specRow('IP ADDRESS', device.ipAddress,
+                            isDarkMode: isDarkMode),
+                        _specRow('MAC ADDRESS', device.macAddress,
+                            isDarkMode: isDarkMode),
+                        _specRow('BANDWIDTH',
+                            '${device.bandwidth.toStringAsFixed(1)} KB/S',
+                            isDarkMode: isDarkMode),
+                        _specRow('CPU LOAD',
+                            '${device.cpuUsage.toStringAsFixed(1)}%',
+                            isDarkMode: isDarkMode),
+                        _specRow('RAM USAGE',
+                            '${device.memoryUsage.toStringAsFixed(1)}%',
+                            isDarkMode: isDarkMode),
+                        _specRow('MESH CONNECTIONS',
+                            '${device.connections.length} ACTIVE PATHS',
+                            isDarkMode: isDarkMode),
                       ],
                     ),
                   ),
@@ -1129,16 +1392,23 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
+                        color: isDarkMode
+                            ? const Color(0xFF141414)
+                            : const Color(0xFFFAF9F6),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: isDarkMode ? Colors.white10 : const Color(0xFFCDD4B2)),
+                        border: Border.all(
+                            color: isDarkMode
+                                ? Colors.white10
+                                : const Color(0xFFCDD4B2)),
                       ),
                       child: Center(
                         child: Text(
                           'NO ACTIVE INCIDENTS FLAGGED ON THIS ASSET',
                           style: CyberTextStyles.technical(
                             fontSize: 9.5,
-                            color: isDarkMode ? Colors.white38 : const Color(0xFF64748B),
+                            color: isDarkMode
+                                ? Colors.white38
+                                : const Color(0xFF64748B),
                           ),
                         ),
                       ),
@@ -1150,15 +1420,20 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
+                            color: isDarkMode
+                                ? const Color(0xFF141414)
+                                : const Color(0xFFFAF9F6),
                             borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: const Color(0xFFDF2531).withOpacity(0.4)),
+                            border: Border.all(
+                                color:
+                                    const Color(0xFFDF2531).withOpacity(0.4)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     a.attackType.toUpperCase(),
@@ -1182,7 +1457,9 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                                 a.details,
                                 style: CyberTextStyles.technical(
                                   fontSize: 9,
-                                  color: isDarkMode ? Colors.white60 : const Color(0xFF475569),
+                                  color: isDarkMode
+                                      ? Colors.white60
+                                      : const Color(0xFF475569),
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
@@ -1209,16 +1486,23 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
+                        color: isDarkMode
+                            ? const Color(0xFF141414)
+                            : const Color(0xFFFAF9F6),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: isDarkMode ? Colors.white10 : const Color(0xFFCDD4B2)),
+                        border: Border.all(
+                            color: isDarkMode
+                                ? Colors.white10
+                                : const Color(0xFFCDD4B2)),
                       ),
                       child: Center(
                         child: Text(
                           'DEFAULT ZERO-TRUST BASELINE RULES ENFORCED',
                           style: CyberTextStyles.technical(
                             fontSize: 9.5,
-                            color: isDarkMode ? Colors.white38 : const Color(0xFF64748B),
+                            color: isDarkMode
+                                ? Colors.white38
+                                : const Color(0xFF64748B),
                           ),
                         ),
                       ),
@@ -1226,16 +1510,21 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                   else
                     Column(
                       children: relatedPolicies.take(2).map((p) {
-                        final bool isDeployed = p.status == PolicyStatus.deployed;
+                        final bool isDeployed =
+                            p.status == PolicyStatus.deployed;
                         return Container(
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
+                            color: isDarkMode
+                                ? const Color(0xFF141414)
+                                : const Color(0xFFFAF9F6),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
                               color: isDeployed
-                                  ? (isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.4) : const Color(0xFF80A416))
+                                  ? (isDarkMode
+                                      ? const Color(0xFF5DD62C).withOpacity(0.4)
+                                      : const Color(0xFF80A416))
                                   : const Color(0xFFFF9F43).withOpacity(0.4),
                             ),
                           ),
@@ -1250,22 +1539,36 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                                     style: CyberTextStyles.technical(
                                       fontSize: 10.5,
                                       fontWeight: FontWeight.bold,
-                                      color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                      color: isDarkMode
+                                          ? Colors.white
+                                          : const Color(0xFF0F172A),
                                     ),
                                   ),
                                   Text(
-                                    isDeployed ? 'ACTIVE IN ENVOY SIDECAR' : 'PENDING REVIEW',
+                                    isDeployed
+                                        ? 'ACTIVE IN ENVOY SIDECAR'
+                                        : 'PENDING REVIEW',
                                     style: CyberTextStyles.technical(
                                       fontSize: 9,
-                                      color: isDeployed ? (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416)) : const Color(0xFFFF9F43),
+                                      color: isDeployed
+                                          ? (isDarkMode
+                                              ? const Color(0xFF5DD62C)
+                                              : const Color(0xFF80A416))
+                                          : const Color(0xFFFF9F43),
                                     ),
                                   ),
                                 ],
                               ),
                               Icon(
-                                isDeployed ? Icons.verified : Icons.hourglass_top,
+                                isDeployed
+                                    ? Icons.verified
+                                    : Icons.hourglass_top,
                                 size: 16,
-                                color: isDeployed ? (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416)) : const Color(0xFFFF9F43),
+                                color: isDeployed
+                                    ? (isDarkMode
+                                        ? const Color(0xFF5DD62C)
+                                        : const Color(0xFF80A416))
+                                    : const Color(0xFFFF9F43),
                               ),
                             ],
                           ),
@@ -1280,55 +1583,85 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
                     children: [
                       ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: isIsolated ? const Color(0xFF00875A) : const Color(0xFFDF2531),
+                          backgroundColor: isIsolated
+                              ? const Color(0xFF00875A)
+                              : const Color(0xFFDF2531),
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4)),
                         ),
-                        icon: Icon(isIsolated ? Icons.lock_open : Icons.lock_outline, size: 16, color: Colors.white),
+                        icon: Icon(
+                            isIsolated ? Icons.lock_open : Icons.lock_outline,
+                            size: 16,
+                            color: Colors.white),
                         label: Text(
-                          isIsolated ? 'RE-ESTABLISH CONNECTION' : 'ISOLATE DEVICE (ZERO-TRUST)',
-                          style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                          isIsolated
+                              ? 'RE-ESTABLISH CONNECTION'
+                              : 'ISOLATE DEVICE (ZERO-TRUST)',
+                          style: CyberTextStyles.technical(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
                         ),
                         onPressed: () {
-                          ref.read(securityProvider.notifier).toggleDeviceIsolation(device.id);
+                          ref
+                              .read(securityProvider.notifier)
+                              .toggleDeviceIsolation(device.id);
                         },
                       ),
                       const SizedBox(height: 8),
-
                       OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416)),
+                          side: BorderSide(
+                              color: isDarkMode
+                                  ? const Color(0xFF5DD62C)
+                                  : const Color(0xFF80A416)),
                           padding: const EdgeInsets.symmetric(vertical: 11),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4)),
                         ),
-                        icon: Icon(Icons.stream, size: 16, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416)),
+                        icon: Icon(Icons.stream,
+                            size: 16,
+                            color: isDarkMode
+                                ? const Color(0xFF5DD62C)
+                                : const Color(0xFF80A416)),
                         label: Text(
                           'VIEW LIVE TELEMETRY TRAFFIC',
                           style: CyberTextStyles.technical(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
+                            color: isDarkMode
+                                ? const Color(0xFF5DD62C)
+                                : const Color(0xFF80A416),
                           ),
                         ),
                         onPressed: () {
-                          ref.read(navigationNotifierProvider.notifier).selectTab(1);
+                          ref
+                              .read(navigationNotifierProvider.notifier)
+                              .selectTab(1);
                         },
                       ),
                       const SizedBox(height: 8),
-
                       OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFFA88AED)),
                           padding: const EdgeInsets.symmetric(vertical: 11),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4)),
                         ),
-                        icon: const Icon(Icons.auto_awesome, size: 16, color: Color(0xFFA88AED)),
+                        icon: const Icon(Icons.auto_awesome,
+                            size: 16, color: Color(0xFFA88AED)),
                         label: Text(
                           'GENERATE OPA REGO POLICY',
-                          style: CyberTextStyles.technical(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFFA88AED)),
+                          style: CyberTextStyles.technical(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFFA88AED)),
                         ),
                         onPressed: () {
-                          ref.read(navigationNotifierProvider.notifier).selectTab(4);
+                          ref
+                              .read(navigationNotifierProvider.notifier)
+                              .selectTab(4);
                         },
                       ),
                     ],
@@ -1348,8 +1681,16 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(k, style: CyberTextStyles.technical(fontSize: 9.5, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B))),
-          Text(v, style: CyberTextStyles.technical(fontSize: 10, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : const Color(0xFF0F172A))),
+          Text(k,
+              style: CyberTextStyles.technical(
+                  fontSize: 9.5,
+                  color:
+                      isDarkMode ? Colors.white54 : const Color(0xFF64748B))),
+          Text(v,
+              style: CyberTextStyles.technical(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : const Color(0xFF0F172A))),
         ],
       ),
     );
@@ -1383,7 +1724,9 @@ class _UniqueGNNGraphPainter extends CustomPainter {
 
   bool _isGateway(IoTDevice d) {
     final type = d.deviceType.toLowerCase();
-    return type.contains('gateway') || type.contains('router') || d.id == 'DEV-001';
+    return type.contains('gateway') ||
+        type.contains('router') ||
+        d.id == 'DEV-001';
   }
 
   bool _isHighValue(IoTDevice d) {
@@ -1402,7 +1745,9 @@ class _UniqueGNNGraphPainter extends CustomPainter {
   }
 
   bool _isWarning(IoTDevice d) {
-    return d.riskScore >= 0.35 && d.riskScore < 0.70 && d.status != DeviceStatus.warning;
+    return d.riskScore >= 0.35 &&
+        d.riskScore < 0.70 &&
+        d.status != DeviceStatus.warning;
   }
 
   @override
@@ -1423,21 +1768,24 @@ class _UniqueGNNGraphPainter extends CustomPainter {
 
     // 2. DRAW CONNECTIONS / EDGES
     for (final device in devices) {
-      if (!isNodeVisible(device) || !nodeCoords.containsKey(device.id)) continue;
+      if (!isNodeVisible(device) || !nodeCoords.containsKey(device.id))
+        continue;
       final Offset srcPos = center + pan + (nodeCoords[device.id]! * zoom);
 
       for (final connId in device.connections) {
         if (!nodeCoords.containsKey(connId)) continue;
         if (device.id.hashCode > connId.hashCode) continue;
 
-        final target = devices.firstWhere((d) => d.id == connId, orElse: () => device);
+        final target =
+            devices.firstWhere((d) => d.id == connId, orElse: () => device);
         if (!isNodeVisible(target)) continue;
 
         final Offset destPos = center + pan + (nodeCoords[connId]! * zoom);
 
-        final bool isLateralPath = (_isCritical(device) && _isCritical(target)) ||
-            (_isCritical(device) && _isWarning(target)) ||
-            (_isWarning(device) && _isCritical(target));
+        final bool isLateralPath =
+            (_isCritical(device) && _isCritical(target)) ||
+                (_isCritical(device) && _isWarning(target)) ||
+                (_isWarning(device) && _isCritical(target));
 
         if (filterMode == GraphFilter.lateralOnly && !isLateralPath) {
           continue;
@@ -1446,8 +1794,12 @@ class _UniqueGNNGraphPainter extends CustomPainter {
         if (isLateralPath) {
           _drawDashedLateralPath(canvas, srcPos, destPos);
         } else {
-          final bool isHighBw = device.bandwidth > 300 || target.bandwidth > 300 || _isGateway(device) || _isGateway(target);
-          final Color edgeColor = isHighBw ? const Color(0xFF00F5FF) : const Color(0xFF5DD62C);
+          final bool isHighBw = device.bandwidth > 300 ||
+              target.bandwidth > 300 ||
+              _isGateway(device) ||
+              _isGateway(target);
+          final Color edgeColor =
+              isHighBw ? const Color(0xFF00F5FF) : const Color(0xFF5DD62C);
 
           canvas.drawLine(
             srcPos,
@@ -1470,7 +1822,8 @@ class _UniqueGNNGraphPainter extends CustomPainter {
 
     // 3. DRAW DIFFERENTIATED NODES
     for (final device in devices) {
-      if (!isNodeVisible(device) || !nodeCoords.containsKey(device.id)) continue;
+      if (!isNodeVisible(device) || !nodeCoords.containsKey(device.id))
+        continue;
       final Offset nodePos = center + pan + (nodeCoords[device.id]! * zoom);
 
       final bool isSelected = device.id == selectedId;
@@ -1511,7 +1864,8 @@ class _UniqueGNNGraphPainter extends CustomPainter {
     final Offset dir = (p2 - p1) / dist;
     final double dashLen = 8.0 * zoom;
     final double gapLen = 5.0 * zoom;
-    final double offset = (pulseVal * (dashLen + gapLen) * 2) % (dashLen + gapLen);
+    final double offset =
+        (pulseVal * (dashLen + gapLen) * 2) % (dashLen + gapLen);
 
     final Paint glowPaint = Paint()
       ..color = const Color(0xFFDF2531).withOpacity(0.35)
@@ -1535,14 +1889,17 @@ class _UniqueGNNGraphPainter extends CustomPainter {
     }
   }
 
-  void _drawGatewayHexagon(Canvas canvas, Offset pos, IoTDevice d, bool isFocused) {
+  void _drawGatewayHexagon(
+      Canvas canvas, Offset pos, IoTDevice d, bool isFocused) {
     final double r = (isFocused ? 24.0 : 20.0) * zoom;
     final path = Path();
     for (int i = 0; i < 6; i++) {
       final double angle = (i * pi) / 3.0;
       final pt = Offset(pos.dx + r * cos(angle), pos.dy + r * sin(angle));
-      if (i == 0) path.moveTo(pt.dx, pt.dy);
-      else path.lineTo(pt.dx, pt.dy);
+      if (i == 0)
+        path.moveTo(pt.dx, pt.dy);
+      else
+        path.lineTo(pt.dx, pt.dy);
     }
     path.close();
 
@@ -1561,10 +1918,12 @@ class _UniqueGNNGraphPainter extends CustomPainter {
         ..style = PaintingStyle.stroke,
     );
 
-    _paintIconGlyph(canvas, pos, Icons.router_outlined, const Color(0xFF00F5FF), 15 * zoom);
+    _paintIconGlyph(
+        canvas, pos, Icons.router_outlined, const Color(0xFF00F5FF), 15 * zoom);
   }
 
-  void _drawHighValueDiamond(Canvas canvas, Offset pos, IoTDevice d, bool isFocused) {
+  void _drawHighValueDiamond(
+      Canvas canvas, Offset pos, IoTDevice d, bool isFocused) {
     final double r = (isFocused ? 21.0 : 17.0) * zoom;
     final path = Path()
       ..moveTo(pos.dx, pos.dy - r)
@@ -1588,7 +1947,9 @@ class _UniqueGNNGraphPainter extends CustomPainter {
         ..style = PaintingStyle.stroke,
     );
 
-    final icon = d.deviceType.toLowerCase().contains('medical') ? Icons.local_hospital : Icons.dns_outlined;
+    final icon = d.deviceType.toLowerCase().contains('medical')
+        ? Icons.local_hospital
+        : Icons.dns_outlined;
     _paintIconGlyph(canvas, pos, icon, const Color(0xFF9D8DF1), 14 * zoom);
   }
 
@@ -1621,7 +1982,8 @@ class _UniqueGNNGraphPainter extends CustomPainter {
         ..strokeWidth = 2.2 * zoom,
     );
 
-    _paintIconGlyph(canvas, pos, Icons.warning_amber_rounded, const Color(0xFFFFEA00), 14 * zoom);
+    _paintIconGlyph(canvas, pos, Icons.warning_amber_rounded,
+        const Color(0xFFFFEA00), 14 * zoom);
   }
 
   void _drawWarningNode(Canvas canvas, Offset pos, IoTDevice d) {
@@ -1658,7 +2020,8 @@ class _UniqueGNNGraphPainter extends CustomPainter {
         ..strokeWidth = 1.2 * zoom,
     );
 
-    _paintIconGlyph(canvas, pos, Icons.priority_high, const Color(0xFFFF9F43), 13 * zoom);
+    _paintIconGlyph(
+        canvas, pos, Icons.priority_high, const Color(0xFFFF9F43), 13 * zoom);
   }
 
   void _drawSafeNode(Canvas canvas, Offset pos, IoTDevice d) {
@@ -1685,7 +2048,8 @@ class _UniqueGNNGraphPainter extends CustomPainter {
         ..strokeWidth = 1.6 * zoom,
     );
 
-    _paintIconGlyph(canvas, pos, Icons.check, const Color(0xFF5DD62C), 13 * zoom);
+    _paintIconGlyph(
+        canvas, pos, Icons.check, const Color(0xFF5DD62C), 13 * zoom);
   }
 
   void _drawIsolatedNode(Canvas canvas, Offset pos, IoTDevice d) {
@@ -1706,10 +2070,12 @@ class _UniqueGNNGraphPainter extends CustomPainter {
         ..strokeWidth = 1.8 * zoom,
     );
 
-    _paintIconGlyph(canvas, pos, Icons.lock_outline, const Color(0xFFA88AED), 13 * zoom);
+    _paintIconGlyph(
+        canvas, pos, Icons.lock_outline, const Color(0xFFA88AED), 13 * zoom);
   }
 
-  void _paintIconGlyph(Canvas canvas, Offset pos, IconData icon, Color color, double size) {
+  void _paintIconGlyph(
+      Canvas canvas, Offset pos, IconData icon, Color color, double size) {
     final textPainter = TextPainter(
       text: TextSpan(
         text: String.fromCharCode(icon.codePoint),
@@ -1750,12 +2116,14 @@ class _UniqueGNNGraphPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
 
-    final Offset labelPos = Offset(pos.dx - painter.width / 2, pos.dy + offset + 4.0);
+    final Offset labelPos =
+        Offset(pos.dx - painter.width / 2, pos.dy + offset + 4.0);
 
     // In light mode, draw a pill background behind each node label for clear contrast and readability
     if (!isDarkMode) {
       final RRect bgPill = RRect.fromRectAndRadius(
-        Rect.fromLTWH(labelPos.dx - 5, labelPos.dy - 2, painter.width + 10, painter.height + 4),
+        Rect.fromLTWH(labelPos.dx - 5, labelPos.dy - 2, painter.width + 10,
+            painter.height + 4),
         const Radius.circular(3),
       );
       canvas.drawRRect(

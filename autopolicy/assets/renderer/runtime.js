@@ -14648,6 +14648,99 @@ var ExternalTexture = class extends Texture {
     return this;
   }
 };
+var _v0 = /* @__PURE__ */ new Vector3();
+var _v1$1 = /* @__PURE__ */ new Vector3();
+var _normal = /* @__PURE__ */ new Vector3();
+var _triangle = /* @__PURE__ */ new Triangle();
+var EdgesGeometry = class extends BufferGeometry {
+  /**
+   * Constructs a new edges geometry.
+   *
+   * @param {?BufferGeometry} [geometry=null] - The geometry.
+   * @param {number} [thresholdAngle=1] - An edge is only rendered if the angle (in degrees)
+   * between the face normals of the adjoining faces exceeds this value.
+   */
+  constructor(geometry = null, thresholdAngle = 1) {
+    super();
+    this.type = "EdgesGeometry";
+    this.parameters = {
+      geometry,
+      thresholdAngle
+    };
+    if (geometry !== null) {
+      const precisionPoints = 4;
+      const precision = Math.pow(10, precisionPoints);
+      const thresholdDot = Math.cos(DEG2RAD * thresholdAngle);
+      const indexAttr = geometry.getIndex();
+      const positionAttr = geometry.getAttribute("position");
+      const indexCount = indexAttr ? indexAttr.count : positionAttr.count;
+      const indexArr = [0, 0, 0];
+      const vertKeys = ["a", "b", "c"];
+      const hashes = new Array(3);
+      const edgeData = {};
+      const vertices = [];
+      for (let i = 0; i < indexCount; i += 3) {
+        if (indexAttr) {
+          indexArr[0] = indexAttr.getX(i);
+          indexArr[1] = indexAttr.getX(i + 1);
+          indexArr[2] = indexAttr.getX(i + 2);
+        } else {
+          indexArr[0] = i;
+          indexArr[1] = i + 1;
+          indexArr[2] = i + 2;
+        }
+        const { a, b, c } = _triangle;
+        a.fromBufferAttribute(positionAttr, indexArr[0]);
+        b.fromBufferAttribute(positionAttr, indexArr[1]);
+        c.fromBufferAttribute(positionAttr, indexArr[2]);
+        _triangle.getNormal(_normal);
+        hashes[0] = `${Math.round(a.x * precision)},${Math.round(a.y * precision)},${Math.round(a.z * precision)}`;
+        hashes[1] = `${Math.round(b.x * precision)},${Math.round(b.y * precision)},${Math.round(b.z * precision)}`;
+        hashes[2] = `${Math.round(c.x * precision)},${Math.round(c.y * precision)},${Math.round(c.z * precision)}`;
+        if (hashes[0] === hashes[1] || hashes[1] === hashes[2] || hashes[2] === hashes[0]) {
+          continue;
+        }
+        for (let j = 0; j < 3; j++) {
+          const jNext = (j + 1) % 3;
+          const vecHash0 = hashes[j];
+          const vecHash1 = hashes[jNext];
+          const v0 = _triangle[vertKeys[j]];
+          const v1 = _triangle[vertKeys[jNext]];
+          const hash = `${vecHash0}_${vecHash1}`;
+          const reverseHash = `${vecHash1}_${vecHash0}`;
+          if (reverseHash in edgeData && edgeData[reverseHash]) {
+            if (_normal.dot(edgeData[reverseHash].normal) <= thresholdDot) {
+              vertices.push(v0.x, v0.y, v0.z);
+              vertices.push(v1.x, v1.y, v1.z);
+            }
+            edgeData[reverseHash] = null;
+          } else if (!(hash in edgeData)) {
+            edgeData[hash] = {
+              index0: indexArr[j],
+              index1: indexArr[jNext],
+              normal: _normal.clone()
+            };
+          }
+        }
+      }
+      for (const key in edgeData) {
+        if (edgeData[key]) {
+          const { index0, index1 } = edgeData[key];
+          _v0.fromBufferAttribute(positionAttr, index0);
+          _v1$1.fromBufferAttribute(positionAttr, index1);
+          vertices.push(_v0.x, _v0.y, _v0.z);
+          vertices.push(_v1$1.x, _v1$1.y, _v1$1.z);
+        }
+      }
+      this.setAttribute("position", new Float32BufferAttribute(vertices, 3));
+    }
+  }
+  copy(source) {
+    super.copy(source);
+    this.parameters = Object.assign({}, source.parameters);
+    return this;
+  }
+};
 var PlaneGeometry = class _PlaneGeometry extends BufferGeometry {
   /**
    * Constructs a new plane geometry.
@@ -23050,12 +23143,12 @@ function getToneMappingFunction(functionName, toneMapping) {
   }
   return "vec3 " + functionName + "( vec3 color ) { return " + toneMappingName + "ToneMapping( color ); }";
 }
-var _v0 = /* @__PURE__ */ new Vector3();
+var _v02 = /* @__PURE__ */ new Vector3();
 function getLuminanceFunction() {
-  ColorManagement.getLuminanceCoefficients(_v0);
-  const r2 = _v0.x.toFixed(4);
-  const g = _v0.y.toFixed(4);
-  const b = _v0.z.toFixed(4);
+  ColorManagement.getLuminanceCoefficients(_v02);
+  const r2 = _v02.x.toFixed(4);
+  const g = _v02.y.toFixed(4);
+  const b = _v02.z.toFixed(4);
   return [
     "float luminance( const in vec3 rgb ) {",
     `	const vec3 weights = vec3( ${r2}, ${g}, ${b} );`,
@@ -33980,6 +34073,8 @@ var time = 0;
 var hover = null;
 var selected = null;
 var telemetry;
+var heroIntroElapsed = 0;
+var heroIntroDuration = 1.65;
 var telemetryPositions = new Float32Array(63);
 var telemetryTarget = new Vector3();
 var featureTarget = new Vector3();
@@ -34078,6 +34173,7 @@ function receive(message) {
       viewportClass = d.class || "desktop";
       spread = /mobile/.test(viewportClass) ? 0.62 : /tablet|Compact/.test(viewportClass) ? 0.78 : 1;
       canvas.dataset.viewportClass = viewportClass;
+      resize();
       break;
     case "SET_THEME":
       dark = d.dark !== false;
@@ -34133,19 +34229,46 @@ window.addEventListener("message", messageListener);
 function theme() {
   scene.background = null;
   renderer.setClearColor(0, 0);
-  document.body.style.background = dark ? "radial-gradient(ellipse at 52% 47%, rgba(149,180,40,.14) 0%, rgba(89,111,33,.055) 40%, transparent 72%), radial-gradient(ellipse at 65% 62%, rgba(117,145,166,.045), transparent 58%), #000000" : "radial-gradient(ellipse at 52% 47%, rgba(128,164,22,.12), rgba(205,212,178,.045) 48%, transparent 74%), #FAF9F6";
-  scene.getObjectByName("fill").intensity = dark ? 0.45 : 1;
-  scene.getObjectByName("key").intensity = dark ? 2 : 2.8;
-  bloom.strength = dark ? 0.56 : 0.23;
-  scene.environmentIntensity = dark ? 0.48 : 0.38;
+  document.body.style.background = "transparent";
+  scene.getObjectByName("fill").intensity = dark ? 0.64 : 1;
+  scene.getObjectByName("key").intensity = dark ? 2.25 : 2.8;
+  scene.getObjectByName("rim").intensity = dark ? 1.35 : 0.7;
+  bloom.strength = dark ? 0.48 : 0.22;
+  bloom.radius = 0.24;
+  scene.environmentIntensity = dark ? 0.56 : 0.38;
 }
 function resize() {
   if (!renderer) return;
   const w = innerWidth, h = innerHeight;
-  renderer.setPixelRatio(Math.min(devicePixelRatio, w < 700 ? 1.4 : 1.75));
+  const mobile = /mobile/.test(viewportClass);
+  const dpr = Math.max(1, Math.min(
+    Math.max(devicePixelRatio, mobile ? 1 : 1.5),
+    mobile ? 1.5 : 2,
+    Math.sqrt((mobile ? 11e5 : 26e5) / Math.max(1, w * h))
+  ));
+  renderer.setPixelRatio(dpr);
   renderer.setSize(w, h, false);
+  composer?.setPixelRatio(dpr);
+  bloomComposer?.setPixelRatio(dpr);
   composer?.setSize(w, h);
   bloomComposer?.setSize(w, h);
+  if (composer) {
+    const samples = Math.min(mobile ? 2 : 4, renderer.capabilities.maxSamples);
+    for (const rt of [composer.renderTarget1, composer.renderTarget2]) {
+      if (rt.samples !== samples) {
+        rt.samples = samples;
+        rt.dispose();
+      }
+    }
+    canvas.dataset.quality = JSON.stringify({
+      dpr,
+      samples,
+      display: [w, h],
+      drawingBuffer: [canvas.width, canvas.height],
+      composite: [composer.renderTarget1.width, composer.renderTarget1.height],
+      bloom: [bloomComposer.renderTarget1.width, bloomComposer.renderTarget1.height]
+    });
+  }
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
 }
@@ -34244,21 +34367,35 @@ function initializeModel(gltf) {
   shadowFloor.receiveShadow = true;
   scene.add(shadowFloor);
   for (const o of r.objects.values()) {
-    if (!o.isMesh || !/ContinuousSignal|AP14_(Front|Right)_(Shield|Network)|Core_Glass/.test(
+    if (!o.isMesh || !/ContinuousSignal|AP14_(Front|Right)_(Shield|Network)|Core_Glass|AP15A_Packet_/.test(
       o.name
     ))
       continue;
     o.material = o.material.clone();
-    if (/ContinuousSignal/.test(o.name)) {
+    if (/ContinuousSignal|AP15A_Packet_/.test(o.name)) {
       o.material.emissive?.set(12903206);
-      o.material.emissiveIntensity = 0.8;
+      o.material.emissiveIntensity = /Packet/.test(o.name) ? 1.05 : 1.15;
     } else if (/Core_Glass/.test(o.name)) {
       o.material.emissive?.set(8104386);
-      o.material.emissiveIntensity = 0.075;
+      o.material.emissiveIntensity = 0.1;
+      const edge = new LineSegments(
+        new EdgesGeometry(o.geometry, 32),
+        new LineBasicMaterial({ color: 13032621, transparent: true, opacity: 0.14, depthWrite: false })
+      );
+      edge.name = "runtime_glass_edge";
+      o.add(edge);
     } else {
       o.material.emissive?.copy(o.material.color);
-      o.material.emissiveIntensity = 0.4;
+      o.material.emissiveIntensity = 0.52;
     }
+    r.materials.set(o.material.uuid, {
+      opacity: o.material.opacity,
+      transparent: o.material.transparent,
+      color: o.material.color?.clone(),
+      emissive: o.material.emissive?.clone(),
+      emissiveIntensity: o.material.emissiveIntensity,
+      depthWrite: o.material.depthWrite
+    });
   }
   for (const [id, , , zone] of devices) {
     roots[id] = r.getDeviceRoot(id);
@@ -34332,7 +34469,9 @@ function cameraState(x) {
   }
   cameraBounds.getCenter(cameraCenter);
   cameraCenter.x += x.c4 * sceneScale * 0.08;
-  cameraDirection.set(Math.sin(x.c0), x.c2 / Math.max(x.c1, 0.1), Math.cos(x.c0)).normalize();
+  const introPhase = reduced ? 1 : clamp2(heroIntroElapsed / heroIntroDuration);
+  const introRemaining = Math.pow(1 - introPhase, 3);
+  cameraDirection.set(Math.sin(x.c0 + introRemaining * 0.055), x.c2 / Math.max(x.c1, 0.1) + introRemaining * 0.025, Math.cos(x.c0 + introRemaining * 0.055)).normalize();
   cameraRight.crossVectors(camera.up, cameraDirection).normalize();
   cameraUp.crossVectors(cameraDirection, cameraRight).normalize();
   const tanV = Math.tan(MathUtils.degToRad(camera.fov / 2)), tanH = tanV * camera.aspect;
@@ -34352,20 +34491,20 @@ function cameraState(x) {
     );
   }
   const margin = {
-    desktopWide: 1.07,
-    desktop: 1.09,
-    laptopCompact: 1.1,
-    tabletLandscape: 1.12,
+    desktopWide: 1.03,
+    desktop: 1.04,
+    laptopCompact: 1.04,
+    tabletLandscape: 1.05,
     tabletPortrait: 1.08,
     mobileLarge: 1.1,
     mobileSmall: 1.14
   }[viewportClass] || 1.1;
-  camera.position.copy(cameraCenter).addScaledVector(cameraDirection, distance * margin);
+  camera.position.copy(cameraCenter).addScaledVector(cameraDirection, distance * margin * (1 - introRemaining * 0.035 - Math.sin(introPhase * Math.PI) * 0.018));
   camera.setViewOffset(
     innerWidth,
     innerHeight,
     0,
-    innerHeight * (/mobile|Portrait/.test(viewportClass) ? 0.015 : 0.065) * (1 - x.ex * 0.7),
+    innerHeight * (/mobile|Portrait/.test(viewportClass) ? 0.015 : 0.025) * (1 - x.ex * 0.7),
     innerWidth,
     innerHeight
   );
@@ -34650,6 +34789,8 @@ function annotations(x) {
       y: -0.5 * projected.y + 0.5
     });
   };
+  scratch.copy(r.getWorldCenter("Core_Glass_Front")).lerp(r.getWorldCenter("Core_Glass_Back"), 0.5);
+  add("_tower-anchor", "", scratch, true);
   if (x.zt > 0.3) {
     add("zone-a", "ZONE A \xB7 DEVICES", r.getWorldCenter("Zone_A"), true);
     add("zone-b", "ZONE B \xB7 VERIFIED", r.getWorldCenter("Zone_B"), true);
@@ -34725,6 +34866,10 @@ function tick() {
   if (!ready || document.hidden) return;
   const dt = Math.min(0.05, (performance.now() - time) / 1e3 || 0.016);
   time = performance.now();
+  heroIntroElapsed = reduced || target > 1e-3 ? heroIntroDuration : Math.min(heroIntroDuration, heroIntroElapsed + dt);
+  const reveal2 = reduced ? 1 : 1 - Math.pow(1 - clamp2(heroIntroElapsed / 0.65), 3);
+  canvas.style.opacity = String(reveal2);
+  canvas.dataset.heroIntro = (heroIntroElapsed / heroIntroDuration).toFixed(3);
   progress = reduced ? target : MathUtils.damp(progress, target, 8, dt);
   const desired = narrative(mode, progress);
   const blend = 1 - Math.exp(-12 * dt);
@@ -34920,6 +35065,8 @@ async function init() {
     fill.name = "fill";
     scene.add(fill);
     const rim = new DirectionalLight(11643354, 0.8);
+    rim.name = "rim";
+    rim.color.set(14280371);
     rim.position.set(7, 9, -8);
     scene.add(rim);
     pmrem = new PMREMGenerator(renderer);

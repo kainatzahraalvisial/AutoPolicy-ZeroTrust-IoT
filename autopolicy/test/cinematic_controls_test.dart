@@ -4,6 +4,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:autopolicy/landing/cinematic_button.dart';
 
 void main() {
+  testWidgets('Active chapter remains readable against the light background',
+      (tester) async {
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: CinematicNavLink(
+      label: 'Security',
+      active: true,
+      foreground: Colors.black,
+      onPressed: () {},
+    ))));
+    final style = tester
+        .widget<AnimatedDefaultTextStyle>(
+            find.byType(AnimatedDefaultTextStyle).last)
+        .style;
+    final contrast = 1.05 / (style.color!.computeLuminance() + .05);
+    expect(contrast, greaterThanOrEqualTo(4.5));
+  });
   testWidgets(
       'CTA hover lifts and glows, resets on exit, and activates its action',
       (tester) async {
@@ -36,6 +53,7 @@ void main() {
   testWidgets('navigation hover uses the lime accent and restores muted text',
       (tester) async {
     await tester.pumpWidget(MaterialApp(
+        theme: ThemeData.dark(),
         home: Scaffold(
             body: Center(
                 child: CinematicNavLink(

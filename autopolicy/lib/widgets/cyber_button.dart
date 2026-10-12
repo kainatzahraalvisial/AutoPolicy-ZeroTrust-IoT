@@ -137,11 +137,15 @@ class VrFrame extends StatelessWidget {
                 border: Border.all(color: frameBorder, width: 1.5),
                 boxShadow: [
                   BoxShadow(
-                    color: isDarkMode ? AP.lime.withOpacity(0.2) : const Color(0xFFCDD4B2).withOpacity(0.25),
+                    color: isDarkMode
+                        ? AP.lime.withOpacity(0.2)
+                        : const Color(0xFFCDD4B2).withOpacity(0.25),
                     blurRadius: 20,
                   ),
                   BoxShadow(
-                    color: isDarkMode ? AP.olive.withOpacity(0.08) : const Color(0xFFD4C9D8).withOpacity(0.15),
+                    color: isDarkMode
+                        ? AP.olive.withOpacity(0.08)
+                        : const Color(0xFFD4C9D8).withOpacity(0.15),
                     blurRadius: 50,
                   ),
                 ],
@@ -175,14 +179,20 @@ class VrFrame extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(width: 18, height: 1.5, color: frameBorder.withOpacity(0.6)),
+                    Container(
+                        width: 18,
+                        height: 1.5,
+                        color: frameBorder.withOpacity(0.6)),
                     const SizedBox(width: 4),
                     ClipPath(
                       clipper: _NotchClipper(),
                       child: Container(width: 56, height: 8, color: tabColor),
                     ),
                     const SizedBox(width: 4),
-                    Container(width: 18, height: 1.5, color: frameBorder.withOpacity(0.6)),
+                    Container(
+                        width: 18,
+                        height: 1.5,
+                        color: frameBorder.withOpacity(0.6)),
                   ],
                 ),
               ),
@@ -204,7 +214,8 @@ class VrFrame extends StatelessWidget {
                         color: tabColor,
                         child: Align(
                           alignment: Alignment.centerRight,
-                          child: Container(width: 1.5, height: 36, color: frameBorder),
+                          child: Container(
+                              width: 1.5, height: 36, color: frameBorder),
                         ),
                       ),
                       Positioned(
@@ -244,7 +255,8 @@ class VrFrame extends StatelessWidget {
                         color: tabColor,
                         child: Align(
                           alignment: Alignment.centerLeft,
-                          child: Container(width: 1.5, height: 36, color: frameBorder),
+                          child: Container(
+                              width: 1.5, height: 36, color: frameBorder),
                         ),
                       ),
                       Positioned(
@@ -286,9 +298,13 @@ class FieldShell extends StatelessWidget {
       clipper: FieldClipper(),
       child: Container(
         decoration: BoxDecoration(
-          color: isDarkMode ? const Color(0xE608120C) : const Color(0xFFFAF9F6), // Feather White box fill
+          color: isDarkMode
+              ? const Color(0xE608120C)
+              : const Color(0xFFFAF9F6), // Feather White box fill
           border: Border.all(
-            color: isDarkMode ? AP.olive.withOpacity(0.35) : const Color(0xFFCDD4B2), // Sage outline from new palette
+            color: isDarkMode
+                ? AP.olive.withOpacity(0.35)
+                : const Color(0xFFCDD4B2), // Sage outline from new palette
             width: 1.2,
           ),
         ),
@@ -333,7 +349,9 @@ class _CyberButtonState extends State<CyberButton> {
         : const Color(0xFF0F172A); // Black text
     final secondaryBg = widget.isDarkMode
         ? (hover ? AP.olive.withOpacity(0.12) : const Color(0xE608120C))
-        : (hover ? const Color(0xFFD4C9D8).withOpacity(0.35) : const Color(0xFFFAF9F6)); // Feather white
+        : (hover
+            ? const Color(0xFFD4C9D8).withOpacity(0.35)
+            : const Color(0xFFFAF9F6)); // Feather white
     final secondaryTextColor = widget.isDarkMode
         ? (hover ? AP.bright : AP.lime)
         : const Color(0xFF0F172A); // Black text
@@ -355,11 +373,16 @@ class _CyberButtonState extends State<CyberButton> {
               decoration: BoxDecoration(
                 color: widget.primary ? primaryColor : secondaryBg,
                 border: widget.primary
-                    ? (widget.isDarkMode ? null : Border.all(color: const Color(0xFF9E8DA7), width: 1.2))
+                    ? (widget.isDarkMode
+                        ? null
+                        : Border.all(
+                            color: const Color(0xFF9E8DA7), width: 1.2))
                     : Border.all(
-                        color: hover 
-                            ? const Color(0xFFB8A9C1) 
-                            : (widget.isDarkMode ? AP.olive.withOpacity(0.35) : const Color(0xFFCDD4B2)),
+                        color: hover
+                            ? const Color(0xFFB8A9C1)
+                            : (widget.isDarkMode
+                                ? AP.olive.withOpacity(0.35)
+                                : const Color(0xFFCDD4B2)),
                         width: 1.2,
                       ),
                 boxShadow: widget.primary
@@ -378,15 +401,19 @@ class _CyberButtonState extends State<CyberButton> {
                     widget.leading!,
                     const SizedBox(width: 10),
                   ],
-                  Text(
+                  Flexible(
+                      child: Text(
                     widget.label.toUpperCase(),
+                    textAlign: TextAlign.center,
                     style: GoogleFonts.orbitron(
-                      color: widget.primary ? primaryTextColor : secondaryTextColor,
+                      color: widget.primary
+                          ? primaryTextColor
+                          : secondaryTextColor,
                       fontSize: 12,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 2.0,
                     ),
-                  ),
+                  )),
                 ],
               ),
             ),

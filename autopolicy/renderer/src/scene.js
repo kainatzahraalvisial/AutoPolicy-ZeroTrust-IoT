@@ -51,6 +51,10 @@ let mode = "explore",
   hover = null,
   selected = null;
 let telemetry;
+// One presentation-only entrance. Narrative input cancels it; it never replays
+// during chapter navigation and never takes ownership of GLB transforms.
+let heroIntroElapsed = 0;
+const heroIntroDuration = 1.65;
 const telemetryPositions = new Float32Array(63),
   telemetryTarget = new T.Vector3(),
   featureTarget = new T.Vector3();
@@ -154,6 +158,7 @@ function receive(message) {
           ? 0.78
           : 1;
       canvas.dataset.viewportClass = viewportClass;
+      resize();
       break;
     case "SET_THEME":
       dark = d.dark !== false;
@@ -209,22 +214,41 @@ window.addEventListener("message", messageListener);
 function theme() {
   scene.background = null;
   renderer.setClearColor(0x000000, 0);
-  document.body.style.background = dark
-    ? "radial-gradient(ellipse at 52% 47%, rgba(149,180,40,.14) 0%, rgba(89,111,33,.055) 40%, transparent 72%), radial-gradient(ellipse at 65% 62%, rgba(117,145,166,.045), transparent 58%), #000000"
-    : "radial-gradient(ellipse at 52% 47%, rgba(128,164,22,.12), rgba(205,212,178,.045) 48%, transparent 74%), #FAF9F6";
-  scene.getObjectByName("fill").intensity = dark ? 0.45 : 1.0;
-  scene.getObjectByName("key").intensity = dark ? 2 : 2.8;
-  bloom.strength = dark ? 0.56 : 0.23;
-  scene.environmentIntensity = dark ? 0.48 : 0.38;
+  // Flutter owns the continuous atmospheric field outside the model viewport.
+  document.body.style.background = "transparent";
+  scene.getObjectByName("fill").intensity = dark ? 0.64 : 1.0;
+  scene.getObjectByName("key").intensity = dark ? 2.25 : 2.8;
+  scene.getObjectByName("rim").intensity = dark ? 1.35 : 0.7;
+  bloom.strength = dark ? 0.48 : 0.22;
+  bloom.radius = 0.24;
+  scene.environmentIntensity = dark ? 0.56 : 0.38;
 }
 function resize() {
   if (!renderer) return;
   const w = innerWidth,
     h = innerHeight;
-  renderer.setPixelRatio(Math.min(devicePixelRatio, w < 700 ? 1.4 : 1.75));
+  // Composer captured DPR=1 at construction. Synchronize its physical buffers
+  // with the canvas: renderer antialias alone does not affect offscreen passes.
+  const mobile = /mobile/.test(viewportClass);
+  const dpr = Math.max(1, Math.min(
+    Math.max(devicePixelRatio, mobile ? 1 : 1.5), mobile ? 1.5 : 2,
+    Math.sqrt((mobile ? 1100000 : 2600000) / Math.max(1, w * h))));
+  renderer.setPixelRatio(dpr);
   renderer.setSize(w, h, false);
+  composer?.setPixelRatio(dpr);
+  bloomComposer?.setPixelRatio(dpr);
   composer?.setSize(w, h);
   bloomComposer?.setSize(w, h);
+  if (composer) {
+    const samples = Math.min(mobile ? 2 : 4, renderer.capabilities.maxSamples);
+    for (const rt of [composer.renderTarget1, composer.renderTarget2]) {
+      if (rt.samples !== samples) { rt.samples = samples; rt.dispose(); }
+    }
+    canvas.dataset.quality = JSON.stringify({dpr, samples,
+      display: [w,h], drawingBuffer: [canvas.width,canvas.height],
+      composite: [composer.renderTarget1.width,composer.renderTarget1.height],
+      bloom: [bloomComposer.renderTarget1.width,bloomComposer.renderTarget1.height]});
+  }
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
 }
@@ -331,22 +355,31 @@ function initializeModel(gltf) {
   for (const o of r.objects.values()) {
     if (
       !o.isMesh ||
-      !/ContinuousSignal|AP14_(Front|Right)_(Shield|Network)|Core_Glass/.test(
+      !/ContinuousSignal|AP14_(Front|Right)_(Shield|Network)|Core_Glass|AP15A_Packet_/.test(
         o.name,
       )
     )
       continue;
     o.material = o.material.clone();
-    if (/ContinuousSignal/.test(o.name)) {
+    if (/ContinuousSignal|AP15A_Packet_/.test(o.name)) {
       o.material.emissive?.set(0xc4e326);
-      o.material.emissiveIntensity = 0.8;
+      o.material.emissiveIntensity = /Packet/.test(o.name) ? 1.05 : 1.15;
     } else if (/Core_Glass/.test(o.name)) {
       o.material.emissive?.set(0x7ba9c2);
-      o.material.emissiveIntensity = 0.075;
+      o.material.emissiveIntensity = 0.10;
+      const edge = new T.LineSegments(new T.EdgesGeometry(o.geometry, 32),
+        new T.LineBasicMaterial({ color: 0xc6dcad, transparent: true, opacity: 0.14, depthWrite: false }));
+      edge.name = "runtime_glass_edge";
+      o.add(edge);
     } else {
       o.material.emissive?.copy(o.material.color);
-      o.material.emissiveIntensity = 0.4;
+      o.material.emissiveIntensity = 0.52;
     }
+    r.materials.set(o.material.uuid, {
+      opacity: o.material.opacity, transparent: o.material.transparent,
+      color: o.material.color?.clone(), emissive: o.material.emissive?.clone(),
+      emissiveIntensity: o.material.emissiveIntensity, depthWrite: o.material.depthWrite,
+    });
   }
   for (const [id, , , zone] of devices) {
     roots[id] = r.getDeviceRoot(id);
@@ -425,8 +458,10 @@ function cameraState(x) {
   }
   cameraBounds.getCenter(cameraCenter);
   cameraCenter.x += x.c4 * sceneScale * 0.08;
+  const introPhase = reduced ? 1 : clamp(heroIntroElapsed / heroIntroDuration);
+  const introRemaining = Math.pow(1 - introPhase, 3);
   cameraDirection
-    .set(Math.sin(x.c0), x.c2 / Math.max(x.c1, 0.1), Math.cos(x.c0))
+    .set(Math.sin(x.c0 + introRemaining * 0.055), x.c2 / Math.max(x.c1, 0.1) + introRemaining * 0.025, Math.cos(x.c0 + introRemaining * 0.055))
     .normalize();
   cameraRight.crossVectors(camera.up, cameraDirection).normalize();
   cameraUp.crossVectors(cameraDirection, cameraRight).normalize();
@@ -452,23 +487,23 @@ function cameraState(x) {
   }
   const margin =
     {
-      desktopWide: 1.07,
-      desktop: 1.09,
-      laptopCompact: 1.1,
-      tabletLandscape: 1.12,
+      desktopWide: 1.03,
+      desktop: 1.04,
+      laptopCompact: 1.04,
+      tabletLandscape: 1.05,
       tabletPortrait: 1.08,
       mobileLarge: 1.1,
       mobileSmall: 1.14,
     }[viewportClass] || 1.1;
   camera.position
     .copy(cameraCenter)
-    .addScaledVector(cameraDirection, distance * margin);
+    .addScaledVector(cameraDirection, distance * margin * (1 - introRemaining * .035 - Math.sin(introPhase * Math.PI) * .018));
   camera.setViewOffset(
     innerWidth,
     innerHeight,
     0,
     innerHeight *
-      (/mobile|Portrait/.test(viewportClass) ? 0.015 : 0.065) *
+      (/mobile|Portrait/.test(viewportClass) ? 0.015 : 0.025) *
       (1 - x.ex * 0.7),
     innerWidth,
     innerHeight,
@@ -796,6 +831,11 @@ function annotations(x) {
       y: -0.5 * projected.y + 0.5,
     });
   };
+  // Presentation anchor follows the actual projected tower, including camera
+  // motion and responsive fitting. Transport it through existing annotations.
+  scratch.copy(r.getWorldCenter("Core_Glass_Front"))
+    .lerp(r.getWorldCenter("Core_Glass_Back"), .5);
+  add("_tower-anchor", "", scratch, true);
   if (x.zt > 0.3) {
     add("zone-a", "ZONE A · DEVICES", r.getWorldCenter("Zone_A"), true);
     add("zone-b", "ZONE B · VERIFIED", r.getWorldCenter("Zone_B"), true);
@@ -872,6 +912,11 @@ function tick() {
   if (!ready || document.hidden) return;
   const dt = Math.min(0.05, (performance.now() - time) / 1000 || 0.016);
   time = performance.now();
+  heroIntroElapsed = reduced || target > .001 ? heroIntroDuration
+    : Math.min(heroIntroDuration, heroIntroElapsed + dt);
+  const reveal = reduced ? 1 : 1 - Math.pow(1 - clamp(heroIntroElapsed / .65), 3);
+  canvas.style.opacity = String(reveal);
+  canvas.dataset.heroIntro = (heroIntroElapsed / heroIntroDuration).toFixed(3);
   progress = reduced ? target : T.MathUtils.damp(progress, target, 8, dt);
   const desired = narrative(mode, progress);
   const blend = 1 - Math.exp(-12 * dt);
@@ -1082,6 +1127,8 @@ async function init() {
     fill.name = "fill";
     scene.add(fill);
     const rim = new T.DirectionalLight(0xb1a9da, 0.8);
+    rim.name = "rim";
+    rim.color.set(0xd9e6b3);
     rim.position.set(7, 9, -8);
     scene.add(rim);
     pmrem = new T.PMREMGenerator(renderer);

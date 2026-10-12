@@ -20,6 +20,7 @@ class CyberStatCard extends ConsumerWidget {
   final VoidCallback? onTap;
   final String? tag;
   final bool isAlert;
+  final bool compact;
 
   const CyberStatCard({
     super.key,
@@ -32,6 +33,7 @@ class CyberStatCard extends ConsumerWidget {
     this.onTap,
     this.tag,
     this.isAlert = false,
+    this.compact = false,
   });
 
   Color _resolveSolidBgColor(bool isDarkMode) {
@@ -59,7 +61,10 @@ class CyberStatCard extends ConsumerWidget {
           val == const Color(0xFFFFE997).value ||
           val == const Color(0xFFC5C764).value ||
           val == const Color(0xFFFDFDC9).value ||
-          tag == 'H17' || tag == 'E01' || tag == 'M01' || tag == 'L01') {
+          tag == 'H17' ||
+          tag == 'E01' ||
+          tag == 'M01' ||
+          tag == 'L01') {
         return const Color(0xFFFFF9E1);
       }
       // 2. #EBECCC (H18)
@@ -67,7 +72,10 @@ class CyberStatCard extends ConsumerWidget {
           val == const Color(0xFFC4E326).value ||
           val == const Color(0xFFC4E320).value ||
           val == const Color(0xFF5DD62C).value ||
-          tag == 'H18' || tag == 'E02' || tag == 'M02' || tag == 'L02') {
+          tag == 'H18' ||
+          tag == 'E02' ||
+          tag == 'M02' ||
+          tag == 'L02') {
         return const Color(0xFFEBECCC);
       }
       // 3. #CDD4B2 (H19) or Clay #DCA278
@@ -75,7 +83,10 @@ class CyberStatCard extends ConsumerWidget {
           val == const Color(0xFFDCA278).value ||
           val == const Color(0xFFB1A9DA).value ||
           val == const Color(0xFFA88AED).value ||
-          tag == 'H19' || tag == 'E03' || tag == 'M03' || tag == 'L03') {
+          tag == 'H19' ||
+          tag == 'E03' ||
+          tag == 'M03' ||
+          tag == 'L03') {
         if (val == const Color(0xFFDCA278).value || tag == 'L03') {
           return const Color(0xFFDCA278);
         }
@@ -85,14 +96,18 @@ class CyberStatCard extends ConsumerWidget {
       if (val == const Color(0xFFD4C9D8).value ||
           val == const Color(0xFF80A416).value ||
           val == const Color(0xFF337418).value ||
-          tag == 'H20' || tag == 'E04' || tag == 'M04') {
+          tag == 'H20' ||
+          tag == 'E04' ||
+          tag == 'M04') {
         return const Color(0xFFD4C9D8);
       }
       // 5. #B8A9C1 (H21)
       if (val == const Color(0xFFB8A9C1).value ||
           val == const Color(0xFF9D8DF1).value ||
           val == const Color(0xFF9D4EDD).value ||
-          tag == 'H21' || tag == 'E05' || tag == 'M05') {
+          tag == 'H21' ||
+          tag == 'E05' ||
+          tag == 'M05') {
         return const Color(0xFFB8A9C1);
       }
       return borderColor;
@@ -103,29 +118,42 @@ class CyberStatCard extends ConsumerWidget {
           val == const Color(0xFFFFE997).value ||
           val == const Color(0xFFC5C764).value ||
           val == const Color(0xFFFDFDC9).value ||
-          tag == 'H17' || tag == 'E01' || tag == 'M01' || tag == 'L01') {
+          tag == 'H17' ||
+          tag == 'E01' ||
+          tag == 'M01' ||
+          tag == 'L01') {
         return const Color(0xFFFFEDA8);
       } else if (val == const Color(0xFFEBECCC).value ||
           val == const Color(0xFFC4E326).value ||
           val == const Color(0xFFC4E320).value ||
           val == const Color(0xFF5DD62C).value ||
-          tag == 'H18' || tag == 'E02' || tag == 'M02' || tag == 'L02') {
+          tag == 'H18' ||
+          tag == 'E02' ||
+          tag == 'M02' ||
+          tag == 'L02') {
         return const Color(0xFFC4E326);
       } else if (val == const Color(0xFFCDD4B2).value ||
           val == const Color(0xFFDCA278).value ||
           val == const Color(0xFFB1A9DA).value ||
           val == const Color(0xFFA88AED).value ||
-          tag == 'H19' || tag == 'E03' || tag == 'M03' || tag == 'L03') {
+          tag == 'H19' ||
+          tag == 'E03' ||
+          tag == 'M03' ||
+          tag == 'L03') {
         return const Color(0xFFB1A9DA);
       } else if (val == const Color(0xFFD4C9D8).value ||
           val == const Color(0xFF80A416).value ||
           val == const Color(0xFF337418).value ||
-          tag == 'H20' || tag == 'E04' || tag == 'M04') {
+          tag == 'H20' ||
+          tag == 'E04' ||
+          tag == 'M04') {
         return const Color(0xFF80A416);
       } else if (val == const Color(0xFFB8A9C1).value ||
           val == const Color(0xFF9D8DF1).value ||
           val == const Color(0xFF9D4EDD).value ||
-          tag == 'H21' || tag == 'E05' || tag == 'M05') {
+          tag == 'H21' ||
+          tag == 'E05' ||
+          tag == 'M05') {
         return const Color(0xFF9D8DF1);
       }
       return borderColor;
@@ -164,14 +192,17 @@ class CyberStatCard extends ConsumerWidget {
     final bool isLight = _isLightSolidFill(solidBg);
     final bool isRedThreat = _isRedThreatCard(solidBg);
 
-    final Color titleColor = isLight ? const Color(0xFF0A0A0E) : const Color(0xFFFFFFFF);
+    final Color titleColor =
+        isLight ? const Color(0xFF0A0A0E) : const Color(0xFFFFFFFF);
     final Color valueColor = isRedThreat
-        ? const Color(0xFFFFEA00) // High-contrast bright yellow on red threat card
+        ? const Color(
+            0xFFFFEA00) // High-contrast bright yellow on red threat card
         : (isLight ? const Color(0xFF050A07) : const Color(0xFFFFFFFF));
     final Color subColor = isRedThreat
         ? const Color(0xFFFFD54F)
         : (isLight ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0));
-    final Color accentColor = isLight ? const Color(0xFF050A07) : const Color(0xFFFFFFFF);
+    final Color accentColor =
+        isLight ? const Color(0xFF050A07) : const Color(0xFFFFFFFF);
 
     Widget cardContent = CustomPaint(
       painter: _OpaqueStatCardPainter(
@@ -179,9 +210,12 @@ class CyberStatCard extends ConsumerWidget {
         solidBackgroundColor: solidBg,
         isSolidFill: true,
         isLightSolidFill: isLight,
+        referenceFrame: compact,
       ),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(14, 20, 16, 8),
+        padding: compact
+            ? const EdgeInsets.fromLTRB(10, 16, 12, 5)
+            : const EdgeInsets.fromLTRB(14, 20, 16, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -192,55 +226,60 @@ class CyberStatCard extends ConsumerWidget {
               children: [
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.only(right: 28.0),
+                    padding: const EdgeInsets.only(right: 10.0),
                     child: Text(
                       title.toUpperCase(),
                       style: GoogleFonts.barlow(
-                        fontSize: 12.5,
+                        fontSize: compact ? 9 : 12.5,
                         fontWeight: FontWeight.w800,
                         color: titleColor,
                         letterSpacing: 0.6,
                       ),
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ),
                 if (icon != null) ...[
                   const SizedBox(width: 4),
-                  Icon(icon, color: accentColor, size: 16),
+                  Icon(icon, color: accentColor, size: compact ? 12 : 16),
                 ],
               ],
             ),
             const SizedBox(height: 4),
 
             // Middle Row: Big Numerical Value & Subtitle (Clean layout with zero symbol overlap)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  value,
-                  style: GoogleFonts.barlow(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: valueColor,
-                    letterSpacing: 0.5,
-                    shadows: isRedThreat
-                        ? [
-                            BoxShadow(
-                              color: const Color(0xFFFFEA00).withOpacity(0.5),
-                              blurRadius: 10,
-                            )
-                          ]
-                        : null,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
+                FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      value,
+                      style: GoogleFonts.barlow(
+                        fontSize: compact ? 22 : 28,
+                        fontWeight: FontWeight.w900,
+                        color: valueColor,
+                        letterSpacing: 0.5,
+                        shadows: isRedThreat
+                            ? [
+                                BoxShadow(
+                                  color:
+                                      const Color(0xFFFFEA00).withOpacity(0.5),
+                                  blurRadius: 10,
+                                )
+                              ]
+                            : null,
+                      ),
+                    )),
+                const SizedBox(height: 3),
+                SizedBox(
                   child: Text(
                     sub,
+                    maxLines: 1,
                     style: GoogleFonts.barlow(
-                      fontSize: 11.5,
+                      fontSize: compact ? 8 : 11.5,
                       color: subColor,
                       fontWeight: FontWeight.w700,
                     ),
@@ -260,7 +299,7 @@ class CyberStatCard extends ConsumerWidget {
                     tag!,
                     style: TextStyle(
                       fontFamily: 'monospace',
-                      fontSize: 8.5,
+                      fontSize: compact ? 7 : 8.5,
                       fontWeight: FontWeight.bold,
                       color: accentColor.withOpacity(0.85),
                       letterSpacing: 1.0,
@@ -272,6 +311,28 @@ class CyberStatCard extends ConsumerWidget {
         ),
       ),
     );
+
+    final hudCard = cardContent;
+    cardContent = LayoutBuilder(builder: (context, bounds) {
+      if (bounds.hasBoundedHeight &&
+          !compact &&
+          bounds.maxHeight >= 154 &&
+          bounds.maxWidth >= 155) return hudCard;
+      final height = bounds.hasBoundedHeight
+          ? bounds.maxHeight
+          : compact
+              ? 126.0
+              : 154.0;
+      return SizedBox(
+          height: height,
+          width: bounds.maxWidth,
+          child: FittedBox(
+              fit: BoxFit.fill,
+              child: SizedBox(
+                  width: bounds.maxWidth < 155 ? 155 : bounds.maxWidth,
+                  height: compact ? 126 : 154,
+                  child: hudCard)));
+    });
 
     if (onTap != null) {
       return InkWell(
@@ -292,123 +353,143 @@ class _OpaqueStatCardPainter extends CustomPainter {
   final Color solidBackgroundColor;
   final bool isSolidFill;
   final bool isLightSolidFill;
+  final bool referenceFrame;
 
   _OpaqueStatCardPainter({
     required this.borderColor,
     required this.solidBackgroundColor,
     required this.isSolidFill,
     required this.isLightSolidFill,
+    this.referenceFrame = false,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final double w = size.width;
     final double h = size.height;
-    const double c = 14.0; // Corner chamfer size
-
-    // Dark cyber stroke - NEVER white boundary!
-    final Color strokeColor = isLightSolidFill
-        ? const Color(0xFF0F1410)
-        : const Color(0xFF140505);
-
-    // Decorative symbol accent color
-    final Color symbolColor = isLightSolidFill
-        ? const Color(0xFF0F1410).withOpacity(0.70)
-        : const Color(0xFFFFFFFF).withOpacity(0.70);
-
-    // 1. Armor HUD Notched Polygon Boundary Path
+    if (!referenceFrame) {
+      const c = 14.0;
+      final darkEdge =
+          isLightSolidFill ? const Color(0xFF0F1410) : const Color(0xFF140505);
+      final ink = isLightSolidFill
+          ? const Color(0xFF0F1410).withOpacity(.7)
+          : Colors.white.withOpacity(.7);
+      final path = Path()
+        ..moveTo(c, 0)
+        ..lineTo(w - c - 18, 0)
+        ..lineTo(w - c - 12, 5)
+        ..lineTo(w - c, 5)
+        ..lineTo(w, 5 + c)
+        ..lineTo(w, h / 2 - 12)
+        ..lineTo(w - 4, h / 2 - 8)
+        ..lineTo(w - 4, h / 2 + 8)
+        ..lineTo(w, h / 2 + 12)
+        ..lineTo(w, h - c)
+        ..lineTo(w - c, h)
+        ..lineTo(c + 18, h)
+        ..lineTo(c + 12, h - 5)
+        ..lineTo(c, h - 5)
+        ..lineTo(0, h - 5 - c)
+        ..lineTo(0, h / 2 + 12)
+        ..lineTo(4, h / 2 + 8)
+        ..lineTo(4, h / 2 - 8)
+        ..lineTo(0, h / 2 - 12)
+        ..lineTo(0, c)
+        ..close();
+      canvas.drawPath(path, Paint()..color = solidBackgroundColor);
+      canvas.drawPath(
+          path,
+          Paint()
+            ..color = darkEdge
+            ..strokeWidth = 1.6
+            ..style = PaintingStyle.stroke);
+      for (var i = 0; i < 3; i++) {
+        final x = 14 + i * 6.0;
+        canvas.drawPath(
+            Path()
+              ..moveTo(x + 3, 8)
+              ..lineTo(x + 6, 8)
+              ..lineTo(x + 3, 16)
+              ..lineTo(x, 16)
+              ..close(),
+            Paint()..color = ink);
+      }
+      for (var i = 0; i < 2; i++) {
+        final x = w - 28 + i * 7;
+        canvas.drawPath(
+            Path()
+              ..moveTo(x + 5, 9)
+              ..lineTo(x, 13)
+              ..lineTo(x + 5, 17),
+            Paint()
+              ..color = ink
+              ..strokeWidth = 1.8
+              ..style = PaintingStyle.stroke);
+      }
+      for (var i = 0; i < 4; i++) {
+        final y = h / 2 - 10 + i * 6;
+        canvas.drawLine(
+            Offset(w - 6, y),
+            Offset(w - 3, y - 3),
+            Paint()
+              ..color = ink.withOpacity(.5)
+              ..strokeWidth = 1.2);
+      }
+      return;
+    }
+    final cut = h < 100 ? 10.0 : 14.0;
+    final stroke =
+        isLightSolidFill ? const Color(0xFF0F1410) : const Color(0xFF140505);
+    final accent = isLightSolidFill ? const Color(0xFF0F1410) : Colors.white;
+    // First wide reference frame: top tab, stepped lower edge and corner cut.
     final path = Path()
-      ..moveTo(c, 0)
-      ..lineTo(w - c - 18, 0)
-      ..lineTo(w - c - 12, 5)
-      ..lineTo(w - c, 5)
-      ..lineTo(w, 5 + c)
-      ..lineTo(w, h / 2 - 12)
-      ..lineTo(w - 4, h / 2 - 8)
-      ..lineTo(w - 4, h / 2 + 8)
-      ..lineTo(w, h / 2 + 12)
-      ..lineTo(w, h - c)
-      ..lineTo(w - c, h)
-      ..lineTo(c + 18, h)
-      ..lineTo(c + 12, h - 5)
-      ..lineTo(c, h - 5)
-      ..lineTo(0, h - 5 - c)
-      ..lineTo(0, h / 2 + 12)
-      ..lineTo(4, h / 2 + 8)
-      ..lineTo(4, h / 2 - 8)
-      ..lineTo(0, h / 2 - 12)
-      ..lineTo(0, c)
+      ..moveTo(0, 0)
+      ..lineTo(w, 0)
+      ..lineTo(w, h - cut)
+      ..lineTo(w - cut, h)
+      ..lineTo(w * .42, h)
+      ..lineTo(w * .37, h - 8)
+      ..lineTo(cut, h - 8)
+      ..lineTo(0, h - 8 - cut)
       ..close();
-
-    // Fill 100% Solid Opaque Background with swatch color
-    final fillPaint = Paint()
-      ..color = solidBackgroundColor
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(path, fillPaint);
-
-    // Boundary Frame Stroke Line: Dark Cyber Frame (NO WHITE BOUNDARY)
-    final borderPaint = Paint()
-      ..color = strokeColor
-      ..strokeWidth = 1.6
-      ..style = PaintingStyle.stroke;
-    canvas.drawPath(path, borderPaint);
-
-    // 2. Top-Left Slanted Parallel Bars (///) - Sits neatly above title
-    final barPaint = Paint()
-      ..color = symbolColor
-      ..style = PaintingStyle.fill;
-
-    const double barW = 3.0;
-    const double barH = 8.0;
-    const double barX = 14.0;
-    const double barY = 8.0;
-
-    for (int i = 0; i < 3; i++) {
-      final barPath = Path();
-      final double xOffset = barX + (i * 6.0);
-      barPath.moveTo(xOffset + 3, barY);
-      barPath.lineTo(xOffset + 3 + barW, barY);
-      barPath.lineTo(xOffset + barW, barY + barH);
-      barPath.lineTo(xOffset, barY + barH);
-      barPath.close();
-      canvas.drawPath(barPath, barPaint);
+    canvas.drawPath(path, Paint()..color = solidBackgroundColor);
+    canvas.drawPath(
+        path,
+        Paint()
+          ..color = stroke
+          ..strokeWidth = 1.4
+          ..style = PaintingStyle.stroke);
+    final tab = Path()
+      ..moveTo(w * .32, 0)
+      ..lineTo(w * .69, 0)
+      ..lineTo(w * .67, 7)
+      ..lineTo(w * .34, 7)
+      ..close();
+    canvas.drawPath(tab, Paint()..color = accent.withOpacity(.65));
+    canvas.drawPath(
+        tab,
+        Paint()
+          ..color = accent.withOpacity(.15)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5));
+    final stripe = Paint()
+      ..color = accent.withOpacity(.6)
+      ..strokeWidth = 2;
+    for (var i = 0; i < 7; i++) {
+      final x = cut + 3 + i * 5.0;
+      canvas.drawLine(Offset(x, h - 6), Offset(x + 4, h - 2), stripe);
     }
-
-    // 3. Top-Right Directional Chevrons (<<)
-    final chevronPaint = Paint()
-      ..color = symbolColor
-      ..strokeWidth = 1.8
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.square;
-
-    final double chevX = w - 28.0;
-    const double chevY = 9.0;
-    for (int i = 0; i < 2; i++) {
-      final double cx = chevX + (i * 7.0);
-      final chevPath = Path()
-        ..moveTo(cx + 5, chevY)
-        ..lineTo(cx, chevY + 4)
-        ..lineTo(cx + 5, chevY + 8);
-      canvas.drawPath(chevPath, chevronPaint);
-    }
-
-    // 4. Vertical Side Vent Hatch Ticks on Right Edge
-    final hatchPaint = Paint()
-      ..color = symbolColor.withOpacity(0.5)
-      ..strokeWidth = 1.2
-      ..style = PaintingStyle.stroke;
-
-    final double hatchX = w - 6.0;
-    final double hatchStartY = h / 2 - 10.0;
-    for (int i = 0; i < 4; i++) {
-      final double hy = hatchStartY + (i * 6.0);
-      canvas.drawLine(Offset(hatchX, hy), Offset(hatchX + 3, hy - 3), hatchPaint);
-    }
+    canvas.drawLine(
+        Offset(w - cut - 4, h - 2),
+        Offset(w - 2, h - cut - 4),
+        Paint()
+          ..color = accent.withOpacity(.6)
+          ..strokeWidth = 2);
   }
 
   @override
   bool shouldRepaint(covariant _OpaqueStatCardPainter oldDelegate) {
-    return oldDelegate.borderColor != borderColor ||
+    return oldDelegate.referenceFrame != referenceFrame ||
+        oldDelegate.borderColor != borderColor ||
         oldDelegate.solidBackgroundColor != solidBackgroundColor ||
         oldDelegate.isSolidFill != isSolidFill ||
         oldDelegate.isLightSolidFill != isLightSolidFill;

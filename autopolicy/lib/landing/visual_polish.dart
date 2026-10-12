@@ -1,6 +1,160 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
+class ExploreEyebrow extends StatelessWidget {
+  final bool dark;
+  const ExploreEyebrow({super.key, required this.dark});
+  @override
+  Widget build(BuildContext context) => SizedBox(
+      height: 16,
+      child: Align(
+          alignment: Alignment.centerLeft,
+          child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text('ANOMALY DETECTION · ZERO TRUST · POLICY AUTOMATION',
+                  style: TextStyle(
+                      fontFamily: 'SpaceGrotesk',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 8,
+                      letterSpacing: 2,
+                      color: dark
+                          ? const Color(0xFFC5C764)
+                          : const Color(0xFF526B0E))))));
+}
+
+/// Delay belongs to the presentation only; telemetry never restarts the reveal.
+class HeroEntrance extends StatelessWidget {
+  final Widget child;
+  final int delay;
+  final double distance;
+  const HeroEntrance(
+      {super.key, required this.child, this.delay = 0, this.distance = 12});
+  @override
+  Widget build(BuildContext context) {
+    final reduced = MediaQuery.of(context).disableAnimations;
+    final total = delay + 620;
+    return TweenAnimationBuilder<double>(
+        tween: Tween(begin: reduced ? 1 : 0, end: 1),
+        duration: Duration(milliseconds: reduced ? 0 : total),
+        child: child,
+        builder: (context, value, child) {
+          final t = reduced
+              ? 1.0
+              : Curves.easeOutCubic
+                  .transform(((value * total - delay) / 620).clamp(0.0, 1.0));
+          return IgnorePointer(
+              ignoring: t < .05,
+              child: Opacity(
+                  opacity: t,
+                  child: Transform.translate(
+                      offset: Offset(0, distance * (1 - t)), child: child)));
+        });
+  }
+}
+
+/// Invisible suffix reserves the final line breaks and height from frame one.
+class TypingParagraph extends StatelessWidget {
+  final String text;
+  final TextStyle style;
+  final int delay;
+  const TypingParagraph(
+      {super.key, required this.text, required this.style, this.delay = 0});
+  @override
+  Widget build(BuildContext context) {
+    final reduced = MediaQuery.of(context).disableAnimations;
+    final characters = text.characters.toList();
+    final total = delay + characters.length * 22;
+    return Semantics(
+        label: text,
+        child: ExcludeSemantics(
+            child: TweenAnimationBuilder<double>(
+                key: ValueKey(text),
+                tween: Tween(begin: reduced ? 1 : 0, end: 1),
+                duration: Duration(milliseconds: reduced ? 0 : total),
+                builder: (context, value, _) {
+                  final count = reduced
+                      ? characters.length
+                      : ((value * total - delay) / 22)
+                          .floor()
+                          .clamp(0, characters.length);
+                  return Text.rich(TextSpan(style: style, children: [
+                    TextSpan(text: characters.take(count).join()),
+                    TextSpan(
+                        text: characters.skip(count).join(),
+                        style: const TextStyle(color: Colors.transparent)),
+                  ]));
+                })));
+  }
+}
+
+/// Static atmosphere is cheap, non-interactive, and continuous behind the iframe.
+class HeroAtmosphere extends StatelessWidget {
+  final Rect scene;
+  final bool dark;
+  final Offset? glowCenter;
+  const HeroAtmosphere(
+      {super.key, required this.scene, required this.dark, this.glowCenter});
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+      child: RepaintBoundary(
+          child: CustomPaint(
+              painter: _Atmosphere(scene, dark, glowCenter),
+              size: Size.infinite)));
+}
+
+class _Atmosphere extends CustomPainter {
+  final Rect scene;
+  final bool dark;
+  final Offset? glowCenter;
+  const _Atmosphere(this.scene, this.dark, this.glowCenter);
+  void field(
+      Canvas canvas, Offset center, double rx, double ry, List<Color> colors) {
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.scale(rx, ry);
+    canvas.drawCircle(
+        Offset.zero,
+        1,
+        Paint()
+          ..shader = RadialGradient(colors: colors, stops: const [0, .42, 1])
+              .createShader(const Rect.fromLTWH(-1, -1, 2, 2)));
+    canvas.restore();
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center =
+        glowCenter ?? Offset(scene.center.dx, scene.top + scene.height * .48);
+    // Feathered light fields terminate inside the scene; stacked copy stays dark.
+    field(canvas, center, scene.width * .64, scene.height * .49, [
+      const Color(0xFF17452E).withOpacity(dark ? .95 : .12),
+      const Color(0xFF0D2119).withOpacity(dark ? .8 : .04),
+      Colors.transparent
+    ]);
+    field(canvas, center, scene.width * .47, scene.height * .43, [
+      const Color(0xFFBCDA27).withOpacity(dark ? .68 : .28),
+      const Color(0xFF80A416).withOpacity(dark ? .40 : .12),
+      Colors.transparent
+    ]);
+    field(canvas, center, scene.width * .23, scene.height * .32, [
+      const Color(0xFFC4E326).withOpacity(dark ? .46 : .16),
+      const Color(0xFF80A416).withOpacity(dark ? .16 : .06),
+      Colors.transparent
+    ]);
+    field(canvas, center.translate(scene.width * .24, -scene.height * .05),
+        scene.width * .12, scene.height * .44, [
+      const Color(0xFFB1A9DA).withOpacity(dark ? .15 : .08),
+      const Color(0xFFCFE6F2).withOpacity(dark ? .04 : .025),
+      Colors.transparent
+    ]);
+  }
+
+  @override
+  bool shouldRepaint(_Atmosphere old) =>
+      old.scene != scene || old.dark != dark || old.glowCenter != glowCenter;
+}
+
 /// One short entrance timeline per chapter/stage; progress ticks never restart it.
 class StaggeredCopy extends StatelessWidget {
   final List<Widget> children;
@@ -131,13 +285,15 @@ class HeroHeading extends StatelessWidget {
   final Color foreground, accent;
   final double size;
   final bool emphasize;
+  final int delay;
   const HeroHeading(
       {super.key,
       required this.text,
       required this.foreground,
       required this.accent,
       required this.size,
-      required this.emphasize});
+      required this.emphasize,
+      this.delay = 0});
   @override
   Widget build(BuildContext context) {
     final reduced = MediaQuery.of(context).disableAnimations;
@@ -148,13 +304,16 @@ class HeroHeading extends StatelessWidget {
             child: TweenAnimationBuilder<double>(
           key: ValueKey(text),
           tween: Tween(begin: reduced ? 1 : 0, end: 1),
-          duration: Duration(milliseconds: reduced ? 0 : 400),
+          duration: Duration(milliseconds: reduced ? 0 : delay + 820),
           builder: (context, value, _) => Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: List.generate(lines.length, (i) {
-              final t = Curves.easeOutCubic.transform(
-                  ((value - i * .18) / (1 - i * .18)).clamp(0.0, 1.0));
+              final elapsed = value * (delay + 820);
+              final t = reduced
+                  ? 1.0
+                  : Curves.easeOutCubic.transform(
+                      ((elapsed - delay - i * 160) / 580).clamp(0.0, 1.0));
               return ClipRect(
                   child: Opacity(
                       opacity: t,

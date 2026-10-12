@@ -53,10 +53,11 @@ class CyberHudCard extends ConsumerWidget {
             : (backgroundColor.computeLuminance() < 0.25
                 ? const Color(0xFFFAF9F6)
                 : backgroundColor));
-    final effectiveBorderColor = isDarkMode 
-        ? borderColor 
-        : (borderColor == const Color(0xFF5DD62C) || borderColor == const Color(0xFF80A416)
-            ? const Color(0xFFCDD4B2) 
+    final effectiveBorderColor = isDarkMode
+        ? borderColor
+        : (borderColor == const Color(0xFF5DD62C) ||
+                borderColor == const Color(0xFF80A416)
+            ? const Color(0xFFCDD4B2)
             : borderColor);
 
     Widget content;
@@ -73,7 +74,9 @@ class CyberHudCard extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w900,
-                color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416),
+                color: isDarkMode
+                    ? const Color(0xFF5DD62C)
+                    : const Color(0xFF80A416),
                 fontFamily: 'monospace',
                 letterSpacing: 1.5,
               ),
@@ -115,29 +118,39 @@ class CyberHudCard extends ConsumerWidget {
       ),
       child: Container(
         padding: padding,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            content,
-            if (tag != null || label != null) ...[
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.bottomLeft,
-                child: Text(
-                  tag ?? label ?? '',
-                  style: TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 9,
-                    color: isDarkMode ? const Color(0xFF80A416) : const Color(0xFF0F172A),
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
+        child: LayoutBuilder(builder: (context, bounds) {
+          final body = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              content,
+              if (tag != null || label != null) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Text(
+                    tag ?? label ?? '',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 9,
+                      color: isDarkMode
+                          ? const Color(0xFF80A416)
+                          : const Color(0xFF0F172A),
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                 ),
-              ),
+              ],
             ],
-          ],
-        ),
+          );
+          if (!bounds.hasBoundedHeight || bounds.maxHeight >= 200) return body;
+          return FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.topLeft,
+              child:
+                  SizedBox(width: bounds.maxWidth, height: 180, child: body));
+        }),
       ),
     );
 

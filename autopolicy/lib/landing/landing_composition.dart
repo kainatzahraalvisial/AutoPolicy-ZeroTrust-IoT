@@ -10,7 +10,7 @@ enum LandingViewport {
   mobileSmall
 }
 
-/// UI and camera share these classes, while the renderer gets its own viewport.
+/// Both axes determine layout; camera classes retain the existing bridge contract.
 class LandingComposition {
   final LandingViewport kind;
   final double width, height;
@@ -28,50 +28,35 @@ class LandingComposition {
                             : width < 1800
                                 ? LandingViewport.desktop
                                 : LandingViewport.desktopWide;
-  bool get stacked =>
-      kind == LandingViewport.tabletPortrait ||
-      kind == LandingViewport.mobileLarge ||
-      kind == LandingViewport.mobileSmall;
+  bool get stacked => phone || kind == LandingViewport.tabletPortrait;
   bool get phone => width < 600;
-  bool get menu => width < 1150;
-  bool get verticalStages => !stacked && width >= 1150;
-  double get header => phone ? 66 : 78;
+  bool get menu => width < 600;
+  bool get compact => height < 800 || width < 1150;
+  double get header => width < 900 ? 58 : 64;
   double get brandWidth => phone
       ? 30
-      : stacked
+      : width < 1150
           ? 46
-          : width < 1150
-              ? 46
-              : 58;
-  double get railWidth => verticalStages ? (width >= 1800 ? 152 : 124) : 0;
+          : 58;
+  double get contentLeft => phone ? 24 : brandWidth + 32;
   double get copyWidth => stacked
-      ? phone
-          ? width - 48
-          : (width - brandWidth - 56).clamp(0.0, 720.0)
-      : kind == LandingViewport.desktopWide
-          ? 500
-          : kind == LandingViewport.desktop
-              ? 460
-              : kind == LandingViewport.laptopCompact
-                  ? 370
-                  : 300;
-  double get contentLeft =>
-      stacked ? (phone ? 24 : brandWidth + 32) : brandWidth + railWidth + 42;
-  double get sceneTop => header + (verticalStages ? 10 : 54);
+      ? (width - contentLeft - 24).clamp(0.0, 720.0)
+      : ((width - contentLeft - 24) * .39).clamp(260.0, 600.0);
+  double get sceneTop => header + 12;
   Rect get sceneRect => stacked
-      ? Rect.fromLTWH(brandWidth + 20, sceneTop, width - brandWidth - 28,
-          ((height - sceneTop - 64) * (phone ? .47 : .64)).clamp(260.0, 720.0))
-      : Rect.fromLTWH(contentLeft + copyWidth + 18, sceneTop,
-          width - contentLeft - copyWidth - 30, height - sceneTop - 84);
+      ? Rect.fromLTWH(brandWidth + 20, sceneTop, width - brandWidth - 32,
+          ((height - sceneTop - 24) * (phone ? .46 : .57)).clamp(60.0, 720.0))
+      : Rect.fromLTWH(contentLeft + copyWidth + 22, sceneTop,
+          width - contentLeft - copyWidth - 34, height - sceneTop - 24);
+  Rect get copyRect => Rect.fromLTWH(
+      contentLeft,
+      stacked ? sceneRect.bottom + 16 : header + 24,
+      copyWidth,
+      height - (stacked ? sceneRect.bottom + 16 : header + 24) - 24);
+  double get gap => compact ? 18 : 28;
   double get headingSize => phone
-      ? (width < 380 ? 29 : 34)
+      ? (width < 380 ? 29 : 32)
       : stacked
           ? 44
-          : kind == LandingViewport.desktopWide
-              ? 60
-              : kind == LandingViewport.desktop
-                  ? 52
-                  : kind == LandingViewport.laptopCompact
-                      ? 42
-                      : 35;
+          : (copyWidth * .105).clamp(30.0, height < 740 ? 43.0 : 60.0);
 }

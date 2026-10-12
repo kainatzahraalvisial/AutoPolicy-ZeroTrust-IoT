@@ -15,8 +15,18 @@ void main() {
     Size(768, 1024),
     Size(430, 932),
     Size(390, 844),
-    Size(360, 800)
+    Size(360, 800),
+    Size(900, 650)
   ];
+  test('Keyboard-height shrink preserves usable stacked content bounds', () {
+    for (final size in [const Size(360, 350), const Size(390, 430)]) {
+      final c = LandingComposition(size.width, size.height);
+      expect(c.sceneRect.height, greaterThan(0));
+      expect(c.copyRect.height, greaterThan(0));
+      expect(c.copyRect.overlaps(c.sceneRect), isFalse);
+      expect(c.copyRect.bottom, lessThanOrEqualTo(size.height));
+    }
+  });
   for (final size in sizes) {
     test(
         'Model and text have separate usable bounds at ${size.width} x ${size.height}',
@@ -28,7 +38,10 @@ void main() {
       expect(scene.left, greaterThanOrEqualTo(12 + c.brandWidth));
       expect(scene.top, greaterThanOrEqualTo(c.header));
       expect(scene.right, lessThanOrEqualTo(size.width));
-      expect(scene.bottom, lessThan(size.height - 64));
+      expect(scene.bottom, lessThan(size.height));
+      expect(c.copyRect.bottom, lessThanOrEqualTo(size.height));
+      expect(c.copyRect.height, greaterThan(300));
+      expect(c.copyRect.overlaps(scene), isFalse);
       if (!c.stacked) expect(c.contentLeft + c.copyWidth, lessThan(scene.left));
       // Regression: a tall tablet brand rail must not cross the stacked text.
       if (c.stacked && !c.phone)

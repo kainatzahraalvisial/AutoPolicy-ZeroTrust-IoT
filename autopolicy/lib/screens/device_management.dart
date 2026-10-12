@@ -1,3 +1,4 @@
+import '../widgets/console_stat_strip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/device.dart';
@@ -27,12 +28,15 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
 
     // Apply search query and status filters
     final filteredDevices = devices.where((device) {
-      final matchesSearch = device.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+      final matchesSearch = device.name
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase()) ||
           device.ipAddress.contains(_searchQuery) ||
           device.deviceType.toLowerCase().contains(_searchQuery.toLowerCase());
-      
+
       final matchesStatus = _statusFilter == 'ALL' ||
-          device.status.toString().split('.').last.toUpperCase() == _statusFilter;
+          device.status.toString().split('.').last.toUpperCase() ==
+              _statusFilter;
 
       return matchesSearch && matchesStatus;
     }).toList();
@@ -50,9 +54,11 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('FLEET DEPLOYED IOT ASSETS', style: CyberTextStyles.heading2),
+                Text('FLEET DEPLOYED IOT ASSETS',
+                    style: CyberTextStyles.heading2),
                 const SizedBox(height: 4),
-                Text('ZERO-TRUST DEVICE DIRECTORY & STATUS GATEWAY', style: CyberTextStyles.techMuted),
+                Text('ZERO-TRUST DEVICE DIRECTORY & STATUS GATEWAY',
+                    style: CyberTextStyles.techMuted),
               ],
             ),
             const SizedBox(height: 14),
@@ -68,26 +74,29 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
                     style: CyberTextStyles.techBody,
                     decoration: InputDecoration(
                       hintText: 'SEARCH BY NAME, IP, TYPE...',
-                      prefixIcon: const Icon(Icons.search, color: CyberColors.neonCyan, size: 18),
+                      prefixIcon: const Icon(Icons.search,
+                          color: CyberColors.neonCyan, size: 18),
                       contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
-                
+
                 // Status Filter options
                 if (!isMobile) ...[
                   _buildStatusFilterButton('ALL', _statusFilter == 'ALL'),
                   _buildStatusFilterButton('SAFE', _statusFilter == 'SAFE'),
-                  _buildStatusFilterButton('WARNING', _statusFilter == 'WARNING'),
-                  _buildStatusFilterButton('ISOLATED', _statusFilter == 'ISOLATED'),
+                  _buildStatusFilterButton(
+                      'WARNING', _statusFilter == 'WARNING'),
+                  _buildStatusFilterButton(
+                      'ISOLATED', _statusFilter == 'ISOLATED'),
                 ],
               ],
             ),
             const SizedBox(height: 14),
 
             // 2. Top Stat Cards Row
-            Row(
+            ConsoleStatStrip(
               children: [
                 Expanded(
                   child: CyberStatCard(
@@ -102,7 +111,8 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
                 Expanded(
                   child: CyberStatCard(
                     title: 'HEALTHY GATEWAYS',
-                    value: '${devices.where((d) => d.status == DeviceStatus.safe).length}',
+                    value:
+                        '${devices.where((d) => d.status == DeviceStatus.safe).length}',
                     sub: 'Clean Traffic Stream',
                     borderColor: const Color(0xFFEBECCC), // 2. #EBECCC (H18)
                     tag: 'H18',
@@ -112,7 +122,8 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
                 Expanded(
                   child: CyberStatCard(
                     title: 'HIGH-RISK SENSORS',
-                    value: '${devices.where((d) => d.status == DeviceStatus.warning).length}',
+                    value:
+                        '${devices.where((d) => d.status == DeviceStatus.warning).length}',
                     sub: 'Under Inspection',
                     borderColor: const Color(0xFFCDD4B2), // 3. #CDD4B2 (H19)
                     tag: 'H19',
@@ -122,10 +133,13 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
                 Expanded(
                   child: CyberStatCard(
                     title: 'ISOLATED NODES',
-                    value: '${devices.where((d) => d.status == DeviceStatus.isolated).length}',
+                    value:
+                        '${devices.where((d) => d.status == DeviceStatus.isolated).length}',
                     sub: 'Zero-Trust Quarantine',
-                    borderColor: const Color(0xFFD82734), // Threat Card #D82734 at end
-                    isAlert: devices.any((d) => d.status == DeviceStatus.isolated),
+                    borderColor:
+                        const Color(0xFFD82734), // Threat Card #D82734 at end
+                    isAlert:
+                        devices.any((d) => d.status == DeviceStatus.isolated),
                     tag: 'H20',
                   ),
                 ),
@@ -181,7 +195,8 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
           color: isSelected ? CyberColors.panelBg : CyberColors.cardBg,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? CyberColors.neonCyan : CyberColors.borderNeonCyan,
+            color:
+                isSelected ? CyberColors.neonCyan : CyberColors.borderNeonCyan,
           ),
         ),
         child: Text(
@@ -224,13 +239,15 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
                     children: [
                       Text(
                         device.name.toUpperCase(),
-                        style: CyberTextStyles.displayTitle(fontSize: 12, color: Colors.white),
+                        style: CyberTextStyles.displayTitle(
+                            fontSize: 12, color: Colors.white),
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'TYPE: ${device.deviceType.toUpperCase()}',
-                        style: CyberTextStyles.techMuted.copyWith(fontSize: 8.5),
+                        style:
+                            CyberTextStyles.techMuted.copyWith(fontSize: 8.5),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -238,7 +255,8 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
                 ),
                 // Status badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(2),
@@ -246,7 +264,10 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
                   ),
                   child: Text(
                     statusLabel,
-                    style: CyberTextStyles.technical(color: statusColor, fontSize: 8.0, fontWeight: FontWeight.bold),
+                    style: CyberTextStyles.technical(
+                        color: statusColor,
+                        fontSize: 8.0,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
@@ -258,8 +279,10 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
             Column(
               children: [
                 _buildCompactStatRow('IP ADDRESS', device.ipAddress),
-                _buildCompactStatRow('CPU METRIC', '${device.cpuUsage.toStringAsFixed(1)}%'),
-                _buildCompactStatRow('RAM METRIC', '${device.memoryUsage.toStringAsFixed(1)}%'),
+                _buildCompactStatRow(
+                    'CPU METRIC', '${device.cpuUsage.toStringAsFixed(1)}%'),
+                _buildCompactStatRow(
+                    'RAM METRIC', '${device.memoryUsage.toStringAsFixed(1)}%'),
               ],
             ),
 
@@ -286,7 +309,9 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(name, style: CyberTextStyles.techMuted.copyWith(fontSize: 8.5)),
-          Text(value, style: CyberTextStyles.technical(color: Colors.white, fontSize: 9.5)),
+          Text(value,
+              style: CyberTextStyles.technical(
+                  color: Colors.white, fontSize: 9.5)),
         ],
       ),
     );
@@ -313,10 +338,14 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
               _buildMetricDetailItem('DEVICE ID', device.id),
               _buildMetricDetailItem('IP NET ADDRESS', device.ipAddress),
               _buildMetricDetailItem('MAC HARDWARE ADDR', device.macAddress),
-              _buildMetricDetailItem('TRANSFERRED BANDWIDTH', '${device.bandwidth.toStringAsFixed(1)} KB/S'),
-              _buildMetricDetailItem('GNN RISK SCORE', '${(device.riskScore * 100).toStringAsFixed(1)}%'),
-              _buildMetricDetailItem('COMMUNICATION PROTOCOL', device.protocol.toUpperCase()),
-              _buildMetricDetailItem('GNN DIRECT CONNS', device.connections.join(' | ')),
+              _buildMetricDetailItem('TRANSFERRED BANDWIDTH',
+                  '${device.bandwidth.toStringAsFixed(1)} KB/S'),
+              _buildMetricDetailItem('GNN RISK SCORE',
+                  '${(device.riskScore * 100).toStringAsFixed(1)}%'),
+              _buildMetricDetailItem(
+                  'COMMUNICATION PROTOCOL', device.protocol.toUpperCase()),
+              _buildMetricDetailItem(
+                  'GNN DIRECT CONNS', device.connections.join(' | ')),
             ],
           ),
           actions: [
@@ -324,7 +353,8 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'CLOSE PROFILE',
-                style: CyberTextStyles.technical(color: CyberColors.neonCyan, fontSize: 11),
+                style: CyberTextStyles.technical(
+                    color: CyberColors.neonCyan, fontSize: 11),
               ),
             ),
           ],
@@ -344,7 +374,10 @@ class _DeviceManagementState extends ConsumerState<DeviceManagement> {
           Expanded(
             child: Text(
               value,
-              style: CyberTextStyles.technical(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold),
+              style: CyberTextStyles.technical(
+                  color: Colors.white,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold),
               textAlign: TextAlign.right,
               overflow: TextOverflow.ellipsis,
             ),

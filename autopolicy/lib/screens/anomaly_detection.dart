@@ -1,3 +1,4 @@
+import '../widgets/console_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/anomaly.dart';
@@ -6,7 +7,6 @@ import '../providers/security_provider.dart';
 import '../providers/theme_provider.dart';
 import '../theme/colors.dart';
 import '../theme/text_styles.dart';
-
 
 class AnomalyDetection extends ConsumerStatefulWidget {
   const AnomalyDetection({super.key});
@@ -28,8 +28,9 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
     // Filters logic
     final filteredAnomalies = anomalies.where((anm) {
       final bool matchesSeverity = _severityFilter == 'ALL' ||
-          anm.severity.toString().split('.').last.toUpperCase() == _severityFilter;
-      
+          anm.severity.toString().split('.').last.toUpperCase() ==
+              _severityFilter;
+
       final bool matchesStatus;
       if (_statusFilter == 'ALL') {
         matchesStatus = true;
@@ -50,20 +51,23 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Title Header
-            Row(
+            ConsoleRow(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('INCIDENT ANALYSIS FEED', style: CyberTextStyles.heading2For(isDarkMode)),
+                    Text('INCIDENT ANALYSIS FEED',
+                        style: CyberTextStyles.heading2For(isDarkMode)),
                     const SizedBox(height: 4),
-                    Text('AI-POWERED ML THREAT DETECTION ALERTS', style: CyberTextStyles.techMutedFor(isDarkMode)),
+                    Text('AI-POWERED ML THREAT DETECTION ALERTS',
+                        style: CyberTextStyles.techMutedFor(isDarkMode)),
                   ],
                 ),
                 // Summary pill (Increased font size & readable contrast)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                   decoration: BoxDecoration(
                     color: CyberColors.alertRed.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(4),
@@ -83,24 +87,31 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
             const SizedBox(height: 16),
 
             // Advanced Filters Bar
-            Row(
+            ConsoleRow(
               children: [
                 // Severity Filter Dropdowns
                 _buildFilterLabel('SEVERITY:', isDarkMode),
                 const SizedBox(width: 8),
-                _buildFilterButton('ALL', 'severity', _severityFilter == 'ALL', isDarkMode),
-                _buildFilterButton('CRITICAL', 'severity', _severityFilter == 'CRITICAL', isDarkMode),
-                _buildFilterButton('HIGH', 'severity', _severityFilter == 'HIGH', isDarkMode),
-                _buildFilterButton('MEDIUM', 'severity', _severityFilter == 'MEDIUM', isDarkMode),
-                
+                _buildFilterButton(
+                    'ALL', 'severity', _severityFilter == 'ALL', isDarkMode),
+                _buildFilterButton('CRITICAL', 'severity',
+                    _severityFilter == 'CRITICAL', isDarkMode),
+                _buildFilterButton(
+                    'HIGH', 'severity', _severityFilter == 'HIGH', isDarkMode),
+                _buildFilterButton('MEDIUM', 'severity',
+                    _severityFilter == 'MEDIUM', isDarkMode),
+
                 const SizedBox(width: 24),
-                
+
                 // Status Filters
                 _buildFilterLabel('STATUS:', isDarkMode),
                 const SizedBox(width: 8),
-                _buildFilterButton('ALL', 'status', _statusFilter == 'ALL', isDarkMode),
-                _buildFilterButton('ACTIVE', 'status', _statusFilter == 'ACTIVE', isDarkMode),
-                _buildFilterButton('MITIGATED', 'status', _statusFilter == 'MITIGATED', isDarkMode),
+                _buildFilterButton(
+                    'ALL', 'status', _statusFilter == 'ALL', isDarkMode),
+                _buildFilterButton(
+                    'ACTIVE', 'status', _statusFilter == 'ACTIVE', isDarkMode),
+                _buildFilterButton('MITIGATED', 'status',
+                    _statusFilter == 'MITIGATED', isDarkMode),
               ],
             ),
             const SizedBox(height: 16),
@@ -111,19 +122,29 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                   ? Container(
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
-                        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+                        color: isDarkMode
+                            ? const Color(0xFF0F0F0F)
+                            : const Color(0xFFFAF9F6),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.3) : const Color(0xFFCDD4B2)),
+                        border: Border.all(
+                            color: isDarkMode
+                                ? const Color(0xFF5DD62C).withOpacity(0.3)
+                                : const Color(0xFFCDD4B2)),
                       ),
                       child: Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.shield_outlined, color: Color(0xFF5DD62C), size: 42),
+                            const Icon(Icons.shield_outlined,
+                                color: Color(0xFF5DD62C), size: 42),
                             const SizedBox(height: 12),
                             Text(
                               'NO FLAGGED INCIDENTS MATCHING CRITERIA',
-                              style: CyberTextStyles.technical(fontSize: 12.5, color: isDarkMode ? Colors.white70 : const Color(0xFF64748B)),
+                              style: CyberTextStyles.technical(
+                                  fontSize: 12.5,
+                                  color: isDarkMode
+                                      ? Colors.white70
+                                      : const Color(0xFF64748B)),
                             ),
                           ],
                         ),
@@ -133,28 +154,44 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                       itemCount: filteredAnomalies.length,
                       itemBuilder: (context, idx) {
                         final anm = filteredAnomalies[idx];
-                        final isCritical = anm.severity == SeverityLevel.critical;
+                        final isCritical =
+                            anm.severity == SeverityLevel.critical;
                         final isHigh = anm.severity == SeverityLevel.high;
                         final isMedium = anm.severity == SeverityLevel.medium;
                         final String timeStr =
                             '${anm.timestamp.hour.toString().padLeft(2, '0')}:${anm.timestamp.minute.toString().padLeft(2, '0')}:${anm.timestamp.second.toString().padLeft(2, '0')}';
                         final Color severityColor = isCritical
                             ? const Color(0xFFD82734)
-                            : (isHigh ? const Color(0xFFE87D85) : (isMedium ? const Color(0xFFFFF4E1) : const Color(0xFF38BDF8)));
+                            : (isHigh
+                                ? const Color(0xFFE87D85)
+                                : (isMedium
+                                    ? const Color(0xFFFFF4E1)
+                                    : const Color(0xFF38BDF8)));
 
                         final Color badgeBg = isCritical
                             ? const Color(0xFFD82734)
-                            : (isHigh ? const Color(0xFFE87D85) : (isMedium ? const Color(0xFFFFF4E1) : const Color(0xFF0284C7)));
-                        final Color badgeBorder = isMedium ? const Color(0xFFE6D6B8) : badgeBg;
-                        final Color badgeText = isMedium ? const Color(0xFF0F172A) : Colors.white;
+                            : (isHigh
+                                ? const Color(0xFFE87D85)
+                                : (isMedium
+                                    ? const Color(0xFFFFF4E1)
+                                    : const Color(0xFF0284C7)));
+                        final Color badgeBorder =
+                            isMedium ? const Color(0xFFE6D6B8) : badgeBg;
+                        final Color badgeText =
+                            isMedium ? const Color(0xFF0F172A) : Colors.white;
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 10),
                           decoration: BoxDecoration(
-                            color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+                            color: isDarkMode
+                                ? const Color(0xFF0F0F0F)
+                                : const Color(0xFFFAF9F6),
                             borderRadius: BorderRadius.circular(4),
                             border: Border.all(
-                              color: isMedium ? const Color(0xFFE6D6B8) : severityColor.withOpacity(isDarkMode ? 0.45 : 0.60),
+                              color: isMedium
+                                  ? const Color(0xFFE6D6B8)
+                                  : severityColor
+                                      .withOpacity(isDarkMode ? 0.45 : 0.60),
                               width: 1.0,
                             ),
                           ),
@@ -166,7 +203,9 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                                 Container(
                                   width: 5,
                                   decoration: BoxDecoration(
-                                    color: isMedium ? const Color(0xFFE6D6B8) : severityColor,
+                                    color: isMedium
+                                        ? const Color(0xFFE6D6B8)
+                                        : severityColor,
                                     borderRadius: const BorderRadius.only(
                                       topLeft: Radius.circular(3),
                                       bottomLeft: Radius.circular(3),
@@ -177,24 +216,38 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                                 // Main Content Row
                                 Expanded(
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 12),
                                     child: Row(
                                       children: [
                                         // Severity Tag & Confidence
                                         Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 3),
                                               decoration: BoxDecoration(
                                                 color: badgeBg,
-                                                borderRadius: BorderRadius.circular(3),
-                                                border: Border.all(color: badgeBorder, width: 1),
+                                                borderRadius:
+                                                    BorderRadius.circular(3),
+                                                border: Border.all(
+                                                    color: badgeBorder,
+                                                    width: 1),
                                               ),
                                               child: Text(
-                                                anm.severity.toString().split('.').last.toUpperCase(),
-                                                style: CyberTextStyles.technical(
+                                                anm.severity
+                                                    .toString()
+                                                    .split('.')
+                                                    .last
+                                                    .toUpperCase(),
+                                                style:
+                                                    CyberTextStyles.technical(
                                                   fontSize: 10.5,
                                                   fontWeight: FontWeight.w800,
                                                   color: badgeText,
@@ -218,42 +271,78 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                                         Expanded(
                                           flex: 5,
                                           child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               Row(
                                                 children: [
                                                   Text(
-                                                    anm.attackType.toUpperCase(),
+                                                    anm.attackType
+                                                        .toUpperCase(),
                                                     style: TextStyle(
                                                       fontFamily: 'Inter',
                                                       fontSize: 13.5,
-                                                      fontWeight: FontWeight.w800,
-                                                      color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: isDarkMode
+                                                          ? Colors.white
+                                                          : const Color(
+                                                              0xFF0F172A),
                                                     ),
                                                   ),
                                                   const SizedBox(width: 10),
                                                   Container(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 2),
                                                     decoration: BoxDecoration(
-                                                      color: isDarkMode ? const Color(0xFF182218) : const Color(0xFFFAF9F6),
-                                                      borderRadius: BorderRadius.circular(3),
+                                                      color: isDarkMode
+                                                          ? const Color(
+                                                              0xFF182218)
+                                                          : const Color(
+                                                              0xFFFAF9F6),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              3),
                                                       border: Border.all(
-                                                        color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.4) : const Color(0xFFCDD4B2),
+                                                        color: isDarkMode
+                                                            ? const Color(
+                                                                    0xFF5DD62C)
+                                                                .withOpacity(
+                                                                    0.4)
+                                                            : const Color(
+                                                                0xFFCDD4B2),
                                                         width: 0.8,
                                                       ),
                                                     ),
                                                     child: Row(
-                                                      mainAxisSize: MainAxisSize.min,
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
                                                       children: [
-                                                        Icon(Icons.router, size: 12, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A)),
-                                                        const SizedBox(width: 4),
+                                                        Icon(Icons.router,
+                                                            size: 12,
+                                                            color: isDarkMode
+                                                                ? const Color(
+                                                                    0xFF5DD62C)
+                                                                : const Color(
+                                                                    0xFF0F172A)),
+                                                        const SizedBox(
+                                                            width: 4),
                                                         Text(
                                                           '${anm.deviceName.toUpperCase()} (${anm.deviceId})',
-                                                          style: CyberTextStyles.technical(
+                                                          style: CyberTextStyles
+                                                              .technical(
                                                             fontSize: 10.5,
-                                                            fontWeight: FontWeight.bold,
-                                                            color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: isDarkMode
+                                                                ? const Color(
+                                                                    0xFF5DD62C)
+                                                                : const Color(
+                                                                    0xFF0F172A),
                                                           ),
                                                         ),
                                                       ],
@@ -268,7 +357,9 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                                                   fontFamily: 'Inter',
                                                   fontSize: 12,
                                                   fontWeight: FontWeight.w500,
-                                                  color: isDarkMode ? Colors.white70 : const Color(0xFF475569),
+                                                  color: isDarkMode
+                                                      ? Colors.white70
+                                                      : const Color(0xFF475569),
                                                 ),
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
@@ -280,25 +371,35 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
 
                                         // Log Time & Status Indicator
                                         Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
                                           children: [
                                             Text(
                                               timeStr,
                                               style: CyberTextStyles.technical(
                                                 fontSize: 11.5,
                                                 fontWeight: FontWeight.w700,
-                                                color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
+                                                color: isDarkMode
+                                                    ? Colors.white
+                                                    : const Color(0xFF0F172A),
                                               ),
                                             ),
                                             const SizedBox(height: 3),
                                             Text(
-                                              anm.isMitigated ? 'MITIGATED' : 'ACTIVE SURGE',
+                                              anm.isMitigated
+                                                  ? 'MITIGATED'
+                                                  : 'ACTIVE SURGE',
                                               style: CyberTextStyles.technical(
                                                 fontSize: 9.5,
                                                 fontWeight: FontWeight.bold,
                                                 color: anm.isMitigated
-                                                    ? (isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF16A34A))
+                                                    ? (isDarkMode
+                                                        ? const Color(
+                                                            0xFF5DD62C)
+                                                        : const Color(
+                                                            0xFF16A34A))
                                                     : severityColor,
                                               ),
                                             ),
@@ -314,42 +415,97 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                                             if (!anm.isAcknowledged)
                                               OutlinedButton.icon(
                                                 onPressed: () {
-                                                  ref.read(securityProvider.notifier).acknowledgeAnomaly(anm.id);
+                                                  ref
+                                                      .read(securityProvider
+                                                          .notifier)
+                                                      .acknowledgeAnomaly(
+                                                          anm.id);
                                                 },
-                                                icon: Icon(Icons.check_circle_outline, size: 14, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A)),
+                                                icon: Icon(
+                                                    Icons.check_circle_outline,
+                                                    size: 14,
+                                                    color: isDarkMode
+                                                        ? const Color(
+                                                            0xFF5DD62C)
+                                                        : const Color(
+                                                            0xFF0F172A)),
                                                 label: Text(
                                                   'ACKNOWLEDGE',
-                                                  style: CyberTextStyles.technical(
+                                                  style:
+                                                      CyberTextStyles.technical(
                                                     fontSize: 10.5,
                                                     fontWeight: FontWeight.bold,
-                                                    color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                                                    color: isDarkMode
+                                                        ? const Color(
+                                                            0xFF5DD62C)
+                                                        : const Color(
+                                                            0xFF0F172A),
                                                   ),
                                                 ),
                                                 style: OutlinedButton.styleFrom(
-                                                  side: BorderSide(color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2), width: 1),
-                                                  backgroundColor: isDarkMode ? Colors.transparent : const Color(0xFFFAF9F6),
-                                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                                  side: BorderSide(
+                                                      color: isDarkMode
+                                                          ? const Color(
+                                                              0xFF5DD62C)
+                                                          : const Color(
+                                                              0xFFCDD4B2),
+                                                      width: 1),
+                                                  backgroundColor: isDarkMode
+                                                      ? Colors.transparent
+                                                      : const Color(0xFFFAF9F6),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 8),
+                                                  shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              4)),
                                                 ),
                                               )
                                             else
                                               Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 6),
                                                 decoration: BoxDecoration(
-                                                  color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.12) : const Color(0xFFFAF9F6),
-                                                  borderRadius: BorderRadius.circular(4),
-                                                  border: Border.all(color: isDarkMode ? const Color(0xFF5DD62C).withOpacity(0.4) : const Color(0xFFCDD4B2)),
+                                                  color: isDarkMode
+                                                      ? const Color(0xFF5DD62C)
+                                                          .withOpacity(0.12)
+                                                      : const Color(0xFFFAF9F6),
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                  border: Border.all(
+                                                      color: isDarkMode
+                                                          ? const Color(
+                                                                  0xFF5DD62C)
+                                                              .withOpacity(0.4)
+                                                          : const Color(
+                                                              0xFFCDD4B2)),
                                                 ),
                                                 child: Row(
                                                   children: [
-                                                    Icon(Icons.check, size: 13, color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF16A34A)),
+                                                    Icon(Icons.check,
+                                                        size: 13,
+                                                        color: isDarkMode
+                                                            ? const Color(
+                                                                0xFF5DD62C)
+                                                            : const Color(
+                                                                0xFF16A34A)),
                                                     const SizedBox(width: 4),
                                                     Text(
                                                       'ACKNOWLEDGED',
-                                                      style: CyberTextStyles.technical(
+                                                      style: CyberTextStyles
+                                                          .technical(
                                                         fontSize: 10,
-                                                        fontWeight: FontWeight.bold,
-                                                        color: isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF0F172A),
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: isDarkMode
+                                                            ? const Color(
+                                                                0xFF5DD62C)
+                                                            : const Color(
+                                                                0xFF0F172A),
                                                       ),
                                                     ),
                                                   ],
@@ -359,21 +515,45 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
 
                                             // Diagnose Button
                                             OutlinedButton.icon(
-                                              onPressed: () => _showInvestigateDialog(context, anm, isDarkMode),
-                                              icon: Icon(Icons.troubleshoot, size: 14, color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF7C3AED)),
+                                              onPressed: () =>
+                                                  _showInvestigateDialog(
+                                                      context, anm, isDarkMode),
+                                              icon: Icon(Icons.troubleshoot,
+                                                  size: 14,
+                                                  color: isDarkMode
+                                                      ? const Color(0xFFA88AED)
+                                                      : const Color(
+                                                          0xFF7C3AED)),
                                               label: Text(
                                                 'DIAGNOSE',
-                                                style: CyberTextStyles.technical(
+                                                style:
+                                                    CyberTextStyles.technical(
                                                   fontSize: 10.5,
                                                   fontWeight: FontWeight.bold,
-                                                  color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF7C3AED),
+                                                  color: isDarkMode
+                                                      ? const Color(0xFFA88AED)
+                                                      : const Color(0xFF7C3AED),
                                                 ),
                                               ),
                                               style: OutlinedButton.styleFrom(
-                                                side: BorderSide(color: isDarkMode ? const Color(0xFFA88AED) : const Color(0xFFCDD4B2), width: 1),
-                                                backgroundColor: isDarkMode ? Colors.transparent : const Color(0xFFFAF9F6),
-                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                                side: BorderSide(
+                                                    color: isDarkMode
+                                                        ? const Color(
+                                                            0xFFA88AED)
+                                                        : const Color(
+                                                            0xFFCDD4B2),
+                                                    width: 1),
+                                                backgroundColor: isDarkMode
+                                                    ? Colors.transparent
+                                                    : const Color(0xFFFAF9F6),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 10,
+                                                        vertical: 8),
+                                                shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            4)),
                                               ),
                                             ),
                                             const SizedBox(width: 8),
@@ -382,48 +562,78 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                                             if (!anm.isMitigated)
                                               ElevatedButton.icon(
                                                 onPressed: () {
-                                                  final policy = securityState.policies.firstWhere(
-                                                    (p) => p.anomalyId == anm.id,
-                                                    orElse: () => securityState.policies.first,
+                                                  final policy = securityState
+                                                      .policies
+                                                      .firstWhere(
+                                                    (p) =>
+                                                        p.anomalyId == anm.id,
+                                                    orElse: () => securityState
+                                                        .policies.first,
                                                   );
-                                                  ref.read(securityProvider.notifier).deployPolicy(
+                                                  ref
+                                                      .read(securityProvider
+                                                          .notifier)
+                                                      .deployPolicy(
                                                         policy.id,
                                                         policy.rawJsonPolicy,
                                                       );
                                                 },
-                                                icon: const Icon(Icons.security, size: 14, color: Colors.white),
+                                                icon: const Icon(Icons.security,
+                                                    size: 14,
+                                                    color: Colors.white),
                                                 label: Text(
                                                   'ISOLATE DEVICE',
-                                                  style: CyberTextStyles.technical(
+                                                  style:
+                                                      CyberTextStyles.technical(
                                                     fontSize: 10.5,
                                                     fontWeight: FontWeight.bold,
                                                     color: Colors.white,
                                                   ),
                                                 ),
                                                 style: ElevatedButton.styleFrom(
-                                                  backgroundColor: const Color(0xFFDF2531),
-                                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                                  backgroundColor:
+                                                      const Color(0xFFDF2531),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 8),
+                                                  shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              4)),
                                                 ),
                                               )
                                             else
                                               Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 10,
+                                                        vertical: 6),
                                                 decoration: BoxDecoration(
-                                                  color: const Color(0xFF5DD62C).withOpacity(0.12),
-                                                  border: Border.all(color: const Color(0xFF5DD62C)),
-                                                  borderRadius: BorderRadius.circular(4),
+                                                  color: const Color(0xFF5DD62C)
+                                                      .withOpacity(0.12),
+                                                  border: Border.all(
+                                                      color: const Color(
+                                                          0xFF5DD62C)),
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
                                                 ),
                                                 child: Row(
                                                   children: [
-                                                    const Icon(Icons.lock, size: 12, color: Color(0xFF5DD62C)),
+                                                    const Icon(Icons.lock,
+                                                        size: 12,
+                                                        color:
+                                                            Color(0xFF5DD62C)),
                                                     const SizedBox(width: 4),
                                                     Text(
                                                       'QUARANTINED',
-                                                      style: CyberTextStyles.technical(
-                                                        color: const Color(0xFF5DD62C),
+                                                      style: CyberTextStyles
+                                                          .technical(
+                                                        color: const Color(
+                                                            0xFF5DD62C),
                                                         fontSize: 10,
-                                                        fontWeight: FontWeight.bold,
+                                                        fontWeight:
+                                                            FontWeight.bold,
                                                       ),
                                                     ),
                                                   ],
@@ -459,7 +669,8 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
     );
   }
 
-  Widget _buildFilterButton(String label, String type, bool isSelected, bool isDarkMode) {
+  Widget _buildFilterButton(
+      String label, String type, bool isSelected, bool isDarkMode) {
     Color activeBg;
     Color activeBorder;
     Color activeText = Colors.white;
@@ -477,8 +688,10 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
         activeText = const Color(0xFF0F172A);
       } else {
         // 'ALL'
-        activeBg = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFDCA278);
-        activeBorder = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFDCA278);
+        activeBg =
+            isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFDCA278);
+        activeBorder =
+            isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFDCA278);
         if (isDarkMode) activeText = Colors.black;
       }
     } else {
@@ -491,20 +704,22 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
         activeBorder = const Color(0xFF08652C);
       } else {
         // 'ALL'
-        activeBg = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFDCA278);
-        activeBorder = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFDCA278);
+        activeBg =
+            isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFDCA278);
+        activeBorder =
+            isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFDCA278);
         if (isDarkMode) activeText = Colors.black;
       }
     }
 
-    final Color bgColor = isSelected 
-        ? activeBg 
+    final Color bgColor = isSelected
+        ? activeBg
         : (isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6));
-    final Color borderColor = isSelected 
-        ? activeBorder 
+    final Color borderColor = isSelected
+        ? activeBorder
         : (isDarkMode ? Colors.white24 : const Color(0xFFCDD4B2));
-    final Color textColor = isSelected 
-        ? activeText 
+    final Color textColor = isSelected
+        ? activeText
         : (isDarkMode ? Colors.white70 : const Color(0xFF475569));
 
     return GestureDetector(
@@ -549,7 +764,8 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
     );
   }
 
-  void _showInvestigateDialog(BuildContext context, Anomaly anm, bool isDarkMode) {
+  void _showInvestigateDialog(
+      BuildContext context, Anomaly anm, bool isDarkMode) {
     showDialog(
       context: context,
       builder: (context) {
@@ -559,7 +775,9 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
             width: 540,
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
+              color: isDarkMode
+                  ? const Color(0xFF0F0F0F)
+                  : const Color(0xFFFAF9F6),
               borderRadius: BorderRadius.circular(6),
               border: Border.all(color: const Color(0xFFDF2531), width: 1.5),
               boxShadow: [
@@ -578,16 +796,22 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.troubleshoot, color: Color(0xFFDF2531), size: 22),
+                        const Icon(Icons.troubleshoot,
+                            color: Color(0xFFDF2531), size: 22),
                         const SizedBox(width: 10),
                         Text(
                           'INCIDENT FORENSICS & DEEP TRIAGE',
-                          style: CyberTextStyles.heading2.copyWith(fontSize: 14, color: const Color(0xFFDF2531)),
+                          style: CyberTextStyles.heading2.copyWith(
+                              fontSize: 14, color: const Color(0xFFDF2531)),
                         ),
                       ],
                     ),
                     IconButton(
-                      icon: Icon(Icons.close, color: isDarkMode ? Colors.white54 : const Color(0xFF64748B), size: 20),
+                      icon: Icon(Icons.close,
+                          color: isDarkMode
+                              ? Colors.white54
+                              : const Color(0xFF64748B),
+                          size: 20),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
@@ -597,31 +821,68 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                   style: CyberTextStyles.techMuted.copyWith(fontSize: 9),
                 ),
                 const SizedBox(height: 12),
-                Divider(color: isDarkMode ? const Color(0xFF252525) : const Color(0xFFCDD4B2)),
+                Divider(
+                    color: isDarkMode
+                        ? const Color(0xFF252525)
+                        : const Color(0xFFCDD4B2)),
                 const SizedBox(height: 10),
 
                 // Flow Telemetry Table
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isDarkMode ? const Color(0xFF141414) : const Color(0xFFFAF9F6),
+                    color: isDarkMode
+                        ? const Color(0xFF141414)
+                        : const Color(0xFFFAF9F6),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: isDarkMode ? const Color(0xFF252525) : const Color(0xFFCDD4B2)),
+                    border: Border.all(
+                        color: isDarkMode
+                            ? const Color(0xFF252525)
+                            : const Color(0xFFCDD4B2)),
                   ),
                   child: Column(
                     children: [
-                      _forensicRow('TARGET DEVICE', '${anm.deviceName} (${anm.deviceId})', isDarkMode ? const Color(0xFFFFE997) : const Color(0xFFB45309)),
-                      _forensicRow('CLASSIFIED ATTACK', anm.attackType.toUpperCase(), const Color(0xFFDF2531)),
-                      _forensicRow('CONFIDENCE SCORE', '${(anm.confidenceScore * 100).toStringAsFixed(1)}% (GNN GraphSAGE)', isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF16A34A)),
-                      _forensicRow('RELATED GNN NODES', 'Gateway-01 <-> PLC-Sensor-04 <-> Mesh-Hub-02', isDarkMode ? const Color(0xFFA88AED) : const Color(0xFF7C3AED)),
-                      _forensicRow('FLOW PROTOCOL', 'MQTT / TLS 1.3 (Port 8883) · 4.8k pkts/s', isDarkMode ? Colors.white70 : const Color(0xFF475569)),
+                      _forensicRow(
+                          'TARGET DEVICE',
+                          '${anm.deviceName} (${anm.deviceId})',
+                          isDarkMode
+                              ? const Color(0xFFFFE997)
+                              : const Color(0xFFB45309)),
+                      _forensicRow(
+                          'CLASSIFIED ATTACK',
+                          anm.attackType.toUpperCase(),
+                          const Color(0xFFDF2531)),
+                      _forensicRow(
+                          'CONFIDENCE SCORE',
+                          '${(anm.confidenceScore * 100).toStringAsFixed(1)}% (GNN GraphSAGE)',
+                          isDarkMode
+                              ? const Color(0xFF5DD62C)
+                              : const Color(0xFF16A34A)),
+                      _forensicRow(
+                          'RELATED GNN NODES',
+                          'Gateway-01 <-> PLC-Sensor-04 <-> Mesh-Hub-02',
+                          isDarkMode
+                              ? const Color(0xFFA88AED)
+                              : const Color(0xFF7C3AED)),
+                      _forensicRow(
+                          'FLOW PROTOCOL',
+                          'MQTT / TLS 1.3 (Port 8883) · 4.8k pkts/s',
+                          isDarkMode
+                              ? Colors.white70
+                              : const Color(0xFF475569)),
                     ],
                   ),
                 ),
                 const SizedBox(height: 12),
 
                 // Suggested Zero-Trust Policy
-                Text('SUGGESTED ZERO-TRUST REGO POLICY SNIPPET', style: CyberTextStyles.technical(fontSize: 10, color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A), fontWeight: FontWeight.bold)),
+                Text('SUGGESTED ZERO-TRUST REGO POLICY SNIPPET',
+                    style: CyberTextStyles.technical(
+                        fontSize: 10,
+                        color: isDarkMode
+                            ? const Color(0xFFC4E320)
+                            : const Color(0xFF0F172A),
+                        fontWeight: FontWeight.bold)),
                 const SizedBox(height: 6),
                 Container(
                   width: double.infinity,
@@ -629,11 +890,19 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                   decoration: BoxDecoration(
                     color: isDarkMode ? Colors.black : const Color(0xFFFAF9F6),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: isDarkMode ? const Color(0xFFC4E320).withOpacity(0.35) : const Color(0xFFCDD4B2)),
+                    border: Border.all(
+                        color: isDarkMode
+                            ? const Color(0xFFC4E320).withOpacity(0.35)
+                            : const Color(0xFFCDD4B2)),
                   ),
                   child: Text(
                     'package autopolicy.authz\n\ndefault allow = false\n\n# Drop lateral surge packets from suspicious device\nallow {\n  input.device_id == "${anm.deviceId}"\n  input.rate_per_sec <= 200\n  not input.anomaly_flagged\n}',
-                    style: TextStyle(fontFamily: 'monospace', fontSize: 10, color: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFF0F172A)),
+                    style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10,
+                        color: isDarkMode
+                            ? const Color(0xFFC4E320)
+                            : const Color(0xFF0F172A)),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -644,22 +913,34 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      child: Text('CLOSE', style: CyberTextStyles.technical(color: isDarkMode ? Colors.white54 : const Color(0xFF64748B))),
+                      child: Text('CLOSE',
+                          style: CyberTextStyles.technical(
+                              color: isDarkMode
+                                  ? Colors.white54
+                                  : const Color(0xFF64748B))),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isDarkMode ? const Color(0xFFC4E320) : const Color(0xFFB8A9C1),
+                        backgroundColor: isDarkMode
+                            ? const Color(0xFFC4E320)
+                            : const Color(0xFFB8A9C1),
                       ),
-                      icon: const Icon(Icons.auto_awesome, color: Colors.black, size: 16),
+                      icon: const Icon(Icons.auto_awesome,
+                          color: Colors.black, size: 16),
                       label: Text(
                         'REVIEW IN POLICY GENERATOR',
-                        style: CyberTextStyles.technical(color: Colors.black, fontSize: 10.5, fontWeight: FontWeight.bold),
+                        style: CyberTextStyles.technical(
+                            color: Colors.black,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold),
                       ),
                       onPressed: () {
                         Navigator.of(context).pop();
                         // Navigate directly to Generated Policies screen (Tab 4)
-                        ref.read(navigationNotifierProvider.notifier).selectTab(4);
+                        ref
+                            .read(navigationNotifierProvider.notifier)
+                            .selectTab(4);
                       },
                     ),
                   ],
@@ -679,7 +960,9 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: CyberTextStyles.techMuted.copyWith(fontSize: 9.5)),
-          Text(value, style: CyberTextStyles.technical(fontSize: 10, color: valColor, fontWeight: FontWeight.bold)),
+          Text(value,
+              style: CyberTextStyles.technical(
+                  fontSize: 10, color: valColor, fontWeight: FontWeight.bold)),
         ],
       ),
     );

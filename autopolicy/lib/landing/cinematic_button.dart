@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 
 class CinematicButton extends StatefulWidget {
   final String label;
-  final VoidCallback onPressed;
-  final bool filled, compact, angular;
+  final VoidCallback? onPressed;
+  final bool filled, compact, angular, navbar;
   const CinematicButton(
       {super.key,
       required this.label,
       required this.onPressed,
       this.filled = false,
       this.compact = false,
-      this.angular = false});
+      this.angular = false,
+      this.navbar = false});
   @override
   State<CinematicButton> createState() => _CinematicButtonState();
 }
@@ -26,19 +27,21 @@ class _CinematicButtonState extends State<CinematicButton> {
       onEnter: (_) => setState(() => hover = true),
       onExit: (_) => setState(() => hover = false),
       child: AnimatedContainer(
-        duration: Duration(milliseconds: reduced ? 0 : 180),
+        duration: Duration(milliseconds: reduced ? 0 : 240),
+        curve: Curves.easeOutCubic,
         transform: Matrix4.translationValues(0, active ? -2 : 0, 0),
         decoration: BoxDecoration(
             boxShadow: active && widget.filled
                 ? [
                     BoxShadow(
-                        color: lime.withOpacity(widget.filled ? .52 : .28),
-                        blurRadius: 48,
-                        spreadRadius: 6),
+                        color: lime.withOpacity(widget.filled ? .30 : .13),
+                        blurRadius: 32,
+                        spreadRadius: 1),
                     BoxShadow(
-                        color: const Color(0xFFC4E326).withOpacity(.24),
-                        blurRadius: 20,
-                        spreadRadius: 1)
+                        color: const Color(0xFFC4E326)
+                            .withOpacity(widget.filled ? .17 : .09),
+                        blurRadius: 14,
+                        spreadRadius: 0)
                   ]
                 : []),
         child: CustomPaint(
@@ -52,6 +55,8 @@ class _CinematicButtonState extends State<CinematicButton> {
             onPressed: widget.onPressed,
             onFocusChange: (value) => setState(() => focus = value),
             style: TextButton.styleFrom(
+              overlayColor:
+                  widget.angular && !widget.filled ? Colors.transparent : null,
               backgroundColor: widget.angular || widget.filled
                   ? Colors.transparent
                   : lime.withOpacity(active ? .15 : .04),
@@ -60,9 +65,18 @@ class _CinematicButtonState extends State<CinematicButton> {
                   : Theme.of(context).brightness == Brightness.dark
                       ? const Color(0xFFBFD46D)
                       : const Color(0xFF607810),
-              minimumSize: Size(0, widget.compact ? 40 : 48),
-              padding: EdgeInsets.fromLTRB(widget.compact ? 22 : 38, 18,
-                  widget.compact ? 22 : 38, widget.filled ? 26 : 18),
+              minimumSize: Size(0, widget.compact ? 44 : 58),
+              padding: EdgeInsets.symmetric(
+                  horizontal: widget.navbar
+                      ? 16
+                      : widget.compact
+                          ? 24
+                          : 34,
+                  vertical: widget.navbar
+                      ? 10
+                      : widget.compact
+                          ? 15
+                          : 21),
               shape: const _CutCornerBorder(),
               side: widget.angular || widget.filled
                   ? BorderSide.none
@@ -73,7 +87,7 @@ class _CinematicButtonState extends State<CinematicButton> {
                     fontFamily: 'Orbitron',
                     fontWeight: FontWeight.w600,
                     fontSize: widget.compact ? 9 : 10,
-                    letterSpacing: 1.2)),
+                    letterSpacing: widget.navbar ? .7 : 1.25)),
           ),
         ),
       ),
@@ -85,18 +99,60 @@ class _AngularHeroPainter extends CustomPainter {
   final bool filled, active, dark;
   const _AngularHeroPainter(this.filled, this.active, this.dark);
   Path shape(Rect r) => Path()
-    ..moveTo(r.left + 19, r.top)
+    ..moveTo(r.left + 11, r.top)
     ..lineTo(r.right, r.top)
-    ..lineTo(r.right - 19, r.bottom)
+    ..lineTo(r.right, r.bottom - 11)
+    ..lineTo(r.right - 11, r.bottom)
     ..lineTo(r.left, r.bottom)
+    ..lineTo(r.left, r.top + 11)
     ..close();
   @override
   void paint(Canvas canvas, Size size) {
-    final face = Rect.fromLTWH(7, 8, size.width - 14, size.height - 18);
+    final face = Rect.fromLTWH(1, 1, size.width - 2, size.height - 4);
     const lime = Color(0xFFBADC29);
-    final accent = dark ? const Color(0xFFEDF3E8) : const Color(0xFF5E7343);
-    canvas.drawPath(shape(face.shift(const Offset(0, 4))),
-        Paint()..color = const Color(0xFF344207).withOpacity(filled ? 1 : .3));
+    if (!filled) {
+      final outline = shape(face);
+      final gradient = LinearGradient(
+          colors: dark
+              ? const [
+                  Color(0xFFC4E326),
+                  Color(0xFFFFEDA8),
+                  Color(0xFFB1A9DA),
+                  Color(0xFF9D8DF1)
+                ]
+              : const [
+                  Color(0xFF526B0E),
+                  Color(0xFF796326),
+                  Color(0xFF72608A)
+                ]);
+      if (active) {
+        canvas.save();
+        // Exclude the button face: the halo can only fall outside the boundary.
+        canvas.clipPath(Path()
+          ..fillType = PathFillType.evenOdd
+          ..addRect(face.inflate(40))
+          ..addPath(outline, Offset.zero));
+        canvas.drawPath(
+            outline,
+            Paint()
+              ..shader = gradient.createShader(face)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 5
+              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 9));
+        canvas.restore();
+      }
+      canvas.drawPath(
+          outline,
+          Paint()
+            ..shader = gradient.createShader(face)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = active ? 1.6 : 1);
+      return;
+    }
+    canvas.drawPath(
+        Path.combine(PathOperation.difference,
+            shape(face.shift(const Offset(0, 2))), shape(face)),
+        Paint()..color = const Color(0xFF344207).withOpacity(filled ? 1 : .2));
     canvas.drawPath(
         shape(face),
         Paint()
@@ -105,41 +161,32 @@ class _AngularHeroPainter extends CustomPainter {
             end: Alignment.bottomRight,
             colors: filled
                 ? [
-                    active ? const Color(0xFFE0F979) : const Color(0xFFD5F368),
-                    lime
+                    active ? const Color(0xFFFFF9D2) : const Color(0xFFFFEDA8),
+                    const Color(0xFFC4E326),
+                    const Color(0xFF80A416)
                   ]
                 : [
-                    lime.withOpacity(active ? .10 : .025),
-                    lime.withOpacity(.015)
+                    lime.withOpacity(active ? .14 : .025),
+                    lime.withOpacity(active ? .05 : .01)
                   ],
           ).createShader(face));
     canvas.drawPath(
         shape(face),
         Paint()
-          ..color = lime
+          ..color = filled
+              ? const Color(0xFFD9EA89).withOpacity(.7)
+              : (dark ? lime : const Color(0xFF526B0E))
+                  .withOpacity(active ? .9 : .55)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2);
-    // Offset end caps echo the reference without changing the existing palette.
-    canvas.drawPath(
-        Path()
-          ..moveTo(0, face.bottom + 2)
-          ..lineTo(21, 3)
-          ..lineTo(40, 3)
-          ..lineTo(35, 7)
-          ..lineTo(24, 7)
-          ..lineTo(5, face.bottom + 2)
-          ..close(),
-        Paint()..color = accent);
-    canvas.drawPath(
-        Path()
-          ..moveTo(size.width - 36, size.height - 5)
-          ..lineTo(size.width - 17, size.height - 5)
-          ..lineTo(size.width - 2, face.top + 12)
-          ..lineTo(size.width - 7, face.top + 12)
-          ..lineTo(size.width - 20, size.height - 9)
-          ..lineTo(size.width - 33, size.height - 9)
-          ..close(),
-        Paint()..color = accent);
+          ..strokeWidth = .9);
+    // A fine lit upper bevel adds depth without decorative end-cap clutter.
+    canvas.drawLine(
+        const Offset(13, 2),
+        Offset(size.width - 16, 2),
+        Paint()
+          ..color =
+              (filled ? Colors.white : lime).withOpacity(active ? .45 : .20)
+          ..strokeWidth = .6);
   }
 
   @override
@@ -235,12 +282,14 @@ class _CutCornerBorder extends OutlinedBorder {
 class CinematicNavLink extends StatefulWidget {
   final String label;
   final bool active;
+  final bool compact;
   final Color foreground;
   final VoidCallback onPressed;
   const CinematicNavLink(
       {super.key,
       required this.label,
       required this.active,
+      this.compact = false,
       required this.foreground,
       required this.onPressed});
   @override
@@ -257,6 +306,9 @@ class _CinematicNavLinkState extends State<CinematicNavLink> {
           onPressed: widget.onPressed,
           onFocusChange: (v) => setState(() => focused = v),
           style: TextButton.styleFrom(
+              minimumSize: const Size(0, 44),
+              padding:
+                  EdgeInsets.symmetric(horizontal: widget.compact ? 8 : 12),
               overlayColor: const Color(0xFF94B51A).withOpacity(.1)),
           child: AnimatedDefaultTextStyle(
               duration: Duration(
@@ -265,10 +317,12 @@ class _CinematicNavLinkState extends State<CinematicNavLink> {
               style: TextStyle(
                   fontFamily: 'Orbitron',
                   fontWeight: FontWeight.w600,
-                  fontSize: 10,
-                  letterSpacing: 1.5,
+                  fontSize: widget.compact ? 9 : 10,
+                  letterSpacing: widget.compact ? .7 : 1,
                   color: widget.active || hovered || focused
-                      ? const Color(0xFFBCDA27)
+                      ? Theme.of(context).brightness == Brightness.dark
+                          ? const Color(0xFFBCDA27)
+                          : const Color(0xFF526B0E)
                       : widget.foreground.withOpacity(.7)),
               child: Text(widget.label.toUpperCase(),
                   semanticsLabel: widget.label))));

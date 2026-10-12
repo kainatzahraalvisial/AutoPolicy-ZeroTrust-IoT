@@ -17,11 +17,12 @@ void main() {
     expect(find.byType(AutoPolicyApp), findsOneWidget);
   });
 
-  testWidgets('MainLayout Theme Toggle & Circular Reveal Test', (WidgetTester tester) async {
+  testWidgets('MainLayout theme toggle updates the palette',
+      (WidgetTester tester) async {
     // Set desktop screen size to prevent layout overflows in the test environment
     tester.view.physicalSize = const Size(1920, 1080);
     tester.view.devicePixelRatio = 1.0;
-    
+
     // Reset view settings after test completes
     addTearDown(() {
       tester.view.resetPhysicalSize();
@@ -40,19 +41,18 @@ void main() {
     // Verify MainLayout loaded successfully
     expect(find.byType(MainLayout), findsOneWidget);
 
-    // In default dark mode, the toggle icon should be wb_sunny_outlined (to switch to light mode)
-    final toggleButtonFinder = find.byIcon(Icons.wb_sunny_outlined);
+    // The pill displays the currently selected theme.
+    final toggleButtonFinder = find.byIcon(Icons.dark_mode_outlined);
     expect(toggleButtonFinder, findsOneWidget);
 
-    // Tap the theme toggle button to trigger the circular reveal transition
+    // Activate the current-theme pill.
     await tester.tap(toggleButtonFinder);
     await tester.pump(); // Start transition
 
-    // Wait for the circular reveal transition animation to complete (duration is 650ms)
-    // We use pump instead of pumpAndSettle since the infinite repeating glass card and globe animations keep the tree active
+    // Allow the palette update without waiting for continuous dashboard animations.
     await tester.pump(const Duration(milliseconds: 700));
 
-    // Verify that the theme toggled to light mode, and the button now shows nightlight_round
-    expect(find.byIcon(Icons.nightlight_round), findsOneWidget);
+    // The pill now displays the light theme.
+    expect(find.byIcon(Icons.light_mode_outlined), findsOneWidget);
   });
 }

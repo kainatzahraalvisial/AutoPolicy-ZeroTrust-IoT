@@ -1,3 +1,4 @@
+import 'console_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
@@ -16,15 +17,18 @@ class CyberTrafficLineChart extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDarkMode = ref.watch(themeModeProvider);
-    final accentColor = isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF5E7343);
+    final accentColor =
+        isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF5E7343);
 
     return Container(
       height: height,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
         border: Border.all(
-          color: isDarkMode ? accentColor.withOpacity(0.35) : const Color(0xFFCDD4B2), 
+          color: isDarkMode
+              ? accentColor.withOpacity(0.35)
+              : const Color(0xFFCDD4B2),
           width: 1.0,
         ),
         borderRadius: BorderRadius.circular(4),
@@ -42,10 +46,14 @@ class CyberTrafficLineChart extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header Row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            spacing: 16,
+            runSpacing: 6,
             children: [
-              Row(
+              Wrap(
+                spacing: 4,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Container(
                     width: 7,
@@ -69,9 +77,12 @@ class CyberTrafficLineChart extends ConsumerWidget {
                   ),
                   const SizedBox(width: 10),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: isDarkMode ? accentColor.withOpacity(0.12) : const Color(0xFFEBECCC),
+                      color: isDarkMode
+                          ? accentColor.withOpacity(0.12)
+                          : const Color(0xFFEBECCC),
                       borderRadius: BorderRadius.circular(3),
                     ),
                     child: Text(
@@ -85,7 +96,10 @@ class CyberTrafficLineChart extends ConsumerWidget {
                   ),
                 ],
               ),
-              Row(
+              Wrap(
+                spacing: 4,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   _buildLegendPill('NORMAL INGRESS', accentColor),
                   const SizedBox(width: 8),
@@ -98,7 +112,9 @@ class CyberTrafficLineChart extends ConsumerWidget {
                         'FULL IDS →',
                         style: CyberTextStyles.technical(
                           fontSize: 9,
-                          color: isDarkMode ? const Color(0xFF8B5CF6) : const Color(0xFF5E7343),
+                          color: isDarkMode
+                              ? const Color(0xFF8B5CF6)
+                              : const Color(0xFF5E7343),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -120,14 +136,45 @@ class CyberTrafficLineChart extends ConsumerWidget {
           const SizedBox(height: 6),
 
           // X-Axis Time Ticks
-          Row(
+          ConsoleRow(
+            compact: true,
+            minimumWidth: 300,
+            spacing: 12,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('-60 min', style: TextStyle(fontFamily: 'monospace', fontSize: 8.5, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
-              Text('-45 min', style: TextStyle(fontFamily: 'monospace', fontSize: 8.5, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
-              Text('-30 min', style: TextStyle(fontFamily: 'monospace', fontSize: 8.5, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
-              Text('-15 min', style: TextStyle(fontFamily: 'monospace', fontSize: 8.5, color: isDarkMode ? Colors.white60 : const Color(0xFF64748B))),
-              Text('NOW', style: CyberTextStyles.technical(fontSize: 8.5, color: accentColor, fontWeight: FontWeight.bold)),
+              Text('-60 min',
+                  style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 8.5,
+                      color: isDarkMode
+                          ? Colors.white60
+                          : const Color(0xFF64748B))),
+              Text('-45 min',
+                  style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 8.5,
+                      color: isDarkMode
+                          ? Colors.white60
+                          : const Color(0xFF64748B))),
+              Text('-30 min',
+                  style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 8.5,
+                      color: isDarkMode
+                          ? Colors.white60
+                          : const Color(0xFF64748B))),
+              Text('-15 min',
+                  style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 8.5,
+                      color: isDarkMode
+                          ? Colors.white60
+                          : const Color(0xFF64748B))),
+              Text('NOW',
+                  style: CyberTextStyles.technical(
+                      fontSize: 8.5,
+                      color: accentColor,
+                      fontWeight: FontWeight.bold)),
             ],
           ),
         ],
@@ -210,7 +257,8 @@ class _TrafficLineChartPainter extends CustomPainter {
     ];
 
     // 1. Draw Normal Ingress Area Gradient
-    final normalPath = Path()..moveTo(normalPoints.first.dx, normalPoints.first.dy);
+    final normalPath = Path()
+      ..moveTo(normalPoints.first.dx, normalPoints.first.dy);
     for (int i = 1; i < normalPoints.length; i++) {
       final p0 = normalPoints[i - 1];
       final p1 = normalPoints[i];
@@ -248,7 +296,8 @@ class _TrafficLineChartPainter extends CustomPainter {
     canvas.drawPath(normalPath, normalLinePaint);
 
     // 2. Draw Anomaly Spike Line
-    final anomalyPath = Path()..moveTo(anomalyPoints.first.dx, anomalyPoints.first.dy);
+    final anomalyPath = Path()
+      ..moveTo(anomalyPoints.first.dx, anomalyPoints.first.dy);
     for (int i = 1; i < anomalyPoints.length; i++) {
       final p0 = anomalyPoints[i - 1];
       final p1 = anomalyPoints[i];
