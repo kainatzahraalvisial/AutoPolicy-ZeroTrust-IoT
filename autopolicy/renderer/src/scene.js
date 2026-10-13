@@ -8,6 +8,7 @@ import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { setupRegistry, devices } from "./registry.js";
 import { Traffic } from "./traffic.js";
+import { ArchitecturalLighting } from "./architectural-lighting.js";
 import { narrative, sm, clamp, counts } from "./narrative.js";
 const canvas = document.getElementById("scene"),
   session = new URLSearchParams(location.search).get("session") || "native";
@@ -27,6 +28,7 @@ let scene,
   model,
   r,
   traffic,
+  architecturalLighting,
   composer,
   bloomComposer,
   bloom,
@@ -110,7 +112,9 @@ const modulePrefixes = [
 const raycaster = new T.Raycaster(),
   pointer = new T.Vector2(),
   black = new T.MeshBasicMaterial({ color: 0 }),
-  savedMaterials = new Map();
+  transparentBlack = new T.MeshBasicMaterial({ color: 0, transparent: true, opacity: 0, depthWrite: false }),
+  savedMaterials = new Map(),
+  bloomMasks = new WeakMap();
 let heroBounds,
   heroCenter,
   sceneScale = 1,
@@ -219,8 +223,9 @@ function theme() {
   scene.getObjectByName("fill").intensity = dark ? 0.64 : 1.0;
   scene.getObjectByName("key").intensity = dark ? 2.25 : 2.8;
   scene.getObjectByName("rim").intensity = dark ? 1.35 : 0.7;
-  bloom.strength = dark ? 0.48 : 0.22;
-  bloom.radius = 0.24;
+  bloom.strength = dark ? 0.62 : 0.28;
+  bloom.radius = 0.48;
+  bloom.threshold = 0.92;
   scene.environmentIntensity = dark ? 0.56 : 0.38;
 }
 function resize() {
@@ -239,6 +244,10 @@ function resize() {
   bloomComposer?.setPixelRatio(dpr);
   composer?.setSize(w, h);
   bloomComposer?.setSize(w, h);
+  const level = mobile ? 'mobile' : /tablet/.test(viewportClass) ? 'tablet' : 'desktop';
+  architecturalLighting?.setLightingQuality(level);
+  const postScale = mobile ? .65 : level === 'tablet' ? .8 : 1;
+  bloomComposer?.setSize(w * postScale, h * postScale);
   if (composer) {
     const samples = Math.min(mobile ? 2 : 4, renderer.capabilities.maxSamples);
     for (const rt of [composer.renderTarget1, composer.renderTarget2]) {
@@ -401,6 +410,7 @@ function initializeModel(gltf) {
   zoneGap = size.x * 0.055;
   traffic = new Traffic(model, r, gltf.animations);
   makeGraph();
+  architecturalLighting = new ArchitecturalLighting(model, r);
   for (const id of ["A", "Core", "B"]) groups[id] = r.getZoneRoot(id);
   for (const o of r.objects.values())
     if (
@@ -432,6 +442,16 @@ const cameraBounds = new T.Box3(),
   cameraRight = new T.Vector3(),
   cameraUp = new T.Vector3(),
   cameraCorner = new T.Vector3();
+const physicalBoundsScratch = new T.Box3();
+function expandPhysicalBounds(object) {
+  object.updateWorldMatrix(true, true);
+  object.traverse((node) => {
+    if (!node.geometry || node.name.startsWith("runtime_lighting_")) return;
+    if (!node.geometry.boundingBox) node.geometry.computeBoundingBox();
+    physicalBoundsScratch.copy(node.geometry.boundingBox).applyMatrix4(node.matrixWorld);
+    cameraBounds.union(physicalBoundsScratch);
+  });
+}
 function cameraState(x) {
   // Fit the actual moving geometry inside the dedicated Flutter scene viewport.
   // Keep the reference chapter azimuth/elevation, without UI-dependent view offsets.
@@ -444,7 +464,7 @@ function cameraState(x) {
     ...devices.map((d) => "runtime_device_" + d[0]),
   ]) {
     const object = r.objects.get(name);
-    if (object) cameraBounds.expandByObject(object);
+    if (object) expandPhysicalBounds(object);
   }
   if (cameraBounds.isEmpty()) cameraBounds.copy(heroBounds);
   for (const name of [
@@ -454,7 +474,7 @@ function cameraState(x) {
     "AP16E_CTRL_ManagementSOC",
   ]) {
     const object = r.requireObject(name);
-    if (object.visible) cameraBounds.expandByObject(object);
+    if (object.visible) expandPhysicalBounds(object);
   }
   cameraBounds.getCenter(cameraCenter);
   cameraCenter.x += x.c4 * sceneScale * 0.08;
@@ -783,6 +803,7 @@ function apply(x, t) {
   updateTelemetry(x, t);
   traffic.update(clock.getDelta(), t, x, offsets, reduced);
   cameraState(x);
+  architecturalLighting?.updateLightingForNarrative(x, t, camera, dark, reduced);
 }
 function updateTelemetry(x, t) {
   const strength = x.ins * (1 - 0.9 * Math.max(x.enf, x.zt));
@@ -886,16 +907,27 @@ function render() {
   scene.background = black.color;
   scene.traverse((o) => {
     if (!o.isMesh) return;
-    const semantic =
+    const semantic = o.userData.apBloom ||
       /Packet|Signal|Indicator|Status|Warning|Graph_Node|DataLine|Policy.*Rule|Evidence|AP14_(Front|Right)_(Shield|Network)/i.test(
         o.name,
       );
     if (!semantic) {
       savedMaterials.set(o.uuid, o.material);
-      o.material = black;
+      // Glass must not become an opaque mask that hides the recessed windows.
+      let mask = bloomMasks.get(o.material);
+      if (!mask) {
+        mask = Array.isArray(o.material)
+          ? o.material.map(m => m.transparent ? transparentBlack : black)
+          : o.material.transparent ? transparentBlack : black;
+        bloomMasks.set(o.material, mask);
+      }
+      o.material = mask;
     }
   });
+  const toneMapping = renderer.toneMapping;
+  renderer.toneMapping = T.NoToneMapping;
   bloomComposer.render();
+  renderer.toneMapping = toneMapping;
   scene.traverse((o) => {
     if (savedMaterials.has(o.uuid)) {
       o.material = savedMaterials.get(o.uuid);
@@ -1051,6 +1083,7 @@ function dispose() {
   disposed = true;
   cancelAnimationFrame(frameId);
   traffic?.dispose();
+  architecturalLighting?.dispose();
   window.removeEventListener("message", messageListener);
   window.removeEventListener("resize", resize);
   window.removeEventListener("keydown", keyboard);
@@ -1072,6 +1105,7 @@ function dispose() {
   pmrem?.dispose();
   renderer?.dispose();
   black.dispose();
+  transparentBlack.dispose();
 }
 window.addEventListener("pagehide", dispose, { once: true });
 window.AutoPolicyDiagnostics = {
@@ -1081,6 +1115,7 @@ window.AutoPolicyDiagnostics = {
     progress,
     parameters: current,
     traffic: traffic?.diagnostics(),
+    lighting: architecturalLighting?.diagnostics(),
     stageVisible: r
       ? [...r.objects.values()]
           .filter((o) => /^AP16.*CTRL/.test(o.name) && o.visible)

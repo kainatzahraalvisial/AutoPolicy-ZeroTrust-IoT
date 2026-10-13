@@ -12,6 +12,7 @@ import '../theme/responsive.dart';
 import '../theme/text_styles.dart';
 import '../widgets/cyber_grid.dart';
 import '../landing/visual_polish.dart';
+import '../widgets/sidebar_brand.dart';
 import '../widgets/cyber_hud_frame.dart';
 
 // Screens placeholder imports (we will write them next)
@@ -38,6 +39,7 @@ class MainLayout extends ConsumerStatefulWidget {
 class _MainLayoutState extends ConsumerState<MainLayout>
     with TickerProviderStateMixin {
   bool _isSidebarCollapsed = false;
+  bool _signingOut = false;
   String? _hoveredCategory;
   bool get _showSidebarLabels => !_isSidebarCollapsed;
   double _lastRailCenterY = 78.0;
@@ -418,11 +420,11 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                         decoration: BoxDecoration(
                           color: isSelectedDirect
                               ? (isDarkMode
-                                  ? const Color(0xFF282A30)
+                                  ? const Color(0xFF9D8DF1)
                                   : const Color(0xFFCBB9A4))
                               : (_hoveredCategory == catTitle
                                   ? (isDarkMode
-                                      ? const Color(0xFF1A1B20)
+                                      ? const Color(0xFFA69BCD)
                                       : const Color(0xFFDDD0BD))
                                   : Colors.transparent),
                           borderRadius: BorderRadius.circular(8),
@@ -435,10 +437,12 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                               size: 20,
                               color: (isSelectedDirect || hasSelectedChild)
                                   ? (isDarkMode
-                                      ? Colors.white
+                                      ? (isSelectedDirect
+                                          ? const Color(0xFF211B35)
+                                          : const Color(0xFF3E345C))
                                       : const Color(0xFF1A1612))
                                   : (isDarkMode
-                                      ? const Color(0xFF8E929E)
+                                      ? const Color(0xFF3E345C)
                                       : const Color(0xFF5C5247)),
                             ),
                             const SizedBox(width: 12),
@@ -451,14 +455,15 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                       (isSelectedDirect || hasSelectedChild)
                                           ? FontWeight.bold
                                           : FontWeight.w600,
-                                  color:
-                                      (isSelectedDirect || hasSelectedChild)
-                                          ? (isDarkMode
-                                              ? Colors.white
-                                              : const Color(0xFF1A1612))
-                                          : (isDarkMode
-                                              ? const Color(0xFF8E929E)
-                                              : const Color(0xFF4A433A)),
+                                  color: (isSelectedDirect || hasSelectedChild)
+                                      ? (isDarkMode
+                                          ? (isSelectedDirect
+                                              ? const Color(0xFF211B35)
+                                              : const Color(0xFF3E345C))
+                                          : const Color(0xFF1A1612))
+                                      : (isDarkMode
+                                          ? const Color(0xFF3E345C)
+                                          : const Color(0xFF4A433A)),
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -488,7 +493,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                     : Icons.keyboard_arrow_down,
                                 size: 18,
                                 color: isDarkMode
-                                    ? Colors.white54
+                                    ? const Color(0xFF51436E)
                                     : const Color(0xFF64748B),
                               ),
                           ],
@@ -521,7 +526,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                         decoration: BoxDecoration(
                           color: isSelected
                               ? (isDarkMode
-                                  ? const Color(0xFF282A30)
+                                  ? const Color(0xFF9D8DF1)
                                   : const Color(0xFFCBB9A4))
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(20),
@@ -536,10 +541,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                 shape: BoxShape.circle,
                                 color: isSelected
                                     ? (isDarkMode
-                                        ? Colors.white
+                                        ? const Color(0xFF211B35)
                                         : const Color(0xFF1A1612))
                                     : (isDarkMode
-                                        ? const Color(0xFF555865)
+                                        ? const Color(0xFF6C802A)
                                         : const Color(0xFF9E9488)),
                               ),
                             ),
@@ -551,10 +556,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                   fontSize: 13.0,
                                   color: isSelected
                                       ? (isDarkMode
-                                          ? Colors.white
+                                          ? const Color(0xFF211B35)
                                           : const Color(0xFF1A1612))
                                       : (isDarkMode
-                                          ? const Color(0xFF8E929E)
+                                          ? const Color(0xFF3E345C)
                                           : const Color(0xFF4A433A)),
                                   fontWeight: isSelected
                                       ? FontWeight.bold
@@ -599,7 +604,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
       margin: const EdgeInsets.symmetric(vertical: 10),
       padding: const EdgeInsets.only(left: 4),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF101114) : const Color(0xFFE6DAC8),
+        color: isDarkMode ? const Color(0xFFB1A9DA) : const Color(0xFFE6DAC8),
         borderRadius: BorderRadius.circular(24),
       ),
       child: ClipRRect(
@@ -616,10 +621,8 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                   Expanded(
                     child: SizedBox(
                       height: 48,
-                      child: AutoPolicyWordmark(
-                        dark: isDarkMode,
-                        height: 48,
-                      ),
+                      child: SidebarBrand(
+                          dark: isDarkMode, lightSurface: isDarkMode),
                     ),
                   ),
                   IconButton(
@@ -627,15 +630,11 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                     constraints:
                         const BoxConstraints(minWidth: 30, minHeight: 30),
                     tooltip: 'Collapse sidebar',
-                    icon: Icon(
-                      Icons.menu,
-                      size: 20,
-                      color: isDarkMode
-                          ? Colors.white70
-                          : const Color(0xFF4A433A),
-                    ),
-                    onPressed: () =>
-                        setState(() => _isSidebarCollapsed = true),
+                    icon: SidebarToggleIcon(
+                        color: isDarkMode
+                            ? const Color(0xFF3E345C)
+                            : const Color(0xFF4A433A)),
+                    onPressed: () => setState(() => _isSidebarCollapsed = true),
                   ),
                 ],
               ),
@@ -684,13 +683,13 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     _lastRailCenterY = targetCenterY;
 
     final sidebarBg =
-        isDarkMode ? const Color(0xFF101114) : const Color(0xFFE6DAC8);
+        isDarkMode ? const Color(0xFF9589BF) : const Color(0xFFE6DAC8);
     final highlightBg =
-        isDarkMode ? const Color(0xFF282A30) : const Color(0xFFCBB9A4);
+        isDarkMode ? const Color(0xFF9D8DF1) : const Color(0xFFCBB9A4);
     final activeIconColor =
-        isDarkMode ? Colors.white : const Color(0xFF1A1612);
+        isDarkMode ? const Color(0xFF211B35) : const Color(0xFF1A1612);
     final unselectedIconColor =
-        isDarkMode ? const Color(0xFF8E929E) : const Color(0xFF5C5247);
+        isDarkMode ? const Color(0xFF3E345C) : const Color(0xFF5C5247);
 
     return Container(
       width: 64,
@@ -698,23 +697,12 @@ class _MainLayoutState extends ConsumerState<MainLayout>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Top Circular Logo Badge aligned directly over the vertical pill
+          // Standalone shield: no circular surface or shadow behind the asset.
           Padding(
             padding: const EdgeInsets.only(left: pillLeft, bottom: 8),
-            child: Container(
+            child: SizedBox(
               width: pillWidth,
               height: pillWidth,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: sidebarBg,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(isDarkMode ? 0.35 : 0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
               child: InkWell(
                 onTap: () {
                   setState(() {
@@ -723,30 +711,9 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                 },
                 borderRadius: BorderRadius.circular(pillWidth / 2),
                 child: Center(
-                  child: SizedBox(
-                    width: 28,
-                    height: 28,
-                    child: Image.asset(
-                      isDarkMode
-                          ? 'assets/images/logo_icon_dark.png'
-                          : 'assets/images/logo_icon_light.png',
-                      fit: BoxFit.contain,
-                      filterQuality: FilterQuality.medium,
-                      isAntiAlias: true,
-                      errorBuilder: (ctx, err, _) => ClipRect(
-                        child: OverflowBox(
-                          alignment: Alignment.centerLeft,
-                          minWidth: 120,
-                          maxWidth: 120,
-                          child: SizedBox(
-                            width: 120,
-                            height: 26,
-                            child: AutoPolicyWordmark(dark: isDarkMode),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  child: Tooltip(
+                      message: 'Expand sidebar',
+                      child: SidebarShield(dark: isDarkMode, size: 38)),
                 ),
               ),
             ),
@@ -776,8 +743,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                         pillLeft: pillLeft,
                         pillRight: pillRight,
                         circleCenterX: activeX,
-                        pocketRadius:
-                            circleRadius + pocketGap - (midPop * 1.5),
+                        pocketRadius: circleRadius + pocketGap - (midPop * 1.5),
                         filletRadius: 12.0,
                       ),
                       child: Stack(
@@ -795,8 +761,8 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                 color: highlightBg,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(
-                                        isDarkMode ? 0.30 : 0.10),
+                                    color: Colors.black
+                                        .withOpacity(isDarkMode ? 0.30 : 0.10),
                                     blurRadius: 6,
                                     offset: const Offset(0, 2),
                                   ),
@@ -824,11 +790,9 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                       child: IconButton(
                                         padding: EdgeInsets.zero,
                                         tooltip: 'Expand navigation',
-                                        icon: Icon(
-                                          Icons.menu,
-                                          size: 20,
+                                        icon: SidebarToggleIcon(
                                           color: isDarkMode
-                                              ? Colors.white70
+                                              ? const Color(0xFF3E345C)
                                               : const Color(0xFF4A433A),
                                         ),
                                         onPressed: () {
@@ -870,8 +834,8 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                         height: itemHeight,
                                         width: 64,
                                         child: AnimatedPadding(
-                                          duration: const Duration(
-                                              milliseconds: 360),
+                                          duration:
+                                              const Duration(milliseconds: 360),
                                           curve: Curves.easeOutBack,
                                           padding: EdgeInsets.only(
                                               left: iconCenterX - 18),
@@ -929,11 +893,8 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                 child: Tooltip(
                                   message: '$username ($activeRole)',
                                   child: InkWell(
-                                    onTap: () => _showUserProfileModal(
-                                        context,
-                                        username,
-                                        activeRole,
-                                        isDarkMode),
+                                    onTap: () => _showUserProfileModal(context,
+                                        username, activeRole, isDarkMode),
                                     borderRadius: BorderRadius.circular(16),
                                     child: CircleAvatar(
                                       radius: 14,
@@ -968,12 +929,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                       Icons.logout,
                                       size: 18,
                                       color: isDarkMode
-                                          ? Colors.white54
+                                          ? const Color(0xFF51436E)
                                           : const Color(0xFF5C5247),
                                     ),
-                                    onPressed: () {
-                                      ref.read(authProvider.notifier).signOut();
-                                    },
+                                    onPressed: _signingOut ? null : _signOut,
                                   ),
                                 ),
                               ),
@@ -1028,7 +987,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
         drawer: isMobile
             ? Drawer(
                 backgroundColor: isDarkMode
-                    ? const Color(0xFF101114)
+                    ? const Color(0xFFB1A9DA)
                     : const Color(0xFFE6DAC8),
                 child: SafeArea(
                     child: Column(children: [
@@ -1054,10 +1013,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
               decoration: BoxDecoration(
                 color: _isSidebarCollapsed
                     ? (isDarkMode
-                        ? const Color(0xFF1C1E26)
+                        ? const Color(0xFFB1A9DA)
                         : const Color(0xFFFAF8F4))
                     : (isDarkMode
-                        ? const Color(0xFF0B0C0E)
+                        ? const Color(0xFFB1A9DA)
                         : const Color(0xFFE6DAC8)),
               ),
             ),
@@ -1076,18 +1035,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                             alignment: Alignment.centerLeft,
                             clipBehavior: Clip.none,
                             child: _isSidebarCollapsed
-                                ? _buildCollapsedSidebar(
-                                    context,
-                                    isDarkMode,
-                                    activeRole,
-                                    unreadCount,
-                                    username)
-                                : _buildExpandedSidebar(
-                                    context,
-                                    isDarkMode,
-                                    activeRole,
-                                    unreadCount,
-                                    username),
+                                ? _buildCollapsedSidebar(context, isDarkMode,
+                                    activeRole, unreadCount, username)
+                                : _buildExpandedSidebar(context, isDarkMode,
+                                    activeRole, unreadCount, username),
                           ),
                         Expanded(
                           child: Container(
@@ -1149,8 +1100,11 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                               Builder(
                                                 builder: (ctx) => IconButton(
                                                   tooltip: 'Open navigation',
-                                                  icon: const Icon(Icons.menu,
-                                                      size: 20),
+                                                  icon: SidebarToggleIcon(
+                                                      color: isDarkMode
+                                                          ? Colors.white70
+                                                          : const Color(
+                                                              0xFF4A433A)),
                                                   onPressed: () =>
                                                       Scaffold.of(ctx)
                                                           .openDrawer(),
@@ -1175,8 +1129,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                                     ? CyberColors.alertRed
                                                     : const Color(0xFF16A34A);
                                             return Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                  horizontal: 12, vertical: 6),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 6),
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
@@ -1240,8 +1196,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                                       BorderRadius.circular(20),
                                                   border: Border.all(
                                                     color: isDarkMode
-                                                        ? const Color(0xFF333640)
-                                                        : const Color(0xFFD4C5B3),
+                                                        ? const Color(
+                                                            0xFF333640)
+                                                        : const Color(
+                                                            0xFFD4C5B3),
                                                     width: 1,
                                                   ),
                                                 ),
@@ -1282,13 +1240,6 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                               ),
                                             ),
                                             const SizedBox(width: 10),
-                                            // Developer Live Role Switcher Pill
-                                            if (screenWidth > 700)
-                                              _buildDevRoleSwitcher(
-                                                  context,
-                                                  activeRole,
-                                                  isDarkMode),
-                                            const SizedBox(width: 12),
                                             // Clock
                                             if (screenWidth > 1050) ...[
                                               Text(
@@ -1438,9 +1389,8 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                       backgroundColor: isDarkMode
                           ? const Color(0xFF101114)
                           : const Color(0xFFE6DAC8),
-                      selectedItemColor: isDarkMode
-                          ? Colors.white
-                          : const Color(0xFF1A1612),
+                      selectedItemColor:
+                          isDarkMode ? Colors.white : const Color(0xFF1A1612),
                       unselectedItemColor: isDarkMode
                           ? const Color(0xFF8E929E)
                           : const Color(0xFF5C5247),
@@ -1514,91 +1464,22 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     );
   }
 
-  Widget _buildDevRoleSwitcher(
-      BuildContext context, String activeRole, bool isDarkMode) {
-    // Normalize role string matching auth provider
-    String currentRoleVal = 'Admin';
-    if (activeRole.toLowerCase().contains('engineer')) {
-      currentRoleVal = 'Security Engineer';
-    } else if (activeRole.toLowerCase().contains('manager')) {
-      currentRoleVal = 'Manager';
-    } else {
-      currentRoleVal = 'Admin';
+  Future<void> _signOut() async {
+    if (_signingOut) return;
+    setState(() => _signingOut = true);
+    try {
+      await ref.read(authProvider.notifier).signOut();
+      if (!mounted) return;
+      ref.invalidate(navigationNotifierProvider);
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('Sign out failed. Please try again.')));
+      }
+    } finally {
+      if (mounted) setState(() => _signingOut = false);
     }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF22242A) : const Color(0xFFEFE8DD),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isDarkMode ? const Color(0xFF333640) : const Color(0xFFD4C5B3),
-          width: 1.2,
-        ),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: currentRoleVal,
-          isDense: true,
-          dropdownColor: isDarkMode ? const Color(0xFF18191E) : Colors.white,
-          icon: Icon(
-            Icons.arrow_drop_down,
-            color:
-                isDarkMode ? Colors.white70 : const Color(0xFF4A433A),
-            size: 18,
-          ),
-          style: CyberTextStyles.technical(
-            fontSize: 11.0,
-            fontWeight: FontWeight.bold,
-            color:
-                isDarkMode ? Colors.white : const Color(0xFF4A433A),
-          ),
-          items: const [
-            DropdownMenuItem(
-              value: 'Admin',
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.admin_panel_settings_outlined,
-                      size: 14, color: Color(0xFFC4E320)),
-                  SizedBox(width: 6),
-                  Text('🎭 ROLE: Admin'),
-                ],
-              ),
-            ),
-            DropdownMenuItem(
-              value: 'Security Engineer',
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.shield_outlined,
-                      size: 14, color: Color(0xFFA88AED)),
-                  SizedBox(width: 6),
-                  Text('🎭 ROLE: Sec Engineer'),
-                ],
-              ),
-            ),
-            DropdownMenuItem(
-              value: 'Manager',
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.analytics_outlined,
-                      size: 14, color: Color(0xFFFFE997)),
-                  SizedBox(width: 6),
-                  Text('🎭 ROLE: Manager'),
-                ],
-              ),
-            ),
-          ],
-          onChanged: (newRole) {
-            if (newRole != null) {
-              ref.read(authProvider.notifier).switchRole(newRole);
-            }
-          },
-        ),
-      ),
-    );
   }
 
   Widget _buildBottomProfileSection(
@@ -1606,12 +1487,11 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF101114) : const Color(0xFFE6DAC8),
+        color: isDarkMode ? const Color(0xFFB1A9DA) : const Color(0xFFE6DAC8),
         border: Border(
           top: BorderSide(
-            color: isDarkMode
-                ? const Color(0xFF22242A)
-                : const Color(0xFFDDD0BD),
+            color:
+                isDarkMode ? const Color(0xFF968ABF) : const Color(0xFFDDD0BD),
             width: 1,
           ),
         ),
@@ -1623,7 +1503,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             color:
-                isDarkMode ? const Color(0xFF18191E) : const Color(0xFFDDD0BD),
+                isDarkMode ? const Color(0xFFA79CCE) : const Color(0xFFDDD0BD),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -1632,7 +1512,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
               CircleAvatar(
                 radius: 16,
                 backgroundColor: isDarkMode
-                    ? const Color(0xFF282A30)
+                    ? const Color(0xFF9D8DF1)
                     : const Color(0xFFCBB9A4),
                 child: Text(
                   username.isNotEmpty
@@ -1642,7 +1522,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: isDarkMode
-                        ? Colors.white
+                        ? const Color(0xFF211B35)
                         : const Color(0xFF1A1612),
                   ),
                 ),
@@ -1659,8 +1539,9 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
-                        color:
-                            isDarkMode ? Colors.white : const Color(0xFF1A1612),
+                        color: isDarkMode
+                            ? const Color(0xFF211B35)
+                            : const Color(0xFF1A1612),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1670,7 +1551,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                           horizontal: 6, vertical: 1.5),
                       decoration: BoxDecoration(
                         color: isDarkMode
-                            ? const Color(0xFF282A30)
+                            ? const Color(0xFF9D8DF1)
                             : const Color(0xFFCBB9A4),
                         borderRadius: BorderRadius.circular(4),
                       ),
@@ -1681,7 +1562,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.4,
                           color: isDarkMode
-                              ? Colors.white70
+                              ? const Color(0xFF3E345C)
                               : const Color(0xFF1A1612),
                         ),
                       ),
@@ -1692,7 +1573,9 @@ class _MainLayoutState extends ConsumerState<MainLayout>
               Icon(
                 Icons.unfold_more,
                 size: 16,
-                color: isDarkMode ? Colors.white54 : const Color(0xFF5C5247),
+                color: isDarkMode
+                    ? const Color(0xFF51436E)
+                    : const Color(0xFF5C5247),
               ),
             ],
           ),
@@ -1710,9 +1593,8 @@ class _MainLayoutState extends ConsumerState<MainLayout>
           backgroundColor: Colors.transparent,
           child: CyberHudFrame(
             design: CyberFrameDesign.yellowTabNotch,
-            baseBorderColor: isDarkMode
-                ? const Color(0xFF333640)
-                : const Color(0xFFCBB9A4),
+            baseBorderColor:
+                isDarkMode ? const Color(0xFF333640) : const Color(0xFFCBB9A4),
             surfaceColor: isDarkMode ? const Color(0xEF141518) : Colors.white,
             padding: const EdgeInsets.all(24),
             child: SizedBox(
@@ -1873,8 +1755,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                       ),
                       onPressed: () {
                         Navigator.of(context).pop();
-                        ref.read(authProvider.notifier).signOut();
-                        Navigator.of(context).pushReplacementNamed('/login');
+                        _signOut();
                       },
                     ),
                   ),
@@ -2134,13 +2015,15 @@ class CollapsedRailPainter extends CustomPainter {
 
     // Geometry for exact tangent-arc circular pocket on the right edge (x = pillRight)
     final double xf = pillRight - filletRadius;
-    final double dx = (circleCenterX - xf).clamp(0.0, pocketRadius + filletRadius - 0.5);
+    final double dx =
+        (circleCenterX - xf).clamp(0.0, pocketRadius + filletRadius - 0.5);
     final double rSum = pocketRadius + filletRadius;
     final double dy = math.sqrt(rSum * rSum - dx * dx);
     final double alpha = math.atan2(dy, dx);
 
     // Clamp y0 so the top/bottom fillets never collide with the pill's top/bottom caps
-    final double y0 = activeCenterY.clamp(r + dy + 1.0, math.max(r + dy + 2.0, h - r - dy - 1.0));
+    final double y0 = activeCenterY.clamp(
+        r + dy + 1.0, math.max(r + dy + 2.0, h - r - dy - 1.0));
 
     final path = Path();
     // Start at top-left after top semicircular cap
@@ -2208,5 +2091,3 @@ class CollapsedRailPainter extends CustomPainter {
       oldDelegate.pocketRadius != pocketRadius ||
       oldDelegate.filletRadius != filletRadius;
 }
-
-

@@ -33996,8 +33996,8 @@ var Traffic = class {
           if (base.emissiveIntensity > 0.05) {
             m.emissive.set(color);
             m.emissiveIntensity = Math.min(
-              1.4,
-              base.emissiveIntensity * (1.18 + 0.3 * state.ins)
+              2,
+              base.emissiveIntensity * (1.4 + 0.3 * state.ins)
             );
           }
         }
@@ -34030,6 +34030,505 @@ var Traffic = class {
   }
 };
 
+// src/architectural-lighting.js
+var COLORS = {
+  lime: 12903206,
+  warm: 12376615,
+  gold: 12961636,
+  purple: 10325489,
+  blue: 13625074,
+  red: 14231881
+};
+var poolVertex = "varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}";
+var poolFragment = `varying vec2 vUv; uniform vec3 tint; uniform float gain;
+  void main(){float d=length((vUv-.5)*2.);float a=exp(-d*d*5.)*(1.-smoothstep(.55,1.,d));
+  gl_FragColor=vec4(tint*1.6,a*gain);}`;
+var edgeSpillFragment = `varying vec2 vUv; uniform vec3 tint; uniform float gain;
+  void main(){float d=abs((vUv.y-.5)*2.);float a=exp(-d*d*4.)*(1.-smoothstep(.65,1.,d));
+  float ends=smoothstep(0.,.045,vUv.x)*(1.-smoothstep(.955,1.,vUv.x));
+  gl_FragColor=vec4(tint*1.3,a*ends*gain);}`;
+var beamFragment = `varying vec2 vUv; uniform vec3 tint; uniform float gain;
+  void main(){float x=(vUv.x-.5)*2.;float side=exp(-x*x*9.)*(1.-smoothstep(.65,1.,abs(x)));
+  float vertical=smoothstep(0.,.12,vUv.y)*(1.-smoothstep(.35,1.,vUv.y));
+  gl_FragColor=vec4(tint*1.3,side*vertical*gain);}`;
+var ArchitecturalLighting = class {
+  constructor(model2, registry) {
+    this.model = model2;
+    this.r = registry;
+    this.emissions = [];
+    this.pools = [];
+    this.beams = [];
+    this.lights = [];
+    this.owned = [];
+    this.windows = [];
+    this.platformEdges = [];
+    this.glass = [];
+    this.quality = "desktop";
+    this.routes = [...registry.objects.values()].filter(
+      (o) => /ContinuousSignal/.test(o.name)
+    );
+    this.scratch = new Vector3();
+    this.createTowerWindowLighting();
+    this.createPlatformUnderlighting();
+    this.createDeviceLightAccents();
+    this.createAtmosphericLightBeams();
+  }
+  bounds(o) {
+    o.geometry.computeBoundingBox();
+    return o.geometry.boundingBox.clone();
+  }
+  mark(o, category) {
+    o.userData.apBloom = true;
+    o.userData.apLightingCategory = category;
+    return o;
+  }
+  rememberMaterial(o, material) {
+    this.r.materials.set(material.uuid, {
+      opacity: material.opacity,
+      transparent: material.transparent,
+      color: material.color?.clone(),
+      emissive: material.emissive?.clone(),
+      emissiveIntensity: material.emissiveIntensity,
+      depthWrite: material.depthWrite
+    });
+  }
+  emit(o, color, intensity, category, device = null) {
+    const source = this.r.list(o);
+    const materials = source.map((m) => m.clone());
+    o.material = materials.length === 1 ? materials[0] : materials;
+    this.mark(o, category);
+    for (const m of materials) {
+      if (!m.emissive) continue;
+      m.emissive.set(color);
+      m.emissiveIntensity = intensity;
+      this.rememberMaterial(o, m);
+      this.emissions.push({
+        m,
+        color: new Color(color),
+        intensity,
+        category,
+        device
+      });
+    }
+  }
+  addMesh(parent, geometry, color, intensity, category) {
+    const m = new MeshStandardMaterial({
+      color,
+      emissive: color,
+      emissiveIntensity: intensity,
+      roughness: 0.45,
+      metalness: 0.08
+    });
+    const mesh = this.mark(new Mesh(geometry, m), category);
+    mesh.name = `runtime_lighting_${category}_${this.owned.length}`;
+    mesh.raycast = () => {
+    };
+    parent.add(mesh);
+    this.owned.push(mesh);
+    this.emissions.push({ m, color: new Color(color), intensity, category });
+    return mesh;
+  }
+  softPool(parent, center, width, depth, gain, category, device = null) {
+    const material = new ShaderMaterial({
+      transparent: true,
+      depthWrite: false,
+      blending: AdditiveBlending,
+      side: DoubleSide,
+      uniforms: {
+        tint: { value: new Color(COLORS.lime) },
+        gain: { value: gain }
+      },
+      vertexShader: poolVertex,
+      fragmentShader: poolFragment
+    });
+    const mesh = this.mark(
+      new Mesh(new PlaneGeometry(width, depth), material),
+      category
+    );
+    mesh.name = `runtime_lighting_pool_${this.pools.length}`;
+    mesh.position.copy(center);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.renderOrder = 2;
+    mesh.raycast = () => {
+    };
+    parent.add(mesh);
+    this.owned.push(mesh);
+    this.pools.push({ mesh, gain, device, category });
+  }
+  perimeter(parent, box, y, color, intensity, category, inset = 0.045) {
+    const size = box.getSize(new Vector3());
+    const center = box.getCenter(new Vector3());
+    const w = size.x - 2 * inset, d = size.z - 2 * inset;
+    for (const z of [box.min.z + inset, box.max.z - inset]) {
+      const strip = this.addMesh(
+        parent,
+        new BoxGeometry(w, 0.017, 0.023),
+        color,
+        intensity,
+        category
+      );
+      strip.position.set(center.x, y, z);
+    }
+    for (const x of [box.min.x + inset, box.max.x - inset]) {
+      const strip = this.addMesh(
+        parent,
+        new BoxGeometry(0.023, 0.017, d),
+        color,
+        intensity,
+        category
+      );
+      strip.position.set(x, y, center.z);
+    }
+    for (const x of [box.min.x + inset, box.max.x - inset])
+      for (const z of [box.min.z + inset, box.max.z - inset]) {
+        const corner = this.addMesh(
+          parent,
+          new BoxGeometry(0.065, 0.02, 0.065),
+          color,
+          intensity * 1.3,
+          category
+        );
+        corner.position.set(x, y, z);
+      }
+  }
+  createTowerWindowLighting() {
+    const windows = [...this.r.objects.values()].filter(
+      (o) => /^AP14_(Front|Right)_WindowRecess_\d+$/.test(o.name)
+    );
+    if (windows.length !== 20)
+      throw new Error(
+        `Tower lighting requires 20 window recesses; found ${windows.length}.`
+      );
+    const palette = [
+      COLORS.warm,
+      COLORS.blue,
+      COLORS.lime,
+      COLORS.purple,
+      COLORS.gold,
+      COLORS.blue,
+      COLORS.warm,
+      COLORS.blue,
+      COLORS.purple,
+      COLORS.lime
+    ];
+    for (const o of windows) {
+      const i = Number(o.name.slice(-2)) - 1;
+      const right = o.name.includes("Right");
+      const color = palette[(i + (right ? 3 : 0)) % palette.length];
+      const lit = color !== COLORS.blue || i % 3 === 1;
+      const glass = this.r.requireObject(
+        o.name.replace("WindowRecess", "BlueGlass")
+      );
+      glass.material = glass.material.clone();
+      glass.material.transparent = true;
+      glass.material.opacity = 0.28;
+      glass.material.depthWrite = false;
+      glass.material.roughness = 0.22;
+      glass.castShadow = false;
+      this.rememberMaterial(glass, glass.material);
+      const b = this.bounds(glass), size = b.getSize(new Vector3());
+      this.emit(o, lit ? color : 4089981, lit ? 0.6 : 0.08, "windows");
+      if (lit) {
+        const pane = this.addMesh(
+          glass,
+          new PlaneGeometry((right ? size.z : size.x) * 0.96, size.y * 0.96),
+          color,
+          color === COLORS.purple ? 1.45 : 1.65,
+          "windows"
+        );
+        if (right) {
+          pane.rotation.y = Math.PI / 2;
+          pane.position.x = (b.min.x + b.max.x) / 2 - 1e-3;
+        } else pane.position.z = (b.min.z + b.max.z) / 2 - 1e-3;
+        pane.material.side = DoubleSide;
+        pane.material.color.set(1055513);
+        pane.material.metalness = 0;
+        pane.material.roughness = 0.7;
+      }
+      this.windows.push({ name: o.name, color, lit });
+    }
+    for (const name of [
+      "Core_Glass_Front",
+      "Core_Glass_Back",
+      "Core_Glass_Left",
+      "Core_Glass_Right"
+    ]) {
+      const o = this.r.requireObject(name);
+      o.material = o.material.clone();
+      o.material.color.set(9353935);
+      o.material.opacity = 0.09;
+      o.material.transparent = true;
+      o.material.depthWrite = false;
+      o.material.metalness = 0;
+      o.material.roughness = 0.22;
+      o.material.emissive.set(5405588);
+      o.material.emissiveIntensity = 0.015;
+      o.castShadow = false;
+      this.rememberMaterial(o, o.material);
+      this.glass.push(o.material);
+    }
+    const roof = this.r.requireObject("Core_Roof");
+    roof.material = roof.material.clone();
+    roof.material.color.set(4607312);
+    roof.material.metalness = 0.82;
+    roof.material.roughness = 0.42;
+    roof.material.emissiveIntensity = 0;
+    this.perimeter(
+      roof,
+      this.bounds(roof),
+      this.bounds(roof).max.y + 8e-3,
+      COLORS.purple,
+      1.9,
+      "roof-rim",
+      0.035
+    );
+    for (const o of this.r.objects.values()) {
+      if (/^Core_LimeBand_1/.test(o.name))
+        this.emit(o, COLORS.lime, 1.3, "foundation");
+      if (/^Core_Intelligence_Light/.test(o.name))
+        this.emit(o, COLORS.warm, 0.8, "windows");
+      if (/^AP14_(Front|Right)_(Shield|Network)/.test(o.name))
+        this.emit(o, o.material.color, 0.95, "logo");
+    }
+    const tower = this.r.requireObject("runtime_tower");
+    const center = tower.worldToLocal(this.r.getWorldCenter("Core_Tower"));
+    for (const [offset, color, intensity] of [
+      [new Vector3(0.36, -0.9, 0.36), COLORS.lime, 2],
+      [new Vector3(0.2, 0.6, -0.2), COLORS.purple, 0.8]
+    ]) {
+      const light = new PointLight(color, intensity, 3.2, 2);
+      light.position.copy(center).add(offset);
+      light.name = "runtime_lighting_interior";
+      tower.add(light);
+      this.lights.push({ light, intensity });
+    }
+  }
+  createEdgeSpill(slab, receiving) {
+    const b = this.bounds(slab), rb = this.bounds(receiving);
+    const size = b.getSize(new Vector3());
+    for (const [axis, sign] of [
+      ["x", -1],
+      ["x", 1],
+      ["z", -1],
+      ["z", 1]
+    ]) {
+      const alongX = axis === "z";
+      const point = new Vector3(0, b.min.y, 0);
+      point[axis] = sign < 0 ? b.min[axis] : b.max[axis];
+      slab.localToWorld(point);
+      receiving.worldToLocal(point);
+      point.y = rb.max.y + 6e-3;
+      const material = new ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        blending: AdditiveBlending,
+        side: DoubleSide,
+        uniforms: {
+          tint: { value: new Color(COLORS.lime) },
+          gain: { value: 0.65 }
+        },
+        vertexShader: poolVertex,
+        fragmentShader: edgeSpillFragment
+      });
+      const mesh = new Mesh(
+        new PlaneGeometry(alongX ? size.x : size.z, 0.56),
+        material
+      );
+      mesh.name = `runtime_lighting_edge_spill_${this.pools.length}`;
+      mesh.position.copy(point);
+      mesh.rotation.set(-Math.PI / 2, 0, alongX ? 0 : Math.PI / 2);
+      mesh.raycast = () => {
+      };
+      receiving.add(mesh);
+      this.owned.push(mesh);
+      this.pools.push({ mesh, gain: 0.65, category: "edge-spill" });
+    }
+  }
+  createPlatformUnderlighting() {
+    for (const step of ["01", "02"])
+      for (const face of ["Front", "Back", "Left", "Right"]) {
+        const name = `Step${step}_LimeEdge_${face}`;
+        const strip = this.r.requireObject(name);
+        this.emit(strip, 8430614, 2.3, "exported-platform-edges");
+        strip.material.color.set(8430614);
+        this.rememberMaterial(strip, strip.material);
+        this.platformEdges.push(name);
+      }
+    for (const name of ["Core_Step_01", "Core_Step_02", "Core_Glass_Base"]) {
+      const slab = this.r.requireObject(name), b = this.bounds(slab);
+      this.perimeter(
+        slab,
+        b,
+        b.min.y + 0.018,
+        COLORS.warm,
+        1.45,
+        "underlighting",
+        -5e-3
+      );
+      const receiving = name === "Core_Step_02" ? this.r.requireObject("Core_Step_01") : name === "Core_Step_01" ? this.r.requireObject("Core_Glass_Base") : null;
+      if (receiving) {
+        this.createEdgeSpill(slab, receiving);
+      }
+    }
+    for (const name of ["Zone_A", "Zone_Core", "Zone_B"]) {
+      const slab = this.r.requireObject(name), b = this.bounds(slab);
+      this.perimeter(
+        slab,
+        b,
+        b.min.y + 0.025,
+        COLORS.lime,
+        0.8,
+        "zone-lighting",
+        -4e-3
+      );
+    }
+  }
+  createDeviceLightAccents() {
+    for (const [id, prefix, anchor, zone] of devices) {
+      const root = this.r.getDeviceRoot(id), source = this.r.requireObject(anchor);
+      const bound = new Box3().setFromObject(source), p = bound.getCenter(new Vector3());
+      p.y = this.r.getWorldBounds("Zone_" + zone).max.y + 5e-3;
+      root.worldToLocal(p);
+      this.softPool(
+        root,
+        p,
+        id === "Cylinder" ? 0.85 : 0.65,
+        id === "Cylinder" ? 0.85 : 0.65,
+        id === "Cylinder" ? 0.28 : 0.14,
+        "device-lights",
+        id
+      );
+      for (const o of this.r.findObjectsByPrefix(prefix)) {
+        if (/StatusLED|StatusBand|TopIndicator|NormalIndicator|GreenIndicator/.test(
+          o.name
+        ))
+          this.emit(
+            o,
+            COLORS.lime,
+            id === "Cylinder" ? 2.8 : 1.55,
+            "device-lights",
+            id
+          );
+      }
+    }
+    for (const o of this.r.objects.values()) {
+      if (/^AP14[B-CF-K]_.*(LED|Status|Indicator|LightStrip)/.test(o.name) && !/GlassSensor|Orb_Anomal|Orb_Red|Decision|ALLOW/.test(o.name)) {
+        if (!o.userData.apLightingCategory)
+          this.emit(o, COLORS.lime, 1.2, "device-lights");
+      }
+      if (/ContinuousSignal/.test(o.name)) {
+        o.userData.apBloom = true;
+        o.userData.apLightingCategory = "traffic";
+      }
+      if (/AP15A_Packet_/.test(o.name)) this.mark(o, "packets");
+      if (/^AP16.*(Warning|ALLOW|DENY|Status|Accent)/.test(o.name) && o.isMesh && this.r.list(o).some((m) => m.emissiveIntensity > 0.05))
+        this.mark(o, "anomaly");
+    }
+  }
+  createAtmosphericLightBeams() {
+    const tower = this.r.requireObject("runtime_tower");
+    const core = tower.worldToLocal(this.r.getWorldCenter("Core_Tower"));
+    for (const [i, width, height, x, z] of [
+      [0, 0.8, 5.2, -1.3, -1.6],
+      [1, 0.48, 5.7, -0.3, -1.7],
+      [2, 0.65, 4.8, 0.75, -1.8],
+      [3, 0.45, 5.3, 1.6, -0.9]
+    ]) {
+      const material = new ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        depthTest: true,
+        blending: AdditiveBlending,
+        side: DoubleSide,
+        uniforms: {
+          tint: { value: new Color(COLORS.warm) },
+          gain: { value: 0.1 }
+        },
+        vertexShader: poolVertex,
+        fragmentShader: beamFragment
+      });
+      const mesh = this.mark(
+        new Mesh(new PlaneGeometry(width, height), material),
+        "beams"
+      );
+      mesh.name = `runtime_lighting_beam_${i}`;
+      mesh.position.set(core.x + x, core.y - 1.5 + height / 2, core.z + z);
+      mesh.renderOrder = 1;
+      mesh.raycast = () => {
+      };
+      tower.add(mesh);
+      this.owned.push(mesh);
+      this.beams.push(mesh);
+    }
+  }
+  setLightingQuality(level) {
+    this.quality = level;
+    this.beams.forEach((o, i) => {
+      o.visible = i < (level === "mobile" ? 1 : level === "tablet" ? 2 : 4);
+    });
+    this.lights.forEach(({ light }, i) => {
+      light.visible = level !== "mobile" || i === 0;
+    });
+  }
+  updateLightingForNarrative(state, t, camera2, dark2, reduced2) {
+    const brightness = dark2 ? 1 : 0.56;
+    for (const entry of this.emissions) {
+      const alert = entry.device === "GlassSensor" && state.roq > 0.1;
+      entry.m.emissive.copy(entry.color);
+      if (alert) entry.m.emissive.set(COLORS.red);
+      entry.m.emissiveIntensity = entry.intensity * brightness;
+    }
+    for (const { mesh, gain, device } of this.pools) {
+      const alert = device === "GlassSensor" && state.roq > 0.1;
+      mesh.material.uniforms.tint.value.set(alert ? COLORS.red : COLORS.lime);
+      mesh.material.uniforms.gain.value = gain * brightness;
+    }
+    this.lights.forEach(({ light, intensity }) => {
+      light.intensity = intensity * brightness;
+    });
+    this.glass.forEach((m) => {
+      m.opacity = dark2 ? 0.09 : 0.1;
+    });
+    const tower = this.r.requireObject("runtime_tower");
+    this.scratch.copy(camera2.position);
+    tower.worldToLocal(this.scratch);
+    for (const [i, mesh] of this.beams.entries()) {
+      mesh.rotation.y = Math.atan2(
+        this.scratch.x - mesh.position.x,
+        this.scratch.z - mesh.position.z
+      );
+      mesh.material.uniforms.gain.value = (reduced2 ? 0.085 : 0.085 + 0.01 * Math.sin(t * 0.45 + i)) * brightness;
+    }
+    for (const o of this.routes)
+      for (const m of this.r.list(o))
+        if (m.emissive)
+          m.emissiveIntensity = (1.65 + (reduced2 ? 0 : 0.12 * Math.sin(t * 1.7))) * brightness;
+  }
+  diagnostics() {
+    return {
+      windows: this.windows,
+      exportedPlatformEdges: this.platformEdges,
+      runtimeMeshes: this.owned.length,
+      beams: this.beams.filter((o) => o.visible).length,
+      localLights: this.lights.filter((o) => o.light.visible).length,
+      quality: this.quality,
+      categories: [...new Set(this.emissions.map((e) => e.category))]
+    };
+  }
+  dispose() {
+    this.owned.forEach((o) => {
+      o.removeFromParent();
+      o.geometry.dispose();
+      o.material.dispose();
+    });
+    this.lights.forEach(({ light }) => {
+      light.removeFromParent();
+      light.dispose();
+    });
+    this.owned.length = 0;
+  }
+};
+
 // src/scene.js
 var canvas = document.getElementById("scene");
 var session = new URLSearchParams(location.search).get("session") || "native";
@@ -34049,6 +34548,7 @@ var camera;
 var model;
 var r;
 var traffic;
+var architecturalLighting;
 var composer;
 var bloomComposer;
 var bloom;
@@ -34129,7 +34629,9 @@ var modulePrefixes = [
 var raycaster = new Raycaster();
 var pointer = new Vector2();
 var black = new MeshBasicMaterial({ color: 0 });
+var transparentBlack = new MeshBasicMaterial({ color: 0, transparent: true, opacity: 0, depthWrite: false });
 var savedMaterials = /* @__PURE__ */ new Map();
+var bloomMasks = /* @__PURE__ */ new WeakMap();
 var heroBounds;
 var heroCenter;
 var sceneScale = 1;
@@ -34233,8 +34735,9 @@ function theme() {
   scene.getObjectByName("fill").intensity = dark ? 0.64 : 1;
   scene.getObjectByName("key").intensity = dark ? 2.25 : 2.8;
   scene.getObjectByName("rim").intensity = dark ? 1.35 : 0.7;
-  bloom.strength = dark ? 0.48 : 0.22;
-  bloom.radius = 0.24;
+  bloom.strength = dark ? 0.62 : 0.28;
+  bloom.radius = 0.48;
+  bloom.threshold = 0.92;
   scene.environmentIntensity = dark ? 0.56 : 0.38;
 }
 function resize() {
@@ -34252,6 +34755,10 @@ function resize() {
   bloomComposer?.setPixelRatio(dpr);
   composer?.setSize(w, h);
   bloomComposer?.setSize(w, h);
+  const level = mobile ? "mobile" : /tablet/.test(viewportClass) ? "tablet" : "desktop";
+  architecturalLighting?.setLightingQuality(level);
+  const postScale = mobile ? 0.65 : level === "tablet" ? 0.8 : 1;
+  bloomComposer?.setSize(w * postScale, h * postScale);
   if (composer) {
     const samples = Math.min(mobile ? 2 : 4, renderer.capabilities.maxSamples);
     for (const rt of [composer.renderTarget1, composer.renderTarget2]) {
@@ -34417,6 +34924,7 @@ function initializeModel(gltf) {
   zoneGap = size.x * 0.055;
   traffic = new Traffic(model, r, gltf.animations);
   makeGraph();
+  architecturalLighting = new ArchitecturalLighting(model, r);
   for (const id of ["A", "Core", "B"]) groups[id] = r.getZoneRoot(id);
   for (const o of r.objects.values())
     if (/^AP16/.test(o.name) || /^(Segmentation_|Zone[ABCore]+.*Boundary)/.test(o.name))
@@ -34445,6 +34953,16 @@ var cameraDirection = new Vector3();
 var cameraRight = new Vector3();
 var cameraUp = new Vector3();
 var cameraCorner = new Vector3();
+var physicalBoundsScratch = new Box3();
+function expandPhysicalBounds(object) {
+  object.updateWorldMatrix(true, true);
+  object.traverse((node) => {
+    if (!node.geometry || node.name.startsWith("runtime_lighting_")) return;
+    if (!node.geometry.boundingBox) node.geometry.computeBoundingBox();
+    physicalBoundsScratch.copy(node.geometry.boundingBox).applyMatrix4(node.matrixWorld);
+    cameraBounds.union(physicalBoundsScratch);
+  });
+}
 function cameraState(x) {
   cameraBounds.makeEmpty();
   for (const name of [
@@ -34455,7 +34973,7 @@ function cameraState(x) {
     ...devices.map((d) => "runtime_device_" + d[0])
   ]) {
     const object = r.objects.get(name);
-    if (object) cameraBounds.expandByObject(object);
+    if (object) expandPhysicalBounds(object);
   }
   if (cameraBounds.isEmpty()) cameraBounds.copy(heroBounds);
   for (const name of [
@@ -34465,7 +34983,7 @@ function cameraState(x) {
     "AP16E_CTRL_ManagementSOC"
   ]) {
     const object = r.requireObject(name);
-    if (object.visible) cameraBounds.expandByObject(object);
+    if (object.visible) expandPhysicalBounds(object);
   }
   cameraBounds.getCenter(cameraCenter);
   cameraCenter.x += x.c4 * sceneScale * 0.08;
@@ -34741,6 +35259,7 @@ function apply(x, t) {
   updateTelemetry(x, t);
   traffic.update(clock.getDelta(), t, x, offsets, reduced);
   cameraState(x);
+  architecturalLighting?.updateLightingForNarrative(x, t, camera, dark, reduced);
 }
 function updateTelemetry(x, t) {
   const strength = x.ins * (1 - 0.9 * Math.max(x.enf, x.zt));
@@ -34841,15 +35360,23 @@ function render() {
   scene.background = black.color;
   scene.traverse((o) => {
     if (!o.isMesh) return;
-    const semantic = /Packet|Signal|Indicator|Status|Warning|Graph_Node|DataLine|Policy.*Rule|Evidence|AP14_(Front|Right)_(Shield|Network)/i.test(
+    const semantic = o.userData.apBloom || /Packet|Signal|Indicator|Status|Warning|Graph_Node|DataLine|Policy.*Rule|Evidence|AP14_(Front|Right)_(Shield|Network)/i.test(
       o.name
     );
     if (!semantic) {
       savedMaterials.set(o.uuid, o.material);
-      o.material = black;
+      let mask = bloomMasks.get(o.material);
+      if (!mask) {
+        mask = Array.isArray(o.material) ? o.material.map((m) => m.transparent ? transparentBlack : black) : o.material.transparent ? transparentBlack : black;
+        bloomMasks.set(o.material, mask);
+      }
+      o.material = mask;
     }
   });
+  const toneMapping = renderer.toneMapping;
+  renderer.toneMapping = NoToneMapping;
   bloomComposer.render();
+  renderer.toneMapping = toneMapping;
   scene.traverse((o) => {
     if (savedMaterials.has(o.uuid)) {
       o.material = savedMaterials.get(o.uuid);
@@ -34995,6 +35522,7 @@ function dispose() {
   disposed = true;
   cancelAnimationFrame(frameId);
   traffic?.dispose();
+  architecturalLighting?.dispose();
   window.removeEventListener("message", messageListener);
   window.removeEventListener("resize", resize);
   window.removeEventListener("keydown", keyboard);
@@ -35016,6 +35544,7 @@ function dispose() {
   pmrem?.dispose();
   renderer?.dispose();
   black.dispose();
+  transparentBlack.dispose();
 }
 window.addEventListener("pagehide", dispose, { once: true });
 window.AutoPolicyDiagnostics = {
@@ -35025,6 +35554,7 @@ window.AutoPolicyDiagnostics = {
     progress,
     parameters: current,
     traffic: traffic?.diagnostics(),
+    lighting: architecturalLighting?.diagnostics(),
     stageVisible: r ? [...r.objects.values()].filter((o) => /^AP16.*CTRL/.test(o.name) && o.visible).map((o) => o.name) : [],
     sensor: roots.GlassSensor?.position.toArray(),
     zones: groups.A ? [groups.A.position.toArray(), groups.B.position.toArray()] : []

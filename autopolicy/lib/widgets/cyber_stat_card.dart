@@ -281,7 +281,7 @@ class CyberStatCard extends ConsumerWidget {
                       shadows: isRedThreat
                           ? [
                               BoxShadow(
-                                color: const Color(0xFFFFEA00).withValues(alpha: 0.5),
+                                color: const Color(0xFFFFEA00).withOpacity(0.5),
                                 blurRadius: 10,
                               )
                             ]
@@ -317,7 +317,7 @@ class CyberStatCard extends ConsumerWidget {
                         fontFamily: 'monospace',
                         fontSize: 8.5,
                         fontWeight: FontWeight.bold,
-                        color: accentColor.withValues(alpha: 0.85),
+                        color: accentColor.withOpacity(0.85),
                         letterSpacing: 1.0,
                       ),
                     ),
@@ -332,8 +332,8 @@ class CyberStatCard extends ConsumerWidget {
     if (onTap != null) {
       return InkWell(
         onTap: onTap,
-        hoverColor: accentColor.withValues(alpha: 0.12),
-        splashColor: accentColor.withValues(alpha: 0.20),
+        hoverColor: accentColor.withOpacity(0.12),
+        splashColor: accentColor.withOpacity(0.20),
         borderRadius: BorderRadius.circular(4),
         child: cardContent,
       );
@@ -366,8 +366,8 @@ class _OpaqueStatCardPainter extends CustomPainter {
         ? const Color(0xFF0F1410)
         : const Color(0xFF140505);
     final Color symbolColor = isLightSolidFill
-        ? const Color(0xFF0F1410).withValues(alpha: 0.70)
-        : const Color(0xFFFFFFFF).withValues(alpha: 0.70);
+        ? const Color(0xFF0F1410).withOpacity(0.70)
+        : const Color(0xFFFFFFFF).withOpacity(0.70);
 
     // Armor HUD Notched Polygon Boundary Path
     final path = Path()
@@ -451,7 +451,7 @@ class _OpaqueStatCardPainter extends CustomPainter {
 
     // 3. Vertical Side Vent Hatch Ticks on Right Edge
     final hatchPaint = Paint()
-      ..color = symbolColor.withValues(alpha: 0.50)
+      ..color = symbolColor.withOpacity(0.50)
       ..strokeWidth = 1.2
       ..style = PaintingStyle.stroke;
 

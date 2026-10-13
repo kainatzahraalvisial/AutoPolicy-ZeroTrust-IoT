@@ -181,8 +181,8 @@ export class Traffic {
           if (base.emissiveIntensity > 0.05) {
             m.emissive.set(color);
             m.emissiveIntensity = Math.min(
-              1.4,
-              base.emissiveIntensity * (1.18 + 0.3 * state.ins),
+              2.0,
+              base.emissiveIntensity * (1.4 + 0.3 * state.ins),
             );
           }
         }

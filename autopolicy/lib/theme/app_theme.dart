@@ -14,7 +14,7 @@ class CyberTheme {
         surface: CyberColors.cardBg,
         error: CyberColors.alertRed,
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: CyberColors.cardBg,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -95,7 +95,7 @@ class CyberTheme {
         surface: Color(0xFFFAF9F6),
         error: Color(0xFFD82734),
       ),
-      cardTheme: CardThemeData(
+      cardTheme: CardTheme(
         color: const Color(0xFFFAF9F6),
         elevation: 0,
         shape: RoundedRectangleBorder(
