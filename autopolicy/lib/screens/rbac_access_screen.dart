@@ -2,6 +2,7 @@ import '../widgets/console_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../landing/cinematic_button.dart';
 import '../providers/theme_provider.dart';
 import '../theme/text_styles.dart';
 
@@ -877,8 +878,9 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen>
 
   // ── PAGE HEADER ────────────────────────────────────────────────────────────
   Widget _buildPageHeader(bool isDarkMode) {
-    return ConsoleRow(
+    return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -904,27 +906,12 @@ class _RbacAccessScreenState extends ConsumerState<RbacAccessScreen>
             ),
           ],
         ),
-        ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-                isDarkMode ? const Color(0xFF80A416) : const Color(0xFFB8A9C1),
-            foregroundColor:
-                isDarkMode ? Colors.white : const Color(0xFF0F172A),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-          ),
-          icon: Icon(Icons.add,
-              size: 18,
-              color: isDarkMode ? Colors.white : const Color(0xFF0F172A)),
-          label: Text(
-            '+ PROVISION NEW OPERATOR',
-            style: CyberTextStyles.technical(
-              fontSize: 11.5,
-              fontWeight: FontWeight.bold,
-              color: isDarkMode ? Colors.white : const Color(0xFF0F172A),
-            ),
-          ),
+        CinematicButton(
+          landingLight: true,
+          label: '+ Provision New Operator',
+          filled: true,
+          compact: true,
+          angular: true,
           onPressed: _showAddUserModal,
         ),
       ],

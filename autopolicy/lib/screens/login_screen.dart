@@ -341,10 +341,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               top: 0,
               left: 0,
               right: 0,
-              child: AuthHeader(
-                  dark: isDarkMode,
-                  onTheme: () => ref.read(themeModeProvider.notifier).state =
-                      !isDarkMode)),
+              child: AuthHeader(dark: isDarkMode)),
           // Form
           AuthViewport(
             child: Padding(

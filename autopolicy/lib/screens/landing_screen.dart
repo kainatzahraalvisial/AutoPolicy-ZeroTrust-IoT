@@ -12,6 +12,7 @@ import '../landing/visual_polish.dart';
 import '../landing/landing_route_observer.dart';
 import '../landing/renderer_host.dart';
 import '../providers/theme_provider.dart';
+import '../theme/colors.dart';
 import '../widgets/system_loader.dart';
 
 class LandingScreen extends ConsumerStatefulWidget {
@@ -139,6 +140,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
 
   Widget _button(String label, VoidCallback action, {bool filled = false}) =>
       CinematicButton(
+          landingLight: true,
           label: label,
           onPressed: action,
           filled: filled,
@@ -184,17 +186,8 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
                   .toList()),
         if (!narrow) const Spacer(),
         Row(mainAxisSize: MainAxisSize.min, children: [
-          IconButton(
-              tooltip:
-                  ref.read(themeModeProvider) ? 'Light theme' : 'Dark theme',
-              onPressed: _toggleTheme,
-              icon: Icon(
-                  ref.read(themeModeProvider)
-                      ? Icons.light_mode_outlined
-                      : Icons.dark_mode_outlined,
-                  size: 15,
-                  color: foreground)),
           CinematicButton(
+              landingLight: true,
               label: 'Sign in',
               compact: true,
               navbar: true,
@@ -284,9 +277,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
   Widget _copy(bool portrait, Color fg, Color muted) {
     if (!_story.ready) return const SizedBox.shrink();
     final hero = _story.hero;
-    final darkAccent = ref.read(themeModeProvider)
-        ? const Color(0xFFC5C764)
-        : const Color(0xFF6D8415);
+    const darkAccent = Color(0xFFC5C764);
     final stage =
         _stages.isEmpty ? null : _stages[_story.activeStage] as List<dynamic>;
     final chapter = _story.chapter;
@@ -318,7 +309,9 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
           hero && chapter == 'explore'
               ? ExploreEyebrow(
                   dark: ref.read(themeModeProvider),
-                  fontSize: _layout.width > 1600 ? 11.5 : (_layout.width > 1200 ? 10.5 : 9.5))
+                  fontSize: _layout.width > 1600
+                      ? 11.5
+                      : (_layout.width > 1200 ? 10.5 : 9.5))
               : Text(
                   hero
                       ? (chapter == 'explore'
@@ -499,8 +492,9 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
   @override
   Widget build(BuildContext context) {
     final dark = ref.watch(themeModeProvider);
-    final fg = dark ? const Color(0xFFEDF3E8) : const Color(0xFF1F2418);
-    final muted = dark ? const Color(0xFFB0B8A6) : const Color(0xFF5F6552);
+    final fg = dark ? const Color(0xFFEDF3E8) : LandingLightPalette.ink;
+    final muted =
+        dark ? const Color(0xFFB0B8A6) : LandingLightPalette.secondary;
     final bg = dark ? const Color(0xFF050A08) : const Color(0xFFFAF9F6);
     return Scaffold(
         backgroundColor: bg,

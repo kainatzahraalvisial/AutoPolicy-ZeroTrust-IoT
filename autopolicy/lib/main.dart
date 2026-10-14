@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme/app_theme.dart';
 import 'landing/landing_route_observer.dart';
@@ -9,11 +10,14 @@ import 'screens/signup_screen.dart';
 import 'screens/main_layout.dart';
 import 'providers/theme_provider.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  final dark = prefs.getBool('autopolicy.darkTheme') ?? true;
   runApp(
-    const ProviderScope(
-      child: AutoPolicyApp(),
+    ProviderScope(
+      overrides: [themeModeProvider.overrideWith((ref) => dark)],
+      child: const AutoPolicyApp(),
     ),
   );
 }

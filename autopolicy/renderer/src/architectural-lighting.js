@@ -469,12 +469,12 @@ export class ArchitecturalLighting {
     });
   }
   updateLightingForNarrative(state, t, camera, dark, reduced) {
-    const brightness = dark ? 1 : 0.56;
+    const brightness = dark ? 1 : 0.78;
     for (const entry of this.emissions) {
       const alert = entry.device === "GlassSensor" && state.roq > 0.1;
       entry.m.emissive.copy(entry.color);
       if (alert) entry.m.emissive.set(COLORS.red);
-      entry.m.emissiveIntensity = entry.intensity * brightness;
+      entry.m.emissiveIntensity = entry.intensity * brightness * (!dark && entry.category === "roof-rim" ? 1.15 : 1);
     }
     for (const { mesh, gain, device } of this.pools) {
       const alert = device === "GlassSensor" && state.roq > 0.1;
@@ -485,7 +485,7 @@ export class ArchitecturalLighting {
       light.intensity = intensity * brightness;
     });
     this.glass.forEach((m) => {
-      m.opacity = dark ? 0.09 : 0.1;
+      m.opacity = dark ? 0.09 : 0.075;
     });
     const tower = this.r.requireObject("runtime_tower");
     this.scratch.copy(camera.position);

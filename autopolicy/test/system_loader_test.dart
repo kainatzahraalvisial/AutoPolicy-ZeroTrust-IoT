@@ -4,10 +4,10 @@ import 'package:autopolicy/widgets/system_loader.dart';
 
 void main() {
   testWidgets('Loader animates in code without media widgets', (tester) async {
-    await tester
-        .pumpWidget(const MaterialApp(home: Scaffold(body: SystemLoader())));
+    await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: SystemLoader(label: 'Loading...'))));
     expect(find.byType(Image), findsNothing);
-    expect(find.text('Loading...'), findsOneWidget);
+    expect(find.text('LOADING...'), findsOneWidget);
     final paint = find.descendant(of: find.byType(SystemLoader), matching: find.byType(CustomPaint));
     final first = tester.widget<CustomPaint>(paint).painter;
     await tester.pump(const Duration(milliseconds: 500));

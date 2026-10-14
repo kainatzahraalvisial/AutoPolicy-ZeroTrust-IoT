@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../landing/cinematic_button.dart';
 import '../models/device.dart';
 import '../providers/security_provider.dart';
 import '../providers/theme_provider.dart';
@@ -240,11 +241,10 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
 
   // ── PAGE HEADER ────────────────────────────────────────────────────────────
   Widget _buildPageHeader(bool isDarkMode) {
-    return ConsoleRow(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isNarrow = constraints.maxWidth < 1150;
+        final title = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -267,44 +267,38 @@ class _SimulationTestingState extends ConsumerState<SimulationTesting> {
               ),
             ),
           ],
-        ),
-        // Badge on right side
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: isDarkMode
-                ? const Color(0xFF5DD62C).withOpacity(0.12)
-                : const Color(0xFFEBECCC),
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(
-                color: isDarkMode
-                    ? const Color(0xFF5DD62C)
-                    : const Color(0xFFCDD4B2),
-                width: 1.0),
-          ),
-          child: ConsoleRow(
-            mainAxisSize: MainAxisSize.min,
+        );
+
+        final badge = CinematicButton(
+          landingLight: true,
+          label: 'Sandbox Isolated – Zero Prod Leakage',
+          filled: false,
+          compact: true,
+          angular: true,
+          onPressed: () {},
+        );
+
+        if (isNarrow) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.shield_outlined,
-                  color: isDarkMode
-                      ? const Color(0xFF5DD62C)
-                      : const Color(0xFF80A416),
-                  size: 16),
-              const SizedBox(width: 6),
-              Text(
-                'SANDBOX ISOLATED – ZERO PROD LEAKAGE',
-                style: CyberTextStyles.technical(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode
-                      ? const Color(0xFF5DD62C)
-                      : const Color(0xFF0F172A),
-                ),
-              ),
+              title,
+              const SizedBox(height: 12),
+              badge,
             ],
-          ),
-        ),
-      ],
+          );
+        }
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(child: title),
+            const SizedBox(width: 16),
+            badge,
+          ],
+        );
+      },
     );
   }
 

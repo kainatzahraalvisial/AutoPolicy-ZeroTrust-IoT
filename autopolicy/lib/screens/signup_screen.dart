@@ -98,10 +98,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
               top: 0,
               left: 0,
               right: 0,
-              child: AuthHeader(
-                  dark: isDarkMode,
-                  onTheme: () => ref.read(themeModeProvider.notifier).state =
-                      !isDarkMode)),
+              child: AuthHeader(dark: isDarkMode)),
           AuthViewport(
             child: Padding(
               padding: EdgeInsets.zero,

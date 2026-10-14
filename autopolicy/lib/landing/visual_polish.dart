@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../widgets/cyber_stencil_title.dart';
+import '../theme/colors.dart';
 
 class ExploreEyebrow extends StatelessWidget {
   final bool dark;
@@ -201,8 +202,9 @@ class _Atmosphere extends CustomPainter {
     canvas.drawPath(edgePath, edgePaint);
   }
 
-  void _drawStarPoint(Canvas canvas, Offset pos, double radius, Color color,
-      double opacity, {bool cross = false}) {
+  void _drawStarPoint(
+      Canvas canvas, Offset pos, double radius, Color color, double opacity,
+      {bool cross = false}) {
     canvas.drawCircle(
       pos,
       radius * 3.2,
@@ -226,9 +228,86 @@ class _Atmosphere extends CustomPainter {
     }
   }
 
+  void paintLightEnvironment(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    canvas.drawRect(
+        rect,
+        Paint()
+          ..shader = const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                LandingLightPalette.canvas,
+                LandingLightPalette.canvas,
+                LandingLightPalette.ivory
+              ],
+              stops: [
+                0,
+                .62,
+                1
+              ]).createShader(rect));
+    final center =
+        glowCenter ?? Offset(scene.center.dx, scene.top + scene.height * .48);
+    // Separate pastel fields give the light environment depth without a green veil.
+    field(canvas, center, scene.width * .65, scene.height * .72, [
+      const Color(0xFFB7EAB9).withOpacity(.60),
+      LandingLightPalette.mint.withOpacity(.36),
+      LandingLightPalette.mint.withOpacity(0)
+    ], const [
+      0,
+      .46,
+      1
+    ]);
+    field(canvas, Offset(size.width * .95, size.height * .07), size.width * .43,
+        size.height * .52, [
+      LandingLightPalette.violet.withOpacity(.32),
+      LandingLightPalette.lavender.withOpacity(.40),
+      LandingLightPalette.lavender.withOpacity(0)
+    ], const [
+      0,
+      .40,
+      1
+    ]);
+    field(canvas, Offset(size.width * .07, size.height * .93), size.width * .40,
+        size.height * .45, [
+      const Color(0xFFF9D3E1).withOpacity(.45),
+      LandingLightPalette.blush.withOpacity(.32),
+      LandingLightPalette.blush.withOpacity(0)
+    ], const [
+      0,
+      .45,
+      1
+    ]);
+    field(canvas, Offset(size.width * .90, size.height), size.width * .44,
+        size.height * .45, [
+      const Color(0xFFBDE8ED).withOpacity(.46),
+      LandingLightPalette.cyan.withOpacity(.30),
+      LandingLightPalette.cyan.withOpacity(0)
+    ], const [
+      0,
+      .42,
+      1
+    ]);
+    // A small floor glow follows the model, independently of the broad backdrop.
+    field(canvas, Offset(scene.center.dx, scene.top + scene.height * .76),
+        scene.width * .40, scene.height * .15, [
+      LandingLightPalette.paleLime.withOpacity(.55),
+      LandingLightPalette.chartreuse.withOpacity(.14),
+      LandingLightPalette.paleLime.withOpacity(0)
+    ], const [
+      0,
+      .45,
+      1
+    ]);
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     if (size.width <= 0 || size.height <= 0) return;
+    if (!dark) {
+      paintLightEnvironment(canvas, size);
+      return;
+    }
     final isPortrait = size.height > size.width || size.width < 900;
     final fullRect = Offset.zero & size;
 
@@ -251,9 +330,7 @@ class _Atmosphere extends CustomPainter {
               Color(0xFFF4F6EE),
               Color(0xFFE9EFE2),
             ],
-      stops: dark
-          ? const [0.0, 0.28, 0.58, 0.82, 1.0]
-          : const [0.0, 0.5, 1.0],
+      stops: dark ? const [0.0, 0.28, 0.58, 0.82, 1.0] : const [0.0, 0.5, 1.0],
     );
     canvas.drawRect(
         fullRect, Paint()..shader = baseGradient.createShader(fullRect));
@@ -774,7 +851,7 @@ class _Atmosphere extends CustomPainter {
     // 8. GLOWING STAR SPECKS & TECH INTERSECTION DOTS
     // ─────────────────────────────────────────────────────────────────────────
     if (dark) {
-      final stars = < List<double>>[
+      final stars = <List<double>>[
         [0.27, 0.08, 1.8],
         [0.25, 0.18, 1.3],
         [0.44, 0.20, 1.5],
@@ -801,8 +878,8 @@ class _Atmosphere extends CustomPainter {
     // 9. SUBTLE VIGNETTE & TEXT CONTRAST PROTECTION
     // ─────────────────────────────────────────────────────────────────────────
     if (!isPortrait && dark) {
-      final textShieldRect =
-          Rect.fromLTWH(0, size.height * 0.18, size.width * 0.42, size.height * 0.56);
+      final textShieldRect = Rect.fromLTWH(
+          0, size.height * 0.18, size.width * 0.42, size.height * 0.56);
       final textShieldGradient = RadialGradient(
         center: const Alignment(-0.35, 0.0),
         radius: 0.95,
@@ -854,13 +931,13 @@ class AutoPolicyWordmark extends StatelessWidget {
   final bool dark;
   final double? height;
   final double? width;
-  const AutoPolicyWordmark({super.key, required this.dark, this.height, this.width});
+  const AutoPolicyWordmark(
+      {super.key, required this.dark, this.height, this.width});
 
   @override
   Widget build(BuildContext context) {
-    final imagePath = dark
-        ? 'assets/images/logo_dark.png'
-        : 'assets/images/logo_light.png';
+    final imagePath =
+        dark ? 'assets/images/logo_dark.png' : 'assets/images/logo_light.png';
     return Image.asset(
       imagePath,
       height: height,
@@ -978,9 +1055,11 @@ class HeroHeading extends StatelessWidget {
     final reduced = MediaQuery.of(context).disableAnimations;
     final lines = text.split('\n');
 
-    final bool isEveryDeviceHero = text.toLowerCase().contains('every device') ||
-        text.toLowerCase().contains('zero trust');
-    if (isEveryDeviceHero) {
+    final bool isEveryDeviceHero =
+        text.toLowerCase().contains('every device') ||
+            text.toLowerCase().contains('zero trust') ||
+            (emphasize && text.startsWith('Detect. Respond.'));
+    if (emphasize && isEveryDeviceHero) {
       return CyberStencilHeroTitle(
         firstLine: lines.isNotEmpty ? lines[0] : 'EVERY DEVICE',
         secondLine: lines.length > 1 ? lines[1] : 'ZERO TRUST',
@@ -989,7 +1068,8 @@ class HeroHeading extends StatelessWidget {
       );
     }
 
-    final purpleColor = isDark ? const Color(0xFF9D8DF1) : const Color(0xFF7C3AED);
+    final purpleColor =
+        isDark ? const Color(0xFF9D8DF1) : const Color(0xFF7C3AED);
 
     return Semantics(
         label: text,
@@ -1041,15 +1121,43 @@ class HeroHeading extends StatelessWidget {
     required bool isDark,
   }) {
     final words = line.split(' ');
-    if (words.isEmpty) return [TextSpan(text: line, style: TextStyle(color: baseColor))];
+    if (words.isEmpty)
+      return [TextSpan(text: line, style: TextStyle(color: baseColor))];
 
     const targetKeywords = {
-      'network', 'behaves', 'security', 'intelligence', 'abnormal', 'relationships',
-      'normally', 'policy', 'decision', 'connection', 'infrastructure', 'devices',
-      'emerges', 'separate', 'enforce', 'protect', 'protected', 'zero', 'trust',
-      'telemetry', 'detection', 'layer', 'observation', 'extraction', 'generation',
-      'segmentation', 'dashboard', 'patterns', 'external', 'malicious', 'infected',
-      'exploration', 'access'
+      'network',
+      'behaves',
+      'security',
+      'intelligence',
+      'abnormal',
+      'relationships',
+      'normally',
+      'policy',
+      'decision',
+      'connection',
+      'infrastructure',
+      'devices',
+      'emerges',
+      'separate',
+      'enforce',
+      'protect',
+      'protected',
+      'zero',
+      'trust',
+      'telemetry',
+      'detection',
+      'layer',
+      'observation',
+      'extraction',
+      'generation',
+      'segmentation',
+      'dashboard',
+      'patterns',
+      'external',
+      'malicious',
+      'infected',
+      'exploration',
+      'access'
     };
 
     final List<int> highlightIndices = [];
@@ -1074,14 +1182,6 @@ class HeroHeading extends StatelessWidget {
           text: wordText,
           style: TextStyle(
             color: isHighlighted ? purpleColor : baseColor,
-            shadows: isHighlighted && isDark
-                ? [
-                    Shadow(
-                      color: purpleColor.withOpacity(0.55),
-                      blurRadius: 14,
-                    ),
-                  ]
-                : null,
           ),
         ),
       );

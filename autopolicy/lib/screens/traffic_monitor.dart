@@ -1,6 +1,7 @@
 import '../widgets/console_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../landing/cinematic_button.dart';
 import '../providers/security_provider.dart';
 import '../providers/theme_provider.dart';
 import '../theme/colors.dart';
@@ -249,9 +250,10 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Screen Header Toolbar
-                ConsoleRow(
+                // Screen Header Toolbar: Left Title vs Right Actions
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,75 +298,34 @@ class _TrafficMonitorState extends ConsumerState<TrafficMonitor> {
                       ],
                     ),
 
-                    // Actions: PCAP Upload & Simulator Toggle
-                    ConsoleRow(
+                    // Actions shifted strictly to the far right side
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Upload PCAP File Button
-                        ElevatedButton.icon(
-                          onPressed:
-                              _isUploadingPcap ? null : _simulatePcapUpload,
-                          icon: const Icon(Icons.upload_file,
-                              size: 16, color: Colors.white),
-                          label: Text(
-                            'UPLOAD PCAP FILE (.pcap, .csv)',
-                            style: CyberTextStyles.technical(
-                                fontSize: 11,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF00875A),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
-                              side: const BorderSide(
-                                  color: Color(0xFF5DD62C), width: 1.5),
-                            ),
-                            elevation: 4,
-                          ),
+                        // Upload PCAP File Button (Styled like filled Explore button)
+                        CinematicButton(
+                          landingLight: true,
+                          label: 'Upload PCAP File',
+                          filled: true,
+                          compact: true,
+                          angular: true,
+                          onPressed: _isUploadingPcap ? null : _simulatePcapUpload,
                         ),
                         const SizedBox(width: 12),
-                        // Play/Pause button control
-                        OutlinedButton.icon(
+                        // Play/Pause button control (Styled like outline View Architecture button)
+                        CinematicButton(
+                          landingLight: true,
+                          label: securityState.isSimulating
+                              ? 'Pause Live Capture'
+                              : 'Resume Live Capture',
+                          filled: false,
+                          compact: true,
+                          angular: true,
                           onPressed: () {
                             ref
                                 .read(securityProvider.notifier)
                                 .toggleSimulation(!securityState.isSimulating);
                           },
-                          icon: Icon(
-                            securityState.isSimulating
-                                ? Icons.pause_circle_outline
-                                : Icons.play_circle_outline,
-                            color: securityState.isSimulating
-                                ? CyberColors.warningOrange
-                                : const Color(0xFF5DD62C),
-                            size: 18,
-                          ),
-                          label: Text(
-                            securityState.isSimulating
-                                ? 'PAUSE LIVE CAPTURE'
-                                : 'RESUME LIVE CAPTURE',
-                            style: CyberTextStyles.technical(
-                              fontSize: 10,
-                              color: securityState.isSimulating
-                                  ? CyberColors.warningOrange
-                                  : const Color(0xFF5DD62C),
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(
-                              color: securityState.isSimulating
-                                  ? CyberColors.warningOrange
-                                  : const Color(0xFF5DD62C),
-                              width: 1,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(6)),
-                          ),
                         ),
                       ],
                     ),

@@ -1,3 +1,4 @@
+import '../widgets/cyber_hud_frame.dart';
 import '../widgets/console_row.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -154,7 +155,8 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
       const SizedBox(height: 8),
       _buildRecentAlertsTable(),
     ]);
-    final right = Column(children: [
+    final right =
+        Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       _buildPolicyStatusSummaryCard(),
       const SizedBox(height: 8),
       const CyberRadialDonutChart(height: 190),
@@ -166,39 +168,33 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
       body: SingleChildScrollView(
         padding: EdgeInsets.all(width < 600 ? 12 : 20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(
+          CyberHudFrame(
+            design: CyberFrameDesign.tacticalArmorNotch,
+            baseBorderColor: const Color(0xFFC4E326),
+            hoverBorderColor: const Color(0xFFC4E326),
+            ambientGlow: true,
+            isInteractive: false,
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-                color: isDarkMode
-                    ? const Color(0xFF0F0F0F)
-                    : const Color(0xFFFAF9F6),
-                border: Border.all(
-                    color: isDarkMode
-                        ? const Color(0xFF5DD62C).withOpacity(.4)
-                        : const Color(0xFFCDD4B2)),
-                borderRadius: BorderRadius.circular(4)),
+            padding: const EdgeInsets.all(22),
             child: LayoutBuilder(builder: (context, constraints) {
               final isNarrow = constraints.maxWidth < 850;
               final headerContent = [
-                Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(headerTitle,
-                          style: CyberTextStyles.displayTitle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                              color: isDarkMode
-                                  ? const Color(0xFF5DD62C)
-                                  : const Color(0xFF0F172A))),
-                      const SizedBox(height: 4),
-                      Text(
-                          'ROLE: ${activeRole.toUpperCase()} - ZERO-TRUST ENFORCING',
-                          style: CyberTextStyles.technical(
-                              fontSize: 10,
-                              color: const Color(0xFF8B5CF6),
-                              fontWeight: FontWeight.bold)),
-                    ]),
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(headerTitle,
+                      style: CyberTextStyles.displayTitle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          color: isDarkMode
+                              ? const Color(0xFF5DD62C)
+                              : const Color(0xFF0F172A))),
+                  const SizedBox(height: 4),
+                  Text(
+                      'ROLE: ${activeRole.toUpperCase()} - ZERO-TRUST ENFORCING',
+                      style: CyberTextStyles.technical(
+                          fontSize: 10,
+                          color: const Color(0xFF8B5CF6),
+                          fontWeight: FontWeight.bold)),
+                ]),
                 Wrap(spacing: 8, runSpacing: 6, children: [
                   _buildQuickActionBtn(
                       icon: Icons.pending_actions_outlined,
@@ -208,7 +204,8 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
                           ref.read(navigationTabProvider.notifier).state = 4),
                   _buildQuickActionBtn(
                       icon: Icons.warning_amber_outlined,
-                      label: 'CRITICAL ALERTS (${activeThreats > 0 ? activeThreats : 1})',
+                      label:
+                          'CRITICAL ALERTS (${activeThreats > 0 ? activeThreats : 1})',
                       color: const Color(0xFFD82734),
                       onTap: () =>
                           ref.read(navigationTabProvider.notifier).state = 2),
@@ -237,14 +234,11 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
           ),
           const SizedBox(height: 16),
           GridView(
+              clipBehavior: Clip.none,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: width >= 768
-                      ? 6
-                      : (width >= 480
-                          ? 3
-                          : 2),
+                  crossAxisCount: width >= 768 ? 6 : (width >= 480 ? 3 : 2),
                   crossAxisSpacing: 8,
                   mainAxisSpacing: 8,
                   mainAxisExtent: 114),
@@ -462,11 +456,13 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
     final dark = ref.watch(themeModeProvider);
     return LayoutBuilder(builder: (context, bounds) {
       final compactRows = bounds.maxWidth >= 560;
-      return Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-            color: dark ? const Color(0xFF0F0F0F) : Colors.white,
-            borderRadius: BorderRadius.circular(4)),
+      return CyberHudFrame(
+        design: CyberFrameDesign.cornerPlate,
+        baseBorderColor: const Color(0xFF9D8DF1),
+        hoverBorderColor: const Color(0xFF9D8DF1),
+        ambientGlow: true,
+        isInteractive: false,
+        padding: const EdgeInsets.all(18),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Expanded(
@@ -570,27 +566,13 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
   Widget _buildPolicyStatusSummaryCard() {
     final isDarkMode = ref.watch(themeModeProvider);
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
-        border: Border.all(
-          color: isDarkMode
-              ? const Color(0xFFC4E320).withOpacity(0.35)
-              : const Color(0xFFCDD4B2),
-          width: 1.0,
-        ),
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: isDarkMode
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-      ),
+    return CyberHudFrame(
+      design: CyberFrameDesign.topTabWedge,
+      baseBorderColor: const Color(0xFFE9D86B),
+      hoverBorderColor: const Color(0xFFE9D86B),
+      ambientGlow: true,
+      isInteractive: false,
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -734,26 +716,14 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
   Widget _buildSystemComponentHealthPanel() {
     final isDarkMode = ref.watch(themeModeProvider);
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
-        border: Border.all(
-            color: isDarkMode
-                ? const Color(0xFF5DD62C).withOpacity(0.35)
-                : const Color(0xFFCDD4B2),
-            width: 1.0),
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: isDarkMode
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-      ),
+    return CyberHudFrame(
+      design: CyberFrameDesign.circuitHud,
+      baseBorderColor: const Color(0xFFC4E326),
+      hoverBorderColor: const Color(0xFFC4E326),
+      ambientGlow: true,
+      isInteractive: false,
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -850,27 +820,29 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
     required Color color,
     required VoidCallback onTap,
   }) {
+    final ink =
+        !ref.watch(themeModeProvider) && color == const Color(0xFFC4E320)
+            ? const Color(0xFF617D10)
+            : color;
     return InkWell(
       onTap: onTap,
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
       borderRadius: BorderRadius.circular(4),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: color.withOpacity(0.7), width: 1.0),
-        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 14, color: color),
+            Icon(icon, size: 14, color: ink),
             const SizedBox(width: 6),
             Text(
               label,
               style: CyberTextStyles.technical(
                 fontSize: 10.5,
                 fontWeight: FontWeight.bold,
-                color: color,
+                color: ink,
               ),
             ),
           ],
@@ -883,28 +855,14 @@ class _DashboardOverviewState extends ConsumerState<DashboardOverview> {
   Widget _buildSystemLogPanel({required double height}) {
     final isDarkMode = ref.watch(themeModeProvider);
 
-    return Container(
+    return CyberHudFrame(
+      design: CyberFrameDesign.ladderFins,
+      baseBorderColor: const Color(0xFF9D8DF1),
+      hoverBorderColor: const Color(0xFF9D8DF1),
+      ambientGlow: true,
+      isInteractive: false,
       height: height,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
-        border: Border.all(
-          color: isDarkMode
-              ? const Color(0xFF5DD62C).withOpacity(0.35)
-              : const Color(0xFFCDD4B2),
-          width: 1.0,
-        ),
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: isDarkMode
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

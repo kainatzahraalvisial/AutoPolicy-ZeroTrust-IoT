@@ -1,4 +1,5 @@
 import '../widgets/console_row.dart';
+import '../landing/cinematic_button.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -266,67 +267,54 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
 
   // ── PAGE HEADER ────────────────────────────────────────────────────────────
   Widget _buildPageHeader(bool isDarkMode) {
-    return ConsoleRow(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'LOGS & REPORTS',
-              style: CyberTextStyles.displayTitle(
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-                color: isDarkMode
-                    ? const Color(0xFF5DD62C)
-                    : const Color(0xFF0F172A),
-              ).copyWith(letterSpacing: 2.0),
-            ),
-            const SizedBox(height: 3),
-            Text(
-              'Audit trails, policy history and compliance reports',
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                color: isDarkMode ? Colors.white70 : const Color(0xFF64748B),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-        if (_activeSectionIndex != null)
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isDarkMode
-                  ? const Color(0xFF1A1A1A)
-                  : const Color(0xFFFAF9F6),
-              foregroundColor: isDarkMode
+        if (_activeSectionIndex != null) ...[
+          IconButton(
+            tooltip: 'Back to Logs & Reports',
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            icon: Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
+              color: isDarkMode
                   ? const Color(0xFF5DD62C)
                   : const Color(0xFF0F172A),
-              side: BorderSide(
-                  color: isDarkMode
-                      ? const Color(0xFF5DD62C)
-                      : const Color(0xFFCDD4B2),
-                  width: 1.0),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4)),
-            ),
-            icon: const Icon(Icons.arrow_back, size: 16),
-            label: Text(
-              'BACK TO LOGS & REPORTS',
-              style: CyberTextStyles.technical(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode
-                      ? const Color(0xFF5DD62C)
-                      : const Color(0xFF0F172A)),
             ),
             onPressed: () => setState(() {
               _activeSectionIndex = null;
               _currentPage = 1;
             }),
           ),
+          const SizedBox(width: 8),
+        ],
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'LOGS & REPORTS',
+                style: CyberTextStyles.displayTitle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: isDarkMode
+                      ? const Color(0xFF5DD62C)
+                      : const Color(0xFF0F172A),
+                ).copyWith(letterSpacing: 2.0),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                'Audit trails, policy history and compliance reports',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: isDarkMode ? Colors.white70 : const Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -930,24 +918,16 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                   ),
                   Row(
                     children: [
-                      OutlinedButton(
+                      CinematicButton(
+                        landingLight: true,
+                        label: '‹ PREV',
+                        compact: true,
+                        navbar: true,
+                        angular: true,
+                        filled: false,
                         onPressed: _currentPage > 1
                             ? () => setState(() => _currentPage--)
                             : null,
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                              color: isDarkMode
-                                  ? Colors.white24
-                                  : const Color(0xFFCDD4B2)),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                        ),
-                        child: Text('‹ PREV',
-                            style: CyberTextStyles.technical(
-                                fontSize: 11,
-                                color: isDarkMode
-                                    ? Colors.white
-                                    : const Color(0xFF0F172A))),
                       ),
                       const SizedBox(width: 8),
                       Text('PAGE $_currentPage OF $totalPages',
@@ -957,24 +937,16 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
                                   ? color
                                   : const Color(0xFF0F172A))),
                       const SizedBox(width: 8),
-                      OutlinedButton(
+                      CinematicButton(
+                        landingLight: true,
+                        label: 'NEXT ›',
+                        compact: true,
+                        navbar: true,
+                        angular: true,
+                        filled: false,
                         onPressed: _currentPage < totalPages
                             ? () => setState(() => _currentPage++)
                             : null,
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                              color: isDarkMode
-                                  ? Colors.white24
-                                  : const Color(0xFFCDD4B2)),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
-                        ),
-                        child: Text('NEXT ›',
-                            style: CyberTextStyles.technical(
-                                fontSize: 11,
-                                color: isDarkMode
-                                    ? Colors.white
-                                    : const Color(0xFF0F172A))),
                       ),
                     ],
                   ),
@@ -1034,24 +1006,14 @@ class _ReportsAnalyticsState extends ConsumerState<ReportsAnalytics> {
 
   Widget _buildExportBtn(
       String label, IconData icon, VoidCallback onTap, bool isDarkMode) {
-    final btnColor =
-        isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF80A416);
-    return OutlinedButton.icon(
+    return CinematicButton(
+      landingLight: true,
+      label: label,
+      compact: true,
+      navbar: true,
+      angular: true,
+      filled: false,
       onPressed: onTap,
-      icon: Icon(icon, size: 14, color: btnColor),
-      label: Text(label,
-          style: CyberTextStyles.technical(
-              fontSize: 11, fontWeight: FontWeight.bold, color: btnColor)),
-      style: OutlinedButton.styleFrom(
-        side: BorderSide(
-            color:
-                isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFFCDD4B2),
-            width: 1.0),
-        backgroundColor:
-            isDarkMode ? Colors.transparent : const Color(0xFFFAF9F6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-      ),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'cyber_hud_frame.dart';
 import 'console_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,28 +21,14 @@ class CyberTrafficLineChart extends ConsumerWidget {
     final accentColor =
         isDarkMode ? const Color(0xFF5DD62C) : const Color(0xFF5E7343);
 
-    return Container(
+    return CyberHudFrame(
+      design: CyberFrameDesign.hazardStripes,
+      baseBorderColor: const Color(0xFF95DB40),
+      hoverBorderColor: const Color(0xFF95DB40),
+      ambientGlow: true,
+      isInteractive: false,
       height: height,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFF0F0F0F) : const Color(0xFFFAF9F6),
-        border: Border.all(
-          color: isDarkMode
-              ? accentColor.withOpacity(0.35)
-              : const Color(0xFFCDD4B2),
-          width: 1.0,
-        ),
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: isDarkMode
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 4,
-                  offset: const Offset(0, 1),
-                ),
-              ],
-      ),
+      padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

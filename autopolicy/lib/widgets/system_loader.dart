@@ -56,7 +56,7 @@ class _SystemLoaderState extends State<SystemLoader>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final purpleColor = isDark ? const Color(0xFF9D8DF1) : const Color(0xFF7C3AED);
     final greenColor = isDark ? const Color(0xFFDCFF33) : const Color(0xFF5B7808);
-    final coreWhite = isDark ? const Color(0xFFFAF9FF) : const Color(0xFF141020);
+    final coreWhite = isDark ? const Color(0xFFFAF9FF) : Colors.black;
 
     return Semantics(
       label: widget.label,
@@ -170,7 +170,7 @@ class _SystemLoaderState extends State<SystemLoader>
                                         fontSize: widget.compact ? 8.5 : 10,
                                         fontWeight: FontWeight.w600,
                                         letterSpacing: 0.8,
-                                        color: purpleColor.withOpacity(0.9),
+                                        color: isDark ? purpleColor.withOpacity(0.9) : Colors.black,
                                       ),
                                     ),
                                     Text(
@@ -180,7 +180,7 @@ class _SystemLoaderState extends State<SystemLoader>
                                         fontSize: widget.compact ? 8.5 : 10,
                                         fontWeight: FontWeight.bold,
                                         letterSpacing: 1.0,
-                                        color: greenColor,
+                                        color: isDark ? greenColor : Colors.black,
                                         shadows: isDark
                                             ? [
                                                 Shadow(
@@ -234,7 +234,7 @@ class _SystemLoaderState extends State<SystemLoader>
                                   letterSpacing: 1.2,
                                   color: isDark
                                       ? const Color(0xFFC4BBE5)
-                                      : const Color(0xFF5A4F72),
+                                      : Colors.black,
                                 ),
                               ),
                             ],
@@ -245,7 +245,7 @@ class _SystemLoaderState extends State<SystemLoader>
                               fontFamily: 'Orbitron',
                               fontSize: 9.5,
                               fontWeight: FontWeight.w700,
-                              color: purpleColor,
+                              color: isDark ? purpleColor : Colors.black,
                               letterSpacing: 1.0,
                             ),
                           ),

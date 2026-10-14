@@ -4,16 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/theme_provider.dart';
 
 enum CyberFrameDesign {
-  hazardStripes,   // Bottom-right chamfer with diagonal hazard warning stripes (///)
-  topTabWedge,     // Glowing top tab + chamfered bottom-left corner with accent wedge
-  ladderFins,      // Side barcode / ventilation ladder fins + angled top-right cut
-  techDots,        // Vertical tech dot matrix + dual chamfers and outer brackets
-  tacticalBrackets,// Corner HUD targeting brackets (┌ ┐ └ ┘) + top header notch
-  stealthHex,      // Asymmetric dual chamfers + technical corner crosshairs
-  reticleCut,      // Inverse chamfer (top-right & bottom-left) + HUD reticle targeting marks
-  cornerPlate,     // Double chamfered right side + heavy armored corner plates & segmented baseline
-  circuitHud,      // Exact Image 2 HUD frame: Circuit traces, upper angled traces, side pads & dot matrix
-  yellowTabNotch,  // Exact Image 3 HUD frame: Top-right glowing tab, bottom-left notch block, bottom-right triangle
+  hazardStripes, // Bottom-right chamfer with diagonal hazard warning stripes (///)
+  topTabWedge, // Glowing top tab + chamfered bottom-left corner with accent wedge
+  ladderFins, // Side barcode / ventilation ladder fins + angled top-right cut
+  techDots, // Vertical tech dot matrix + dual chamfers and outer brackets
+  tacticalBrackets, // Corner HUD targeting brackets (┌ ┐ └ ┘) + top header notch
+  stealthHex, // Asymmetric dual chamfers + technical corner crosshairs
+  reticleCut, // Inverse chamfer (top-right & bottom-left) + HUD reticle targeting marks
+  cornerPlate, // Double chamfered right side + heavy armored corner plates & segmented baseline
+  circuitHud, // Exact Image 2 HUD frame: Circuit traces, upper angled traces, side pads & dot matrix
+  yellowTabNotch, // Exact Image 3 HUD frame: Top-right glowing tab, bottom-left notch block, bottom-right triangle
   tacticalArmorNotch, // Exact Figure Card Frame from media_1788769893400.png: Armor tab notch, top-right slashes, bottom-left chevrons
 }
 
@@ -29,20 +29,24 @@ class CyberHudFrame extends ConsumerStatefulWidget {
   final double? width;
   final double? height;
   final bool showGrid;
+  final bool ambientGlow;
 
   const CyberHudFrame({
     super.key,
     required this.child,
     this.design = CyberFrameDesign.hazardStripes,
     this.baseBorderColor = const Color(0xFF80A416),
-    this.hoverBorderColor = const Color(0xFF80A416), // Palette Vibrant Olive Green hover!
-    this.surfaceColor = const Color(0xFF0F0F0F),     // Deep tactical black from palette
+    this.hoverBorderColor =
+        const Color(0xFF80A416), // Palette Vibrant Olive Green hover!
+    this.surfaceColor =
+        const Color(0xFF0F0F0F), // Deep tactical black from palette
     this.padding = const EdgeInsets.all(18),
     this.onTap,
     this.isInteractive = true,
     this.width,
     this.height,
     this.showGrid = false,
+    this.ambientGlow = false,
   });
 
   @override
@@ -70,7 +74,9 @@ class _CyberHudFrameState extends ConsumerState<CyberHudFrame> {
                 : widget.surfaceColor));
 
     return MouseRegion(
-      cursor: widget.onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      cursor: widget.onTap != null
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
       onEnter: (_) {
         if (widget.isInteractive) setState(() => _isHovered = true);
       },
@@ -86,36 +92,49 @@ class _CyberHudFrameState extends ConsumerState<CyberHudFrame> {
           width: widget.width,
           height: widget.height,
           decoration: BoxDecoration(
-            boxShadow: _isHovered
-                ? [
-                    BoxShadow(
-                      color: widget.hoverBorderColor.withOpacity(isDarkMode ? 0.22 : 0.15),
-                      blurRadius: 22,
-                      spreadRadius: 1,
-                      offset: const Offset(0, 6),
-                    ),
-                    BoxShadow(
-                      color: isDarkMode ? Colors.black.withOpacity(0.85) : const Color(0xFF80A416).withOpacity(0.08),
-                      blurRadius: 18,
-                      offset: const Offset(0, 10),
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: isDarkMode ? Colors.black.withOpacity(0.50) : const Color(0xFF80A416).withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+            boxShadow: widget.ambientGlow
+                ? const <BoxShadow>[]
+                : (_isHovered || (widget.ambientGlow && isDarkMode))
+                    ? [
+                        BoxShadow(
+                          color: widget.hoverBorderColor
+                              .withOpacity(isDarkMode ? 0.22 : 0.15),
+                          blurRadius: 22,
+                          spreadRadius: 1,
+                          offset: const Offset(0, 6),
+                        ),
+                        BoxShadow(
+                          color: isDarkMode
+                              ? Colors.black.withOpacity(0.85)
+                              : const Color(0xFF80A416).withOpacity(0.08),
+                          blurRadius: 18,
+                          offset: const Offset(0, 10),
+                        ),
+                      ]
+                    : [
+                        BoxShadow(
+                          color: isDarkMode
+                              ? Colors.black.withOpacity(0.50)
+                              : const Color(0xFF80A416).withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
           ),
           child: CustomPaint(
-            painter: _CyberHudFramePainter(
-              design: widget.design,
-              borderColor: activeBorderColor,
-              surfaceColor: effectiveSurface,
-              isHovered: _isHovered,
-              showGrid: widget.showGrid,
-            ),
+            painter: widget.ambientGlow
+                ? _SpectralHudPainter(
+                    design: widget.design,
+                    primary: widget.baseBorderColor,
+                    dark: isDarkMode,
+                    surface: effectiveSurface)
+                : _CyberHudFramePainter(
+                    design: widget.design,
+                    borderColor: activeBorderColor,
+                    surfaceColor: effectiveSurface,
+                    isHovered: _isHovered || (widget.ambientGlow && isDarkMode),
+                    showGrid: widget.showGrid,
+                  ),
             child: ClipPath(
               clipper: _CyberHudClipper(widget.design),
               child: Container(
@@ -322,7 +341,7 @@ class _CyberHudFramePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final dimPaint = Paint()
-      ..color = borderColor.withOpacity( isHovered ? 0.35 : 0.18)
+      ..color = borderColor.withOpacity(isHovered ? 0.35 : 0.18)
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
 
@@ -330,7 +349,7 @@ class _CyberHudFramePainter extends CustomPainter {
     if (showGrid) {
       const spacing = 28.0;
       final gridPaint = Paint()
-        ..color = borderColor.withOpacity( 0.05)
+        ..color = borderColor.withOpacity(0.05)
         ..strokeWidth = 0.8;
       for (double x = spacing; x < w; x += spacing) {
         canvas.drawLine(Offset(x, 0), Offset(x, h), gridPaint);
@@ -342,43 +361,55 @@ class _CyberHudFramePainter extends CustomPainter {
 
     switch (design) {
       case CyberFrameDesign.hazardStripes:
-        _paintHazardStripes(canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
+        _paintHazardStripes(
+            canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
         break;
       case CyberFrameDesign.topTabWedge:
-        _paintTopTabWedge(canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
+        _paintTopTabWedge(
+            canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
         break;
       case CyberFrameDesign.ladderFins:
-        _paintLadderFins(canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
+        _paintLadderFins(
+            canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
         break;
       case CyberFrameDesign.techDots:
-        _paintTechDots(canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
+        _paintTechDots(
+            canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
         break;
       case CyberFrameDesign.tacticalBrackets:
-        _paintTacticalBrackets(canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
+        _paintTacticalBrackets(
+            canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
         break;
       case CyberFrameDesign.stealthHex:
-        _paintStealthHex(canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
+        _paintStealthHex(
+            canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
         break;
       case CyberFrameDesign.reticleCut:
-        _paintReticleCut(canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
+        _paintReticleCut(
+            canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
         break;
       case CyberFrameDesign.cornerPlate:
-        _paintCornerPlate(canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
+        _paintCornerPlate(
+            canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
         break;
       case CyberFrameDesign.circuitHud:
-        _paintCircuitHud(canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
+        _paintCircuitHud(
+            canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
         break;
       case CyberFrameDesign.yellowTabNotch:
-        _paintYellowTabNotch(canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
+        _paintYellowTabNotch(
+            canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
         break;
       case CyberFrameDesign.tacticalArmorNotch:
-        _paintTacticalArmorNotch(canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
+        _paintTacticalArmorNotch(
+            canvas, w, h, fillPaint, strokePaint, accentPaint, dimPaint);
         break;
     }
   }
 
   // 1. Hazard Stripes: Chamfer bottom-right with diagonal stripes (///)
-  void _paintHazardStripes(Canvas canvas, double w, double h, Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
+  void _paintHazardStripes(Canvas canvas, double w, double h, Paint fillPaint,
+      Paint strokePaint, Paint accentPaint, Paint dimPaint) {
     const chamfer = 22.0;
     final path = Path()
       ..moveTo(0, 0)
@@ -394,7 +425,7 @@ class _CyberHudFramePainter extends CustomPainter {
     // Diagonal hazard warning stripes along bottom-right cut
     const stripeCount = 5;
     final stripePaint = Paint()
-      ..color = borderColor.withOpacity( isHovered ? 0.95 : 0.60)
+      ..color = borderColor.withOpacity(isHovered ? 0.95 : 0.60)
       ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.square;
 
@@ -406,12 +437,23 @@ class _CyberHudFramePainter extends CustomPainter {
     }
 
     // Top-left technical tick
-    canvas.drawLine(const Offset(0, 0), const Offset(14, 0), Paint()..color = borderColor..strokeWidth = 3.0);
-    canvas.drawLine(const Offset(0, 0), const Offset(0, 14), Paint()..color = borderColor..strokeWidth = 3.0);
+    canvas.drawLine(
+        const Offset(0, 0),
+        const Offset(14, 0),
+        Paint()
+          ..color = borderColor
+          ..strokeWidth = 3.0);
+    canvas.drawLine(
+        const Offset(0, 0),
+        const Offset(0, 14),
+        Paint()
+          ..color = borderColor
+          ..strokeWidth = 3.0);
   }
 
   // 2. Top Tab Wedge: Glowing top tab + bottom-left accent wedge
-  void _paintTopTabWedge(Canvas canvas, double w, double h, Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
+  void _paintTopTabWedge(Canvas canvas, double w, double h, Paint fillPaint,
+      Paint strokePaint, Paint accentPaint, Paint dimPaint) {
     const chamfer = 22.0;
     final path = Path()
       ..moveTo(0, 0)
@@ -436,13 +478,13 @@ class _CyberHudFramePainter extends CustomPainter {
       ..close();
 
     final glowTabPaint = Paint()
-      ..color = borderColor.withOpacity( isHovered ? 0.90 : 0.45)
+      ..color = borderColor.withOpacity(isHovered ? 0.90 : 0.45)
       ..style = PaintingStyle.fill;
     canvas.drawPath(tabPath, glowTabPaint);
 
     if (isHovered) {
       final blurPaint = Paint()
-        ..color = borderColor.withOpacity( 0.5)
+        ..color = borderColor.withOpacity(0.5)
         ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6);
       canvas.drawPath(tabPath, blurPaint);
     }
@@ -454,11 +496,16 @@ class _CyberHudFramePainter extends CustomPainter {
       ..lineTo(chamfer - 8, h)
       ..lineTo(0, h - chamfer + 8)
       ..close();
-    canvas.drawPath(wedgePath, Paint()..color = borderColor..style = PaintingStyle.fill);
+    canvas.drawPath(
+        wedgePath,
+        Paint()
+          ..color = borderColor
+          ..style = PaintingStyle.fill);
   }
 
   // 3. Ladder Fins: Side barcode ladder fins + top-right cut
-  void _paintLadderFins(Canvas canvas, double w, double h, Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
+  void _paintLadderFins(Canvas canvas, double w, double h, Paint fillPaint,
+      Paint strokePaint, Paint accentPaint, Paint dimPaint) {
     const chamfer = 20.0;
     final path = Path()
       ..moveTo(0, 0)
@@ -475,7 +522,7 @@ class _CyberHudFramePainter extends CustomPainter {
     // Right-side barcode / heat fin lines
     const finCount = 6;
     final finPaint = Paint()
-      ..color = borderColor.withOpacity( isHovered ? 0.90 : 0.55)
+      ..color = borderColor.withOpacity(isHovered ? 0.90 : 0.55)
       ..strokeWidth = 2.0;
 
     const startY = 32.0;
@@ -485,11 +532,17 @@ class _CyberHudFramePainter extends CustomPainter {
     }
 
     // Top-right cut accent highlight
-    canvas.drawLine(Offset(w - chamfer, 0), Offset(w, chamfer), Paint()..color = borderColor..strokeWidth = 2.5);
+    canvas.drawLine(
+        Offset(w - chamfer, 0),
+        Offset(w, chamfer),
+        Paint()
+          ..color = borderColor
+          ..strokeWidth = 2.5);
   }
 
   // 4. Tech Dots: Vertical micro-dot array + dual chamfers
-  void _paintTechDots(Canvas canvas, double w, double h, Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
+  void _paintTechDots(Canvas canvas, double w, double h, Paint fillPaint,
+      Paint strokePaint, Paint accentPaint, Paint dimPaint) {
     const chamfer = 18.0;
     final path = Path()
       ..moveTo(chamfer, 0)
@@ -506,7 +559,7 @@ class _CyberHudFramePainter extends CustomPainter {
     // Vertical dot array along left edge
     const dotCount = 7;
     final dotPaint = Paint()
-      ..color = borderColor.withOpacity( isHovered ? 0.95 : 0.50)
+      ..color = borderColor.withOpacity(isHovered ? 0.95 : 0.50)
       ..style = PaintingStyle.fill;
 
     final double startY = (h - (dotCount * 7.0)) / 2;
@@ -515,11 +568,17 @@ class _CyberHudFramePainter extends CustomPainter {
     }
 
     // Top-left double bracket mark
-    canvas.drawLine(const Offset(chamfer + 2, 3), const Offset(chamfer + 14, 3), Paint()..color = borderColor..strokeWidth = 1.8);
+    canvas.drawLine(
+        const Offset(chamfer + 2, 3),
+        const Offset(chamfer + 14, 3),
+        Paint()
+          ..color = borderColor
+          ..strokeWidth = 1.8);
   }
 
   // 5. Tactical Brackets: Corner HUD brackets (┌ ┐ └ ┘) + top notch plate
-  void _paintTacticalBrackets(Canvas canvas, double w, double h, Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
+  void _paintTacticalBrackets(Canvas canvas, double w, double h,
+      Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
     const c = 10.0;
     final path = Path()
       ..moveTo(c, 0)
@@ -559,7 +618,8 @@ class _CyberHudFramePainter extends CustomPainter {
   }
 
   // 6. Stealth Hex: Hex cuts + corner crosshairs
-  void _paintStealthHex(Canvas canvas, double w, double h, Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
+  void _paintStealthHex(Canvas canvas, double w, double h, Paint fillPaint,
+      Paint strokePaint, Paint accentPaint, Paint dimPaint) {
     final path = Path()
       ..moveTo(14, 0)
       ..lineTo(w, 0)
@@ -574,7 +634,7 @@ class _CyberHudFramePainter extends CustomPainter {
 
     // Corner crosshairs on top-right
     final crossPaint = Paint()
-      ..color = borderColor.withOpacity( isHovered ? 0.90 : 0.50)
+      ..color = borderColor.withOpacity(isHovered ? 0.90 : 0.50)
       ..strokeWidth = 1.2;
     canvas.drawLine(Offset(w - 18, 8), Offset(w - 8, 8), crossPaint);
     canvas.drawLine(Offset(w - 13, 3), Offset(w - 13, 13), crossPaint);
@@ -583,11 +643,17 @@ class _CyberHudFramePainter extends CustomPainter {
     final subPath = Path()
       ..moveTo(w, h - 22)
       ..lineTo(w - 22, h);
-    canvas.drawPath(subPath, Paint()..color = borderColor.withOpacity( 0.5)..strokeWidth = 1.0..style = PaintingStyle.stroke);
+    canvas.drawPath(
+        subPath,
+        Paint()
+          ..color = borderColor.withOpacity(0.5)
+          ..strokeWidth = 1.0
+          ..style = PaintingStyle.stroke);
   }
 
   // 7. Reticle Cut: Inverse chamfers + HUD reticle targeting marks
-  void _paintReticleCut(Canvas canvas, double w, double h, Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
+  void _paintReticleCut(Canvas canvas, double w, double h, Paint fillPaint,
+      Paint strokePaint, Paint accentPaint, Paint dimPaint) {
     const chamfer = 22.0;
     final path = Path()
       ..moveTo(0, 0)
@@ -602,26 +668,48 @@ class _CyberHudFramePainter extends CustomPainter {
     canvas.drawPath(path, strokePaint);
 
     // Diagonal cut highlights
-    canvas.drawLine(Offset(w - chamfer, 0), Offset(w, chamfer), Paint()..color = borderColor..strokeWidth = 2.5);
-    canvas.drawLine(Offset(0, h - chamfer), Offset(chamfer, h), Paint()..color = borderColor..strokeWidth = 2.5);
+    canvas.drawLine(
+        Offset(w - chamfer, 0),
+        Offset(w, chamfer),
+        Paint()
+          ..color = borderColor
+          ..strokeWidth = 2.5);
+    canvas.drawLine(
+        Offset(0, h - chamfer),
+        Offset(chamfer, h),
+        Paint()
+          ..color = borderColor
+          ..strokeWidth = 2.5);
 
     // Top-left HUD reticle targeting crosshair
     final reticlePaint = Paint()
-      ..color = borderColor.withOpacity( isHovered ? 0.95 : 0.55)
+      ..color = borderColor.withOpacity(isHovered ? 0.95 : 0.55)
       ..strokeWidth = 1.2;
     canvas.drawLine(const Offset(8, 14), const Offset(20, 14), reticlePaint);
     canvas.drawLine(const Offset(14, 8), const Offset(14, 20), reticlePaint);
-    canvas.drawCircle(const Offset(14, 14), 3.0, Paint()..color = borderColor.withOpacity( isHovered ? 0.95 : 0.55)..style = PaintingStyle.stroke..strokeWidth = 1.0);
+    canvas.drawCircle(
+        const Offset(14, 14),
+        3.0,
+        Paint()
+          ..color = borderColor.withOpacity(isHovered ? 0.95 : 0.55)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.0);
 
     // Right edge telemetry tick marks
     for (int i = 0; i < 4; i++) {
       final y = (h / 2) - 12 + (i * 8.0);
-      canvas.drawLine(Offset(w - 6, y), Offset(w - 1, y), Paint()..color = borderColor.withOpacity( 0.60)..strokeWidth = 1.5);
+      canvas.drawLine(
+          Offset(w - 6, y),
+          Offset(w - 1, y),
+          Paint()
+            ..color = borderColor.withOpacity(0.60)
+            ..strokeWidth = 1.5);
     }
   }
 
   // 8. Corner Plate: Double chamfered right side + armored plates & segmented baseline
-  void _paintCornerPlate(Canvas canvas, double w, double h, Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
+  void _paintCornerPlate(Canvas canvas, double w, double h, Paint fillPaint,
+      Paint strokePaint, Paint accentPaint, Paint dimPaint) {
     const chamfer = 16.0;
     final path = Path()
       ..moveTo(0, 0)
@@ -636,25 +724,32 @@ class _CyberHudFramePainter extends CustomPainter {
     canvas.drawPath(path, strokePaint);
 
     // Heavy armored plates on left corners
-    final platePaint = Paint()..color = borderColor..strokeWidth = 3.0;
+    final platePaint = Paint()
+      ..color = borderColor
+      ..strokeWidth = 3.0;
     canvas.drawLine(const Offset(0, 0), const Offset(18, 0), platePaint);
     canvas.drawLine(const Offset(0, 0), const Offset(0, 18), platePaint);
     canvas.drawLine(Offset(0, h), Offset(18, h), platePaint);
     canvas.drawLine(Offset(0, h), Offset(0, h - 18), platePaint);
 
     // Top status micro tabs
-    canvas.drawRect(const Rect.fromLTWH(26, 0, 22, 3), Paint()..color = borderColor);
-    canvas.drawRect(const Rect.fromLTWH(52, 0, 10, 3), Paint()..color = borderColor.withOpacity( 0.5));
+    canvas.drawRect(
+        const Rect.fromLTWH(26, 0, 22, 3), Paint()..color = borderColor);
+    canvas.drawRect(const Rect.fromLTWH(52, 0, 10, 3),
+        Paint()..color = borderColor.withOpacity(0.5));
 
     // Segmented baseline along bottom
-    final basePaint = Paint()..color = borderColor.withOpacity( isHovered ? 0.80 : 0.35)..strokeWidth = 1.5;
+    final basePaint = Paint()
+      ..color = borderColor.withOpacity(isHovered ? 0.80 : 0.35)
+      ..strokeWidth = 1.5;
     for (double bx = 28; bx < w - 30; bx += 14) {
       canvas.drawLine(Offset(bx, h), Offset(bx + 8, h), basePaint);
     }
   }
 
   // 9. Circuit HUD (Exact Image 2 frame): Circuit traces, upper angled traces, side pads & dot matrix
-  void _paintCircuitHud(Canvas canvas, double w, double h, Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
+  void _paintCircuitHud(Canvas canvas, double w, double h, Paint fillPaint,
+      Paint strokePaint, Paint accentPaint, Paint dimPaint) {
     const c1 = 14.0;
     const c2 = 20.0;
 
@@ -713,12 +808,24 @@ class _CyberHudFramePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     // Left vertical pads
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(-3, h * 0.22, 6, 26), const Radius.circular(1.5)), padPaint);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(-3, h * 0.58, 6, 26), const Radius.circular(1.5)), padPaint);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            Rect.fromLTWH(-3, h * 0.22, 6, 26), const Radius.circular(1.5)),
+        padPaint);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            Rect.fromLTWH(-3, h * 0.58, 6, 26), const Radius.circular(1.5)),
+        padPaint);
 
     // Right vertical pads
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(w - 3, h * 0.28, 6, 26), const Radius.circular(1.5)), padPaint);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(w - 3, h * 0.64, 6, 26), const Radius.circular(1.5)), padPaint);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            Rect.fromLTWH(w - 3, h * 0.28, 6, 26), const Radius.circular(1.5)),
+        padPaint);
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            Rect.fromLTWH(w - 3, h * 0.64, 6, 26), const Radius.circular(1.5)),
+        padPaint);
 
     // Outer parallel trace line running on left wall (Image 2)
     final leftTrace = Path()
@@ -726,7 +833,12 @@ class _CyberHudFramePainter extends CustomPainter {
       ..lineTo(-8, h * 0.35)
       ..moveTo(-8, h * 0.45)
       ..lineTo(-8, h - 18);
-    canvas.drawPath(leftTrace, Paint()..color = borderColor.withOpacity(0.5)..strokeWidth = 1.2..style = PaintingStyle.stroke);
+    canvas.drawPath(
+        leftTrace,
+        Paint()
+          ..color = borderColor.withOpacity(0.5)
+          ..strokeWidth = 1.2
+          ..style = PaintingStyle.stroke);
 
     // Outer parallel trace line running on right wall (Image 2)
     final rightTrace = Path()
@@ -734,17 +846,26 @@ class _CyberHudFramePainter extends CustomPainter {
       ..lineTo(w + 8, h * 0.48)
       ..moveTo(w + 8, h * 0.58)
       ..lineTo(w + 8, h - 22);
-    canvas.drawPath(rightTrace, Paint()..color = borderColor.withOpacity(0.5)..strokeWidth = 1.2..style = PaintingStyle.stroke);
+    canvas.drawPath(
+        rightTrace,
+        Paint()
+          ..color = borderColor.withOpacity(0.5)
+          ..strokeWidth = 1.2
+          ..style = PaintingStyle.stroke);
 
     // Bottom-right 4 square dot matrix (■ ■ ■ ■ - Image 2)
-    final matrixDotPaint = Paint()..color = borderColor..style = PaintingStyle.fill;
+    final matrixDotPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.fill;
     for (int i = 0; i < 4; i++) {
-      canvas.drawRect(Rect.fromLTWH(w - 65 + (i * 10), h - 3, 5, 5), matrixDotPaint);
+      canvas.drawRect(
+          Rect.fromLTWH(w - 65 + (i * 10), h - 3, 5, 5), matrixDotPaint);
     }
   }
 
   // 10. Yellow Tab & Notch (Exact Image 3 frame): Top-right tab, bottom-left notch block, bottom-right triangle
-  void _paintYellowTabNotch(Canvas canvas, double w, double h, Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
+  void _paintYellowTabNotch(Canvas canvas, double w, double h, Paint fillPaint,
+      Paint strokePaint, Paint accentPaint, Paint dimPaint) {
     const chamfer = 16.0;
 
     final path = Path()
@@ -780,7 +901,11 @@ class _CyberHudFramePainter extends CustomPainter {
       ..lineTo(tabX + tabW - 4, 0)
       ..close();
 
-    canvas.drawPath(topTabPath, Paint()..color = borderColor..style = PaintingStyle.fill);
+    canvas.drawPath(
+        topTabPath,
+        Paint()
+          ..color = borderColor
+          ..style = PaintingStyle.fill);
 
     // Bottom-Left Solid Filled Accent Notch Block (Image 3)
     final notchBlockPath = Path()
@@ -789,7 +914,11 @@ class _CyberHudFramePainter extends CustomPainter {
       ..lineTo(44, h)
       ..lineTo(0, h)
       ..close();
-    canvas.drawPath(notchBlockPath, Paint()..color = borderColor..style = PaintingStyle.fill);
+    canvas.drawPath(
+        notchBlockPath,
+        Paint()
+          ..color = borderColor
+          ..style = PaintingStyle.fill);
 
     // Bottom-Right Corner Filled Triangle (◢ - Image 3)
     final triPath = Path()
@@ -797,12 +926,17 @@ class _CyberHudFramePainter extends CustomPainter {
       ..lineTo(w, h - chamfer)
       ..lineTo(w, h)
       ..close();
-    canvas.drawPath(triPath, Paint()..color = borderColor..style = PaintingStyle.fill);
+    canvas.drawPath(
+        triPath,
+        Paint()
+          ..color = borderColor
+          ..style = PaintingStyle.fill);
   }
 
   // 11. Tactical Armor Notch (Exact Figure Card Frame from media_1788769893400.png Right Frame):
   // Armor tab notch, top-right diagonal slash banner (///), left diagonal cuts (//), right hash bars, bottom-left chevrons (<<<)
-  void _paintTacticalArmorNotch(Canvas canvas, double w, double h, Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
+  void _paintTacticalArmorNotch(Canvas canvas, double w, double h,
+      Paint fillPaint, Paint strokePaint, Paint accentPaint, Paint dimPaint) {
     const chamfer = 16.0;
 
     // Outer contour path with top center armor notch
@@ -846,7 +980,11 @@ class _CyberHudFramePainter extends CustomPainter {
         ..lineTo(w - 22, 38)
         ..lineTo(w - 38, 38)
         ..close();
-      canvas.drawPath(bannerPath, Paint()..color = borderColor..style = PaintingStyle.fill);
+      canvas.drawPath(
+          bannerPath,
+          Paint()
+            ..color = borderColor
+            ..style = PaintingStyle.fill);
 
       final slashPaint = Paint()
         ..color = surfaceColor
@@ -871,7 +1009,8 @@ class _CyberHudFramePainter extends CustomPainter {
     for (double vy = h * 0.40; vy < h * 0.70; vy += 7) {
       canvas.drawLine(Offset(w - 3, vy), Offset(w + 4, vy + 4), ventPaint);
     }
-    canvas.drawRect(Rect.fromLTWH(w - 7, h * 0.55, 4, 22), Paint()..color = borderColor);
+    canvas.drawRect(
+        Rect.fromLTWH(w - 7, h * 0.55, 4, 22), Paint()..color = borderColor);
 
     // 4. Bottom-Left Chamfer Triple Leftward Arrow Chevrons (<<< - Image 2 Right Frame)
     final chevronPaint = Paint()
@@ -899,4 +1038,224 @@ class _CyberHudFramePainter extends CustomPainter {
         oldDelegate.isHovered != isHovered ||
         oldDelegate.showGrid != showGrid;
   }
+}
+
+/// Keeps the hit area stationary while the summary card lifts inside it.
+class DashboardCardLift extends StatefulWidget {
+  final Widget child;
+  const DashboardCardLift({super.key, required this.child});
+  @override
+  State<DashboardCardLift> createState() => _DashboardCardLiftState();
+}
+
+class _DashboardCardLiftState extends State<DashboardCardLift> {
+  bool hovered = false;
+  @override
+  Widget build(BuildContext context) => MouseRegion(
+        onEnter: (_) => setState(() => hovered = true),
+        onExit: (_) => setState(() => hovered = false),
+        child: AnimatedContainer(
+          duration: Duration(
+              milliseconds: MediaQuery.of(context).disableAnimations ? 0 : 180),
+          curve: Curves.easeOutCubic,
+          transform: Matrix4.translationValues(0, hovered ? -5 : 0, 0),
+          child: widget.child,
+        ),
+      );
+}
+
+/// Layered luminous rails follow the frame contour, never the rectangular bounds.
+class _SpectralHudPainter extends CustomPainter {
+  final CyberFrameDesign design;
+  final Color primary, surface;
+  final bool dark;
+  const _SpectralHudPainter(
+      {required this.design,
+      required this.primary,
+      required this.dark,
+      required this.surface});
+
+  int get variant {
+    switch (design) {
+      case CyberFrameDesign.hazardStripes:
+        return 0;
+      case CyberFrameDesign.topTabWedge:
+        return 1;
+      case CyberFrameDesign.cornerPlate:
+      case CyberFrameDesign.circuitHud:
+        return 2;
+      case CyberFrameDesign.tacticalArmorNotch:
+        return 0;
+      default:
+        return 3;
+    }
+  }
+
+  Path contour(Rect r, int variant) {
+    if (variant == 0 || variant == 1) return Path()..addRect(r);
+    if (variant == 2)
+      return Path()
+        ..addRRect(RRect.fromRectAndRadius(r, const Radius.circular(4)));
+
+    final cut = (r.height * .14).clamp(7.0, 16.0);
+    final p = Path();
+    if (variant == 0) {
+      p.moveTo(r.left + cut, r.top);
+      p.lineTo(r.left + r.width * .28, r.top);
+      p.lineTo(r.left + r.width * .28 + 6, r.top + 5);
+      p.lineTo(r.right - cut, r.top + 5);
+    } else {
+      p.moveTo(r.left + cut, r.top);
+      p.lineTo(r.left + r.width * .58, r.top);
+      p.lineTo(r.left + r.width * .58 + 6, r.top - 4);
+      p.lineTo(r.right - cut, r.top - 4);
+    }
+    p.lineTo(r.right, r.top + cut);
+    p.lineTo(r.right, r.bottom - cut);
+    p.lineTo(r.right - cut, r.bottom);
+    p.lineTo(r.left + r.width * .37, r.bottom);
+    p.lineTo(r.left + r.width * .37 - 6, r.bottom - 4);
+    p.lineTo(r.left + cut, r.bottom - 4);
+    p.lineTo(r.left, r.bottom - cut);
+    p.lineTo(r.left, r.top + cut);
+    return p..close();
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width < 40 || size.height < 30) return;
+    final variant = this.variant;
+    final bounds = (Offset.zero & size).deflate(3);
+    final path = contour(bounds, variant);
+    final violet = dark ? const Color(0xFFD1A0FF) : const Color(0xFF8A5AB0);
+    final yellow = dark ? const Color(0xFFFAF4AF) : const Color(0xFF8A8027);
+    final green = dark ? const Color(0xFFC4E326) : const Color(0xFF6F8B27);
+    // Two hues per frame; alternate pairings rather than mixing all three.
+    final first = variant == 0 ? green : violet;
+    final second = variant == 3 ? green : yellow;
+    final colors = [first, second, first];
+    final shader = LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: colors)
+        .createShader(bounds);
+    canvas.drawPath(path, Paint()..color = surface);
+    if (dark) {
+      canvas.drawPath(
+          path,
+          Paint()
+            ..shader = shader
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.5
+            ..color = Colors.white.withOpacity(.5)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2));
+    }
+    canvas.drawPath(
+        path,
+        Paint()
+          ..shader = shader
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.15);
+    final inner = contour(bounds.deflate(5), variant);
+    canvas.drawPath(
+        inner,
+        Paint()
+          ..shader = shader
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = .65
+          ..color = Colors.white.withOpacity(.6));
+
+    final rail = Paint()
+      ..shader = shader
+      ..strokeWidth = 1.8;
+    void light(Offset a, Offset b) {
+      if (dark)
+        canvas.drawLine(
+            a,
+            b,
+            Paint()
+              ..shader = shader
+              ..strokeWidth = 3
+              ..color = Colors.white.withOpacity(.6)
+              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5));
+      canvas.drawLine(a, b, rail);
+    }
+
+    if (variant == 0) {
+      // Minimal open corner brackets and offset targeting crosses.
+      for (final corner in [bounds.topLeft, bounds.bottomRight]) {
+        final direction = corner == bounds.topLeft ? 1.0 : -1.0;
+        light(corner, corner.translate(18 * direction, 0));
+        light(corner, corner.translate(0, 24 * direction));
+      }
+      for (final p in [bounds.topRight, bounds.bottomLeft]) {
+        canvas.drawLine(p.translate(-4, 0), p.translate(4, 0), rail);
+        canvas.drawLine(p.translate(0, -4), p.translate(0, 4), rail);
+      }
+      for (var i = 0; i < 5; i++) {
+        final x = bounds.left + 18 + i * 6;
+        canvas.drawCircle(
+            Offset(x, bounds.bottom - 4), .8, Paint()..color = first);
+      }
+    } else if (variant == 1) {
+      // Dotted upper/lower rails, chevrons and a bright terminal at each end.
+      for (var i = 0; i < (bounds.width / 14).floor(); i++) {
+        final x = bounds.left + 12 + i * 14;
+        canvas.drawLine(
+            Offset(x, bounds.top - 2), Offset(x, bounds.top - 5), rail);
+        canvas.drawLine(
+            Offset(x, bounds.bottom + 2), Offset(x, bounds.bottom + 4), rail);
+      }
+      light(Offset(bounds.right - 65, bounds.top),
+          Offset(bounds.right - 30, bounds.top));
+      light(Offset(bounds.left + 20, bounds.bottom),
+          Offset(bounds.left + 55, bounds.bottom));
+      for (var i = 0; i < 3; i++) {
+        final y = bounds.top + 22 + i * 6;
+        final p = Path()
+          ..moveTo(bounds.left + 4, y - 3)
+          ..lineTo(bounds.left + 7, y)
+          ..lineTo(bounds.left + 4, y + 3);
+        canvas.drawPath(
+            p,
+            Paint()
+              ..shader = shader
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 1);
+      }
+    } else if (variant == 2) {
+      // Bracketed monitor with paired rails and fine side vents.
+      for (final y in [bounds.top + 3, bounds.bottom - 3]) {
+        light(Offset(bounds.left + 24, y), Offset(bounds.left + 60, y));
+        light(Offset(bounds.right - 60, y), Offset(bounds.right - 24, y));
+      }
+      for (var i = 0; i < 5; i++) {
+        final y = bounds.center.dy - 12 + i * 6;
+        canvas.drawLine(
+            Offset(bounds.left - 2, y), Offset(bounds.left + 2, y + 2), rail);
+        canvas.drawLine(
+            Offset(bounds.right - 2, y), Offset(bounds.right + 2, y + 2), rail);
+      }
+      for (final y in [bounds.top + 9, bounds.bottom - 9]) {
+        canvas.drawLine(
+            Offset(bounds.left + 14, y),
+            Offset(bounds.right - 14, y),
+            Paint()
+              ..color = first.withOpacity(dark ? .18 : .12)
+              ..strokeWidth = .8);
+      }
+    } else {
+      light(Offset(bounds.left + 7, bounds.top + 22),
+          Offset(bounds.left + 7, bounds.top + 38));
+      light(Offset(bounds.right - 38, bounds.bottom - 6),
+          Offset(bounds.right - 22, bounds.bottom - 6));
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SpectralHudPainter old) =>
+      old.dark != dark ||
+      old.primary != primary ||
+      old.design != design ||
+      old.surface != surface;
 }

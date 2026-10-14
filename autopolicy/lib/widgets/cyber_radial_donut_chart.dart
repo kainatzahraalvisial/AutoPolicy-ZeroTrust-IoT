@@ -1,3 +1,4 @@
+import 'cyber_hud_frame.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -45,28 +46,14 @@ class CyberRadialDonutChart extends ConsumerWidget {
       onTap: () => ref.read(navigationTabProvider.notifier).state =
           2, // Jump to Anomalies Feed
       borderRadius: BorderRadius.circular(4),
-      child: Container(
+      child: CyberHudFrame(
+        design: CyberFrameDesign.stealthHex,
+        baseBorderColor: const Color(0xFFC5C764),
+        hoverBorderColor: const Color(0xFFC5C764),
+        ambientGlow: true,
+        isInteractive: false,
         height: height,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDarkMode ? const Color(0xFF08120C) : const Color(0xFFFAF9F6),
-          border: Border.all(
-            color: isDarkMode
-                ? const Color(0xFF80A416).withOpacity(0.40)
-                : const Color(0xFFCDD4B2),
-            width: 1.0,
-          ),
-          borderRadius: BorderRadius.circular(4),
-          boxShadow: isDarkMode
-              ? null
-              : [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-        ),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -146,7 +133,7 @@ class CyberRadialDonutChart extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: categories.map((cat) {
                         return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2.5),
+                          padding: const EdgeInsets.symmetric(vertical: 1.5),
                           child: Row(
                             children: [
                               Container(

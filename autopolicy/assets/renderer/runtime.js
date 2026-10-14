@@ -34471,12 +34471,12 @@ var ArchitecturalLighting = class {
     });
   }
   updateLightingForNarrative(state, t, camera2, dark2, reduced2) {
-    const brightness = dark2 ? 1 : 0.56;
+    const brightness = dark2 ? 1 : 0.78;
     for (const entry of this.emissions) {
       const alert = entry.device === "GlassSensor" && state.roq > 0.1;
       entry.m.emissive.copy(entry.color);
       if (alert) entry.m.emissive.set(COLORS.red);
-      entry.m.emissiveIntensity = entry.intensity * brightness;
+      entry.m.emissiveIntensity = entry.intensity * brightness * (!dark2 && entry.category === "roof-rim" ? 1.15 : 1);
     }
     for (const { mesh, gain, device } of this.pools) {
       const alert = device === "GlassSensor" && state.roq > 0.1;
@@ -34487,7 +34487,7 @@ var ArchitecturalLighting = class {
       light.intensity = intensity * brightness;
     });
     this.glass.forEach((m) => {
-      m.opacity = dark2 ? 0.09 : 0.1;
+      m.opacity = dark2 ? 0.09 : 0.075;
     });
     const tower = this.r.requireObject("runtime_tower");
     this.scratch.copy(camera2.position);
@@ -34733,12 +34733,12 @@ function theme() {
   renderer.setClearColor(0, 0);
   document.body.style.background = "transparent";
   scene.getObjectByName("fill").intensity = dark ? 0.64 : 1;
-  scene.getObjectByName("key").intensity = dark ? 2.25 : 2.8;
-  scene.getObjectByName("rim").intensity = dark ? 1.35 : 0.7;
-  bloom.strength = dark ? 0.62 : 0.28;
+  scene.getObjectByName("key").intensity = dark ? 2.25 : 2.35;
+  scene.getObjectByName("rim").intensity = dark ? 1.35 : 0.85;
+  bloom.strength = dark ? 0.62 : 0.4;
   bloom.radius = 0.48;
   bloom.threshold = 0.92;
-  scene.environmentIntensity = dark ? 0.56 : 0.38;
+  scene.environmentIntensity = dark ? 0.56 : 0.45;
 }
 function resize() {
   if (!renderer) return;

@@ -1,3 +1,4 @@
+import 'cyber_hud_frame.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -330,16 +331,18 @@ class CyberStatCard extends ConsumerWidget {
     );
 
     if (onTap != null) {
-      return InkWell(
+      return DashboardCardLift(
+          child: InkWell(
         onTap: onTap,
-        hoverColor: accentColor.withOpacity(0.12),
-        splashColor: accentColor.withOpacity(0.20),
+        hoverColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        splashColor: Colors.transparent,
         borderRadius: BorderRadius.circular(4),
         child: cardContent,
-      );
+      ));
     }
 
-    return cardContent;
+    return DashboardCardLift(child: cardContent);
   }
 }
 
@@ -362,9 +365,8 @@ class _OpaqueStatCardPainter extends CustomPainter {
     final double h = size.height;
     const double c = 14.0;
 
-    final Color strokeColor = isLightSolidFill
-        ? const Color(0xFF0F1410)
-        : const Color(0xFF140505);
+    final Color strokeColor =
+        isLightSolidFill ? const Color(0xFF0F1410) : const Color(0xFF140505);
     final Color symbolColor = isLightSolidFill
         ? const Color(0xFF0F1410).withOpacity(0.70)
         : const Color(0xFFFFFFFF).withOpacity(0.70);

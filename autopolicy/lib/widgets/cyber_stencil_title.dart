@@ -32,18 +32,25 @@ class CyberStencilHeroTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final primary = primaryColor ?? (isDark ? Colors.white : const Color(0xFF141812));
-    final accent = accentColor ?? (isDark ? const Color(0xFFDCFF33) : const Color(0xFF6B8A0E));
-    final hud = hudColor ?? (isDark ? const Color(0xFF00E5FF) : const Color(0xFF009BB0));
+    final primary =
+        primaryColor ?? (isDark ? Colors.white : const Color(0xFF141812));
+    final accent = accentColor ??
+        (isDark ? const Color(0xFFDCFF33) : const Color(0xFF6B8A0E));
+    final hud = hudColor ??
+        (isDark ? const Color(0xFF00E5FF) : const Color(0xFF009BB0));
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableWidth = maxWidth ?? constraints.maxWidth;
         // Target aspect ratio for 2 lines + hashes
-        const double designWidth = 680.0;
+        final double designWidth = [
+          680.0,
+          _CyberStencilTitlePainter.measureLine(firstLine.toUpperCase()),
+          _CyberStencilTitlePainter.measureLine(secondLine.toUpperCase())
+        ].reduce((a, b) => a > b ? a : b);
         const double designHeight = 175.0;
 
-        final double scale = (availableWidth / designWidth).clamp(0.40, 1.45);
+        final double scale = (availableWidth / designWidth).clamp(0.0, 1.45);
         final double renderWidth = designWidth * scale;
         final double renderHeight = designHeight * scale;
 
@@ -102,7 +109,7 @@ class _CyberStencilTitlePainter extends CustomPainter {
       text: firstLine,
       startY: line1Y,
       color: primaryColor,
-      hasGlow: isDark,
+      hasGlow: false,
       glowColor: primaryColor.withOpacity(0.35),
     );
 
@@ -113,7 +120,7 @@ class _CyberStencilTitlePainter extends CustomPainter {
       text: secondLine,
       startY: line2Y,
       color: accentColor,
-      hasGlow: isDark,
+      hasGlow: false,
       glowColor: accentColor.withOpacity(0.55),
     );
 
@@ -194,21 +201,51 @@ class _CyberStencilTitlePainter extends CustomPainter {
       }
 
       final double glyphWidth = _getGlyphWidth(char, baseGlyphWidth);
-      final path = _buildCyberGlyph(char, curX, startY, glyphWidth, glyphHeight);
+      final path =
+          _buildCyberGlyph(char, curX, startY, glyphWidth, glyphHeight);
 
       if (path != null) {
         if (glowPaint != null) {
           canvas.drawPath(path, glowPaint);
         }
         canvas.drawPath(path, fillPaint);
+      } else {
+        // Unmapped characters must remain readable rather than become blocks.
+        final glyph = TextPainter(
+          text: TextSpan(
+              text: char,
+              style: TextStyle(
+                  fontFamily: 'Orbitron',
+                  fontWeight: FontWeight.w800,
+                  fontSize: glyphHeight,
+                  height: 1,
+                  color: color)),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        canvas.save();
+        canvas.translate(curX, startY);
+        canvas.scale(glyphWidth / glyph.width, glyphHeight / glyph.height);
+        glyph.paint(canvas, Offset.zero);
+        canvas.restore();
+        glyph.dispose();
       }
 
       curX += glyphWidth + charSpacing;
     }
   }
 
-  double _getGlyphWidth(String char, double baseWidth) {
+  static double measureLine(String text) {
+    var width = 0.0;
+    for (final char in text.split('')) {
+      width += char == ' ' ? 24.0 : _getGlyphWidth(char, 46.0) + 9.0;
+    }
+    return width;
+  }
+
+  static double _getGlyphWidth(String char, double baseWidth) {
     switch (char) {
+      case '.':
+        return baseWidth * .22;
       case 'I':
         return baseWidth * 0.44;
       case 'M':
@@ -440,41 +477,43 @@ class _CyberStencilTitlePainter extends CustomPainter {
         path.addPath(rightVBottom, Offset.zero);
         return path;
 
-      case 'D':
-        // D: Left stem, chamfered outer bowl, inner counter, 45° cut on top-right
+      case 'F':
         path.addRect(Rect.fromLTWH(x, y, stem, h));
+        path.addRect(Rect.fromLTWH(x, y, w, stem));
+        path.addRect(Rect.fromLTWH(x, y + h * .42, w * .82, stem * .85));
+        return path;
 
-        // Outer curve of D with diagonal cut
-        final dTopCutX = x + w * 0.55;
-        final dBody = Path()
-          ..moveTo(x + stem, y)
-          ..lineTo(dTopCutX, y)
-          ..lineTo(dTopCutX - stem * 0.6, y + stem)
-          ..lineTo(x + stem, y + stem)
-          ..lineTo(x + stem, y + h - stem)
-          ..lineTo(x + w - stem - c * 0.5, y + h - stem)
-          ..lineTo(x + w - stem, y + h - stem - c * 0.5)
-          ..lineTo(x + w - stem, y + stem + c * 0.5)
-          ..lineTo(x + w - stem - c * 0.5, y + stem)
-          ..lineTo(dTopCutX - stem * 0.6, y + stem)
-          ..close();
-        path.addPath(dBody, Offset.zero);
+      case 'M':
+        path.addPolygon([
+          Offset(x, y + h),
+          Offset(x, y),
+          Offset(x + stem * .85, y),
+          Offset(x + w * .5, y + h * .43),
+          Offset(x + w - stem * .85, y),
+          Offset(x + w, y),
+          Offset(x + w, y + h),
+          Offset(x + w - stem * .85, y + h),
+          Offset(x + w - stem * .85, y + h * .30),
+          Offset(x + w * .5, y + h * .70),
+          Offset(x + stem * .85, y + h * .30),
+          Offset(x + stem * .85, y + h),
+        ], true);
+        return path;
 
-        final dHook = Path()
-          ..moveTo(dTopCutX + cut, y)
-          ..lineTo(x + w - c, y)
-          ..lineTo(x + w, y + c)
-          ..lineTo(x + w, y + h - c)
-          ..lineTo(x + w - c, y + h)
-          ..lineTo(x + stem, y + h)
-          ..lineTo(x + stem, y + h - stem)
-          ..lineTo(x + w - stem - c * 0.5, y + h - stem)
-          ..lineTo(x + w - stem, y + h - stem - c * 0.5)
-          ..lineTo(x + w - stem, y + stem + c * 0.5)
-          ..lineTo(x + w - stem - c * 0.5, y + stem)
-          ..lineTo(dTopCutX + cut - stem * 0.6, y + stem)
-          ..close();
-        path.addPath(dHook, Offset.zero);
+      case 'D':
+        path.fillType = PathFillType.evenOdd;
+        path.addPolygon([
+          Offset(x, y),
+          Offset(x + w - c, y),
+          Offset(x + w, y + c),
+          Offset(x + w, y + h - c),
+          Offset(x + w - c, y + h),
+          Offset(x, y + h),
+        ], true);
+        path.addRRect(RRect.fromRectAndRadius(
+            Rect.fromLTRB(
+                x + stem * .8, y + stem, x + w - stem * .75, y + h - stem),
+            Radius.circular(c * .4)));
         return path;
 
       case 'I':
@@ -517,29 +556,68 @@ class _CyberStencilTitlePainter extends CustomPainter {
         return path;
 
       case 'O':
-        // O: Octagon outer, octagon inner with diagonal cut
-        path.moveTo(x + c, y);
+        // A generous, genuinely transparent counter survives mobile scaling.
+        final wall = w * .23;
+        final outer = Path()
+          ..moveTo(x + c, y)
+          ..lineTo(x + w - c, y)
+          ..lineTo(x + w, y + c)
+          ..lineTo(x + w, y + h - c)
+          ..lineTo(x + w - c, y + h)
+          ..lineTo(x + c, y + h)
+          ..lineTo(x, y + h - c)
+          ..lineTo(x, y + c)
+          ..close();
+        final inner = Path()
+          ..addRRect(RRect.fromRectAndRadius(
+              Rect.fromLTRB(x + wall, y + stem, x + w - wall, y + h - stem),
+              Radius.circular(w * .10)));
+        return outer
+          ..fillType = PathFillType.evenOdd
+          ..addPath(inner, Offset.zero);
+
+      case 'P':
+        path.fillType = PathFillType.evenOdd;
+        path.moveTo(x, y);
         path.lineTo(x + w - c, y);
         path.lineTo(x + w, y + c);
-        path.lineTo(x + w, y + h - c);
-        path.lineTo(x + w - c, y + h);
-        path.lineTo(x + c, y + h);
-        path.lineTo(x, y + h - c);
-        path.lineTo(x, y + c);
+        path.lineTo(x + w, y + h * .53 - c);
+        path.lineTo(x + w - c, y + h * .53);
+        path.lineTo(x + stem, y + h * .53);
+        path.lineTo(x + stem, y + h);
+        path.lineTo(x, y + h);
         path.close();
+        path.addRect(Rect.fromLTRB(x + stem, y + stem * .75, x + w - stem * .65,
+            y + h * .53 - stem * .7));
+        return path;
 
-        // Inner counter hole
-        final hole = Path()
-          ..moveTo(x + stem + c * 0.5, y + stem)
-          ..lineTo(x + w - stem - c * 0.5, y + stem)
-          ..lineTo(x + w - stem, y + stem + c * 0.5)
-          ..lineTo(x + w - stem, y + h - stem - c * 0.5)
-          ..lineTo(x + w - stem - c * 0.5, y + h - stem)
-          ..lineTo(x + stem + c * 0.5, y + h - stem)
-          ..lineTo(x + stem, y + h - stem - c * 0.5)
-          ..lineTo(x + stem, y + stem + c * 0.5)
-          ..close();
-        return Path.combine(PathOperation.difference, path, hole);
+      case 'N':
+        path.addRect(Rect.fromLTWH(x, y, stem * .8, h));
+        path.addRect(Rect.fromLTWH(x + w - stem * .8, y, stem * .8, h));
+        path.addPolygon([
+          Offset(x + stem * .6, y),
+          Offset(x + stem * 1.4, y),
+          Offset(x + w - stem * .6, y + h),
+          Offset(x + w - stem * 1.4, y + h)
+        ], true);
+        return path;
+
+      case 'A':
+        path.addPolygon([
+          Offset(x, y + h),
+          Offset(x + w * .30, y),
+          Offset(x + w * .70, y),
+          Offset(x + w, y + h),
+          Offset(x + w - stem * .8, y + h),
+          Offset(x + w * .5, y + stem),
+          Offset(x + stem * .8, y + h)
+        ], true);
+        path.addRect(Rect.fromLTWH(
+            x + stem * .7, y + h * .59, w - stem * 1.4, stem * .7));
+        return path;
+
+      case '.':
+        return Path()..addRect(Rect.fromLTWH(x, y + h - w, w, w));
 
       case 'T':
         // T: Top bar with chamfers, center vertical stem with 45° cut
@@ -603,17 +681,7 @@ class _CyberStencilTitlePainter extends CustomPainter {
         return path;
 
       default:
-        // Generic fallback chamfered box
-        path.moveTo(x + c, y);
-        path.lineTo(x + w - c, y);
-        path.lineTo(x + w, y + c);
-        path.lineTo(x + w, y + h - c);
-        path.lineTo(x + w - c, y + h);
-        path.lineTo(x + c, y + h);
-        path.lineTo(x, y + h - c);
-        path.lineTo(x, y + c);
-        path.close();
-        return path;
+        return null;
     }
   }
 

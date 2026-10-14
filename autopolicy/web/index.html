@@ -50,47 +50,28 @@
 
   <title>AutoPolicy — Zero Trust IoT Security</title>
   <style>
-    html, body { margin: 0; background: #050a08; }
+    html, body { margin: 0; background: var(--startup-bg, #050a08); }
     #startup { position: fixed; inset: 0; display: grid; place-content: center;
-      background: #050a08; color: #b1a9da; font: 13px sans-serif; text-align: center; letter-spacing: 1.2px; }
-    #startup canvas { display: block; width: min(520px, 90vw); height: 170px; }
+      background: var(--startup-bg, #050a08); color: var(--startup-text, #b1a9da); font: 13px sans-serif; text-align: center; letter-spacing: 1.2px; }
   </style>
+  <script>
+    try {
+      if (localStorage.getItem('flutter.autopolicy.darkTheme') === 'false') {
+        document.documentElement.style.setProperty('--startup-bg', '#FAF9F6');
+        document.documentElement.style.setProperty('--startup-text', '#000000');
+      }
+    } catch (_) {}
+  </script>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
   <div id="startup" role="status" aria-label="Loading AutoPolicy">
-    <canvas id="light-ribbon" aria-hidden="true"></canvas>
     <span>Loading...</span>
   </div>
   <script>
-    (() => {
-      const canvas = document.getElementById('light-ribbon'), ctx = canvas.getContext('2d');
-      const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const started = performance.now(); let frame;
-      function draw(now) {
-        const w = canvas.clientWidth, h = 170, dpr = devicePixelRatio || 1;
-        canvas.width = w * dpr; canvas.height = h * dpr; ctx.scale(dpr, dpr);
-        const turn = reduced ? .15 * Math.PI * 2 : (now - started) / 4000 * Math.PI * 2;
-        const gradient = ctx.createLinearGradient(w * .12, 0, w * .88, 0);
-        ['#9d8df1','#c4e326','#fffeda','#c4e326','#9d8df1'].forEach((color,i) => gradient.addColorStop(i/4,color));
-        ctx.strokeStyle = gradient; ctx.lineWidth = .65; ctx.shadowColor = '#9d8df1'; ctx.shadowBlur = 8;
-        for (let strand = 0; strand < 36; strand++) {
-          const offset = (strand / 35 - .5) * 18; ctx.beginPath();
-          for (let step = 0; step <= 180; step++) {
-            const angle = step / 180 * Math.PI * 2;
-            const x = w/2 + Math.cos(angle) * w * .38;
-            const y = h/2 + Math.sin(angle) * 42 * Math.sin(turn) * (.12 + .88 * Math.abs(Math.cos(angle))) + offset * Math.cos(angle + turn);
-            step ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
-          }
-          ctx.stroke();
-        }
-        if (!reduced) frame = requestAnimationFrame(draw);
-      }
-      frame = requestAnimationFrame(draw);
-      window.addEventListener('flutter-first-frame', () => {
-        cancelAnimationFrame(frame); document.getElementById('startup')?.remove();
-      });
-    })();
+    window.addEventListener('flutter-first-frame', () => {
+      document.getElementById('startup')?.remove();
+    }, { once: true });
   </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>

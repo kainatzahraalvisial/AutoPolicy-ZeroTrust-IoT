@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import '../theme/colors.dart';
 
 class CinematicButton extends StatefulWidget {
   final String label;
   final VoidCallback? onPressed;
-  final bool filled, compact, angular, navbar;
+  final bool filled, compact, angular, navbar, landingLight;
   const CinematicButton(
       {super.key,
       required this.label,
@@ -11,7 +12,8 @@ class CinematicButton extends StatefulWidget {
       this.filled = false,
       this.compact = false,
       this.angular = false,
-      this.navbar = false});
+      this.navbar = false,
+      this.landingLight = false});
   @override
   State<CinematicButton> createState() => _CinematicButtonState();
 }
@@ -21,6 +23,8 @@ class _CinematicButtonState extends State<CinematicButton> {
   @override
   Widget build(BuildContext context) {
     const lime = Color(0xFF94B51A);
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final refinedLight = widget.landingLight && !dark;
     final active = hover || focus;
     final reduced = MediaQuery.of(context).disableAnimations;
     return MouseRegion(
@@ -29,27 +33,28 @@ class _CinematicButtonState extends State<CinematicButton> {
       child: AnimatedContainer(
         duration: Duration(milliseconds: reduced ? 0 : 240),
         curve: Curves.easeOutCubic,
-        transform: Matrix4.translationValues(0, active ? -2 : 0, 0),
+        transform: Matrix4.translationValues(
+            0, active ? (refinedLight ? -1 : -2) : 0, 0),
         decoration: BoxDecoration(
             boxShadow: active && widget.filled
                 ? [
                     BoxShadow(
-                        color: lime.withOpacity(widget.filled ? .30 : .13),
-                        blurRadius: 32,
+                        color: lime.withOpacity(
+                            refinedLight ? .14 : (widget.filled ? .30 : .13)),
+                        blurRadius: refinedLight ? 18 : 32,
                         spreadRadius: 1),
                     BoxShadow(
-                        color: const Color(0xFFC4E326)
-                            .withOpacity(widget.filled ? .17 : .09),
-                        blurRadius: 14,
+                        color: const Color(0xFFC4E326).withOpacity(
+                            refinedLight ? .07 : (widget.filled ? .17 : .09)),
+                        blurRadius: refinedLight ? 8 : 14,
                         spreadRadius: 0)
                   ]
                 : []),
         child: CustomPaint(
           painter: widget.angular
-              ? _AngularHeroPainter(widget.filled, active,
-                  Theme.of(context).brightness == Brightness.dark)
+              ? _AngularHeroPainter(widget.filled, active, dark, refinedLight)
               : widget.filled
-                  ? _RaisedButtonPainter(active)
+                  ? _RaisedButtonPainter(active, dark, refinedLight)
                   : null,
           child: TextButton(
             onPressed: widget.onPressed,
@@ -61,7 +66,9 @@ class _CinematicButtonState extends State<CinematicButton> {
                   ? Colors.transparent
                   : lime.withOpacity(active ? .15 : .04),
               foregroundColor: widget.filled
-                  ? const Color(0xFF111507)
+                  ? (refinedLight
+                      ? LandingLightPalette.ink
+                      : const Color(0xFF111507))
                   : Theme.of(context).brightness == Brightness.dark
                       ? const Color(0xFFBFD46D)
                       : const Color(0xFF607810),
@@ -96,8 +103,9 @@ class _CinematicButtonState extends State<CinematicButton> {
 }
 
 class _AngularHeroPainter extends CustomPainter {
-  final bool filled, active, dark;
-  const _AngularHeroPainter(this.filled, this.active, this.dark);
+  final bool filled, active, dark, refinedLight;
+  const _AngularHeroPainter(
+      this.filled, this.active, this.dark, this.refinedLight);
   Path shape(Rect r) => Path()
     ..moveTo(r.left + 11, r.top)
     ..lineTo(r.right, r.top)
@@ -109,6 +117,45 @@ class _AngularHeroPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final face = Rect.fromLTWH(1, 1, size.width - 2, size.height - 4);
+    if (refinedLight) {
+      final outline = shape(face);
+      final gradient = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: filled
+              ? [LandingLightPalette.paleLime, LandingLightPalette.chartreuse]
+              : [
+                  LandingLightPalette.olive,
+                  LandingLightPalette.violet.withOpacity(.8)
+                ]);
+      canvas.drawPath(outline,
+          Paint()..color = LandingLightPalette.canvas.withOpacity(.28));
+      if (filled)
+        canvas.drawPath(outline, Paint()..shader = gradient.createShader(face));
+      if (active) {
+        canvas.save();
+        canvas.clipPath(Path()
+          ..fillType = PathFillType.evenOdd
+          ..addRect(face.inflate(20))
+          ..addPath(outline, Offset.zero));
+        canvas.drawPath(
+            outline,
+            Paint()
+              ..shader = gradient.createShader(face)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 2
+              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5));
+        canvas.restore();
+      }
+      canvas.drawPath(
+          outline,
+          Paint()
+            ..shader = gradient.createShader(face)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = active ? 1.3 : .9);
+      return;
+    }
+
     const lime = Color(0xFFBADC29);
     if (!filled) {
       final outline = shape(face);
@@ -191,13 +238,16 @@ class _AngularHeroPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_AngularHeroPainter old) =>
-      old.active != active || old.filled != filled || old.dark != dark;
+      old.active != active ||
+      old.filled != filled ||
+      old.dark != dark ||
+      old.refinedLight != refinedLight;
 }
 
 // A solid lower rim, sloped face and thin lit edge give the CTA real depth.
 class _RaisedButtonPainter extends CustomPainter {
-  final bool active;
-  const _RaisedButtonPainter(this.active);
+  final bool active, dark, refinedLight;
+  const _RaisedButtonPainter(this.active, this.dark, this.refinedLight);
 
   Path outline(Rect r) => Path()
     ..moveTo(r.left + 17, r.top)
@@ -211,6 +261,24 @@ class _RaisedButtonPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final face = Rect.fromLTWH(1, 1, size.width - 3, size.height - 6);
+    if (refinedLight) {
+      canvas.drawPath(
+          outline(face),
+          Paint()
+            ..shader = LinearGradient(colors: [
+              LandingLightPalette.paleLime,
+              LandingLightPalette.chartreuse
+            ], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                .createShader(face));
+      canvas.drawPath(
+          outline(face),
+          Paint()
+            ..color = LandingLightPalette.olive.withOpacity(.55)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = .8);
+      return;
+    }
+
     canvas.drawPath(outline(face.shift(const Offset(1, 4))),
         Paint()..color = const Color(0xFF344207));
     canvas.drawPath(
@@ -242,7 +310,9 @@ class _RaisedButtonPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_RaisedButtonPainter oldDelegate) =>
-      oldDelegate.active != active;
+      oldDelegate.active != active ||
+      oldDelegate.dark != dark ||
+      oldDelegate.refinedLight != refinedLight;
 }
 
 class _CutCornerBorder extends OutlinedBorder {

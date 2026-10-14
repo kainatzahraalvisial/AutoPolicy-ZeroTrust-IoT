@@ -13,6 +13,7 @@ import '../theme/text_styles.dart';
 import '../widgets/cyber_grid.dart';
 import '../landing/visual_polish.dart';
 import '../widgets/sidebar_brand.dart';
+import '../widgets/dashboard_chrome.dart';
 import '../widgets/cyber_hud_frame.dart';
 
 // Screens placeholder imports (we will write them next)
@@ -363,6 +364,8 @@ class _MainLayoutState extends ConsumerState<MainLayout>
 
   Widget _buildTreeSidebar(BuildContext context, bool isDarkMode,
       String activeRole, int unreadCount) {
+    if (isDarkMode)
+      return _buildDarkTreeSidebar(context, activeRole, unreadCount);
     final activeTab = ref.watch(navigationTabProvider);
     final treeNav = _getTreeNavigation(unreadCount, activeRole);
 
@@ -400,7 +403,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                           ref
                               .read(navigationNotifierProvider.notifier)
                               .selectTab(directIndex);
-                          if (Scaffold.maybeOf(context)?.isDrawerOpen == true) {
+                          if (Responsive.isMobile(context)) {
                             Navigator.pop(context);
                           }
                         } else {
@@ -597,6 +600,233 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     );
   }
 
+  Widget _buildDarkTreeSidebar(
+      BuildContext context, String role, int unreadCount) {
+    final activeTab = ref.watch(navigationTabProvider);
+    final tree = _getTreeNavigation(unreadCount, role);
+    Widget badge(String? value) => value == null
+        ? const SizedBox.shrink()
+        : Container(
+            margin: const EdgeInsets.only(left: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+            decoration: BoxDecoration(
+                color: CyberColors.alertRed,
+                borderRadius: BorderRadius.circular(6)),
+            child: Text(value,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold)));
+    return ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        children: tree.map((cat) {
+          final title = cat['category'] as String;
+          final direct = cat.containsKey('index');
+          final children = cat['subItems'] as List? ?? [];
+          final selected = direct && activeTab == cat['index'];
+          final childSelected =
+              children.any((sub) => sub['index'] == activeTab);
+          final expanded = _expandedCategories[title] ?? true;
+          return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Tooltip(
+                        message: title,
+                        child: DarkNavigationItem(
+                            label: title,
+                            selected: selected,
+                            onTap: () {
+                              if (direct) {
+                                ref
+                                    .read(navigationNotifierProvider.notifier)
+                                    .selectTab(cat['index'] as int);
+                                if (Responsive.isMobile(context))
+                                  Navigator.pop(context);
+                              } else {
+                                setState(() =>
+                                    _expandedCategories[title] = !expanded);
+                              }
+                            },
+                            builder: (fg) => Row(children: [
+                                  Icon(cat['icon'] as IconData,
+                                      size: 20,
+                                      color: selected || childSelected
+                                          ? DashboardDarkPalette.chartreuse
+                                          : fg == DashboardDarkPalette.secondary
+                                              ? DashboardDarkPalette.icon
+                                              : fg),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                      child: Text(title,
+                                          style: CyberTextStyles.technical(
+                                              fontSize: 12,
+                                              fontWeight:
+                                                  selected || childSelected
+                                                      ? FontWeight.bold
+                                                      : FontWeight.w600,
+                                              color: fg),
+                                          overflow: TextOverflow.ellipsis)),
+                                  badge(cat['badge'] as String?),
+                                  if (!direct)
+                                    Icon(
+                                        expanded
+                                            ? Icons.keyboard_arrow_up
+                                            : Icons.keyboard_arrow_down,
+                                        size: 18,
+                                        color: fg),
+                                ])))),
+                if (!direct && expanded)
+                  Padding(
+                      padding: const EdgeInsets.only(left: 18),
+                      child: Column(
+                          children: children.map<Widget>((sub) {
+                        final index = sub['index'] as int;
+                        final chosen = index == activeTab;
+                        final label = sub['label'] as String;
+                        return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: DarkNavigationItem(
+                                label: label,
+                                selected: chosen,
+                                onTap: () => ref
+                                    .read(navigationNotifierProvider.notifier)
+                                    .selectTab(index),
+                                builder: (fg) => Row(children: [
+                                      Icon(Icons.circle,
+                                          size: 5,
+                                          color: chosen
+                                              ? DashboardDarkPalette.chartreuse
+                                              : DashboardDarkPalette.icon),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                          child: Text(label,
+                                              style: CyberTextStyles.technical(
+                                                  fontSize: 12,
+                                                  color: fg,
+                                                  fontWeight: chosen
+                                                      ? FontWeight.bold
+                                                      : FontWeight.w500),
+                                              overflow: TextOverflow.ellipsis)),
+                                      badge(sub['badge'] as String?),
+                                    ])));
+                      }).toList())),
+              ]);
+        }).toList());
+  }
+
+  Widget _buildDarkCollapsedSidebar(
+      BuildContext context, String role, int unreadCount, String username) {
+    final activeTab = ref.watch(navigationTabProvider);
+    final tree = _getTreeNavigation(unreadCount, role);
+    return Container(
+        width: 64,
+        margin: const EdgeInsets.symmetric(vertical: 10),
+        child: Column(children: [
+          SizedBox(
+              height: 44,
+              child: IconButton(
+                  tooltip: 'Expand sidebar',
+                  icon: const SidebarShield(dark: true, size: 38),
+                  onPressed: () =>
+                      setState(() => _isSidebarCollapsed = false))),
+          const SizedBox(height: 8),
+          Expanded(
+              child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 3, vertical: 8),
+                  decoration: BoxDecoration(
+                      gradient: DashboardDarkPalette.sidebarGradient,
+                      borderRadius: BorderRadius.circular(20)),
+                  child: Column(children: [
+                    SizedBox(
+                        height: 40,
+                        child: IconButton(
+                            tooltip: 'Expand navigation',
+                            icon: const SidebarToggleIcon(
+                                color: DashboardDarkPalette.secondary),
+                            onPressed: () =>
+                                setState(() => _isSidebarCollapsed = false))),
+                    Expanded(
+                        child: ListView(
+                            children: tree.map((cat) {
+                      final title = cat['category'] as String;
+                      final direct = cat.containsKey('index');
+                      final selected = direct
+                          ? activeTab == cat['index']
+                          : (cat['subItems'] as List)
+                              .any((sub) => sub['index'] == activeTab);
+                      return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 1),
+                          child: Tooltip(
+                              message: title,
+                              child: SizedBox(
+                                  height: 42,
+                                  child: DarkNavigationItem(
+                                      label: title,
+                                      selected: selected,
+                                      padding: const EdgeInsets.all(9),
+                                      onTap: () {
+                                        if (direct) {
+                                          ref
+                                              .read(navigationNotifierProvider
+                                                  .notifier)
+                                              .selectTab(cat['index'] as int);
+                                        } else {
+                                          setState(() {
+                                            _isSidebarCollapsed = false;
+                                            _expandedCategories[title] = true;
+                                          });
+                                        }
+                                      },
+                                      builder: (fg) => Center(
+                                          child: Icon(cat['icon'] as IconData,
+                                              size: 20,
+                                              color: selected
+                                                  ? DashboardDarkPalette
+                                                      .chartreuse
+                                                  : fg ==
+                                                          DashboardDarkPalette
+                                                              .secondary
+                                                      ? DashboardDarkPalette
+                                                          .icon
+                                                      : fg))))));
+                    }).toList())),
+                    SizedBox(
+                        height: 42,
+                        child: Tooltip(
+                            message: 'Operator profile',
+                            child: DarkNavigationItem(
+                                label: 'Operator profile',
+                                onTap: () => _showUserProfileModal(
+                                    context, username, role, true),
+                                builder: (fg) => Center(
+                                    child: Text(
+                                        username.isEmpty
+                                            ? 'A'
+                                            : username
+                                                .substring(0, 1)
+                                                .toUpperCase(),
+                                        style: TextStyle(
+                                            color: fg,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700)))))),
+                    SizedBox(
+                        height: 42,
+                        child: Tooltip(
+                            message: 'Sign out',
+                            child: DarkNavigationItem(
+                                label: 'Sign out',
+                                onTap: _signingOut ? null : _signOut,
+                                builder: (fg) => Center(
+                                    child: Icon(Icons.logout,
+                                        size: 20, color: fg))))),
+                  ]))),
+        ]));
+  }
+
   Widget _buildExpandedSidebar(BuildContext context, bool isDarkMode,
       String activeRole, int unreadCount, String username) {
     return Container(
@@ -604,7 +834,9 @@ class _MainLayoutState extends ConsumerState<MainLayout>
       margin: const EdgeInsets.symmetric(vertical: 10),
       padding: const EdgeInsets.only(left: 4),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFFDCFF33) : const Color(0xFFE6DAC8),
+        color:
+            isDarkMode ? DashboardDarkPalette.carbon : const Color(0xFFE6DAC8),
+        gradient: isDarkMode ? DashboardDarkPalette.sidebarGradient : null,
         borderRadius: BorderRadius.circular(24),
       ),
       child: ClipRRect(
@@ -621,8 +853,8 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                   Expanded(
                     child: SizedBox(
                       height: 48,
-                      child: SidebarBrand(
-                          dark: isDarkMode, lightSurface: isDarkMode),
+                      child:
+                          SidebarBrand(dark: isDarkMode, lightSurface: false),
                     ),
                   ),
                   IconButton(
@@ -632,7 +864,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                     tooltip: 'Collapse sidebar',
                     icon: SidebarToggleIcon(
                         color: isDarkMode
-                            ? const Color(0xFF141518)
+                            ? DashboardDarkPalette.secondary
                             : const Color(0xFF4A433A)),
                     onPressed: () => setState(() => _isSidebarCollapsed = true),
                   ),
@@ -655,6 +887,9 @@ class _MainLayoutState extends ConsumerState<MainLayout>
 
   Widget _buildCollapsedSidebar(BuildContext context, bool isDarkMode,
       String activeRole, int unreadCount, String username) {
+    if (isDarkMode)
+      return _buildDarkCollapsedSidebar(
+          context, activeRole, unreadCount, username);
     final activeTab = ref.watch(navigationTabProvider);
     final treeNav = _getTreeNavigation(unreadCount, activeRole);
 
@@ -987,7 +1222,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
         drawer: isMobile
             ? Drawer(
                 backgroundColor: isDarkMode
-                    ? const Color(0xFFDCFF33)
+                    ? DashboardDarkPalette.carbon
                     : const Color(0xFFE6DAC8),
                 child: SafeArea(
                     child: Column(children: [
@@ -1006,19 +1241,14 @@ class _MainLayoutState extends ConsumerState<MainLayout>
             : null,
         body: Stack(
           children: [
-            // Base background color behind main section: #E5FF66
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 260),
-              decoration: BoxDecoration(
-                color: _isSidebarCollapsed
-                    ? (isDarkMode
-                        ? const Color(0xFFE5FF66)
-                        : const Color(0xFFFAF8F4))
-                    : (isDarkMode
-                        ? const Color(0xFFE5FF66)
-                        : const Color(0xFFE6DAC8)),
-              ),
-            ),
+            if (isDarkMode)
+              const Positioned.fill(child: DashboardAmbientBackground())
+            else
+              Positioned.fill(
+                  child: ColoredBox(
+                      color: _isSidebarCollapsed
+                          ? const Color(0xFFFAF8F4)
+                          : const Color(0xFFE6DAC8))),
 
             // Main Layout Row
             CyberGrid(
@@ -1047,19 +1277,23 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                     top: 10, bottom: 10, right: 12, left: 6),
                             decoration: BoxDecoration(
                               color: isDarkMode
-                                  ? const Color(0xFF141518)
+                                  ? DashboardDarkPalette.shell
                                   : Colors.white,
                               borderRadius: isMobile
                                   ? BorderRadius.zero
                                   : BorderRadius.circular(24),
-                              border: null,
+                              border: isDarkMode
+                                  ? Border.all(
+                                      color: DashboardDarkPalette.border
+                                          .withOpacity(.35))
+                                  : null,
                               boxShadow: isMobile
                                   ? null
                                   : [
                                       BoxShadow(
                                         color: Colors.black.withOpacity(
-                                            isDarkMode ? 0.35 : 0.05),
-                                        blurRadius: 16,
+                                            isDarkMode ? 0.55 : 0.05),
+                                        blurRadius: isDarkMode ? 28 : 16,
                                         offset: const Offset(0, 4),
                                       ),
                                     ],
@@ -1075,7 +1309,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                         horizontal: 14, vertical: 8),
                                     decoration: BoxDecoration(
                                       color: isDarkMode
-                                          ? const Color(0xFF141518)
+                                          ? DashboardDarkPalette.shell
                                           : Colors.white,
                                       border: Border(
                                         bottom: BorderSide(
@@ -1172,73 +1406,28 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                         // Clock & Active User Controls
                                         Row(
                                           children: [
-                                            // Theme Mode Switcher Pill (Dark / Light)
-                                            InkWell(
-                                              onTap: () {
+                                            // Theme Mode Switcher Icon (like landing page)
+                                            IconButton(
+                                              tooltip: isDarkMode
+                                                  ? 'Light theme'
+                                                  : 'Dark theme',
+                                              onPressed: () {
                                                 ref
                                                     .read(themeModeProvider
                                                         .notifier)
                                                     .state = !isDarkMode;
                                               },
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 10,
-                                                        vertical: 4),
-                                                decoration: BoxDecoration(
-                                                  color: isDarkMode
-                                                      ? const Color(0xFF22242A)
-                                                      : const Color(0xFFEFE8DD),
-                                                  borderRadius:
-                                                      BorderRadius.circular(20),
-                                                  border: Border.all(
-                                                    color: isDarkMode
-                                                        ? const Color(
-                                                            0xFF333640)
-                                                        : const Color(
-                                                            0xFFD4C5B3),
-                                                    width: 1,
-                                                  ),
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Icon(
-                                                      isDarkMode
-                                                          ? Icons
-                                                              .dark_mode_outlined
-                                                          : Icons
-                                                              .light_mode_outlined,
-                                                      size: 13,
-                                                      color: isDarkMode
-                                                          ? Colors.white
-                                                          : const Color(
-                                                              0xFF4A433A),
-                                                    ),
-                                                    const SizedBox(width: 5),
-                                                    Text(
-                                                      isDarkMode
-                                                          ? 'DARK'
-                                                          : 'LIGHT',
-                                                      style: TextStyle(
-                                                        fontFamily: 'monospace',
-                                                        fontSize: 10.5,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: isDarkMode
-                                                            ? Colors.white
-                                                            : const Color(
-                                                                0xFF4A433A),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
+                                              icon: Icon(
+                                                isDarkMode
+                                                    ? Icons.light_mode_outlined
+                                                    : Icons.dark_mode_outlined,
+                                                size: 18,
+                                                color: isDarkMode
+                                                    ? const Color(0xFF9E9EA8)
+                                                    : const Color(0xFF4A433A),
                                               ),
                                             ),
-                                            const SizedBox(width: 10),
+                                            const SizedBox(width: 8),
                                             // Clock
                                             if (screenWidth > 1050) ...[
                                               Text(
@@ -1251,58 +1440,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                                   fontSize: 13,
                                                 ),
                                               ),
-                                              const SizedBox(width: 16),
                                             ],
-                                            // Notifications Bell
-                                            Stack(
-                                              clipBehavior: Clip.none,
-                                              children: [
-                                                IconButton(
-                                                  icon: Icon(
-                                                    Icons
-                                                        .notifications_outlined,
-                                                    color: isDarkMode
-                                                        ? const Color(
-                                                            0xFF9E9EA8)
-                                                        : const Color(
-                                                            0xFF4A433A),
-                                                    size: 20,
-                                                  ),
-                                                  onPressed: () {
-                                                    ref
-                                                        .read(
-                                                            navigationTabProvider
-                                                                .notifier)
-                                                        .state = 11;
-                                                  },
-                                                ),
-                                                if (unreadCount > 0)
-                                                  Positioned(
-                                                    top: 6,
-                                                    right: 6,
-                                                    child: Container(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              4),
-                                                      decoration:
-                                                          const BoxDecoration(
-                                                        shape: BoxShape.circle,
-                                                        color: CyberColors
-                                                            .alertRed,
-                                                      ),
-                                                      child: Text(
-                                                        '$unreadCount',
-                                                        style: const TextStyle(
-                                                            fontSize: 8,
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
                                           ],
                                         ),
                                       ],
@@ -1486,11 +1624,13 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFFDCFF33) : const Color(0xFFE6DAC8),
+        color:
+            isDarkMode ? DashboardDarkPalette.carbon : const Color(0xFFE6DAC8),
         border: Border(
           top: BorderSide(
-            color:
-                isDarkMode ? const Color(0xFFB8DB24) : const Color(0xFFDDD0BD),
+            color: isDarkMode
+                ? DashboardDarkPalette.border
+                : const Color(0xFFDDD0BD),
             width: 1,
           ),
         ),
@@ -1501,8 +1641,9 @@ class _MainLayoutState extends ConsumerState<MainLayout>
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            color:
-                isDarkMode ? const Color(0xFFCBEB2F) : const Color(0xFFDDD0BD),
+            color: isDarkMode
+                ? DashboardDarkPalette.elevated
+                : const Color(0xFFDDD0BD),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -1511,17 +1652,17 @@ class _MainLayoutState extends ConsumerState<MainLayout>
               CircleAvatar(
                 radius: 16,
                 backgroundColor: isDarkMode
-                    ? const Color(0xFFA6CC00)
+                    ? DashboardDarkPalette.selected
                     : const Color(0xFFCBB9A4),
                 child: Text(
                   username.isNotEmpty
-                       ? username.substring(0, 1).toUpperCase()
+                      ? username.substring(0, 1).toUpperCase()
                       : 'A',
                   style: CyberTextStyles.technical(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: isDarkMode
-                        ? const Color(0xFF141518)
+                        ? DashboardDarkPalette.primary
                         : const Color(0xFF1A1612),
                   ),
                 ),
@@ -1539,7 +1680,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
                         color: isDarkMode
-                            ? const Color(0xFF141518)
+                            ? DashboardDarkPalette.primary
                             : const Color(0xFF1A1612),
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -1550,7 +1691,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                           horizontal: 6, vertical: 1.5),
                       decoration: BoxDecoration(
                         color: isDarkMode
-                            ? const Color(0xFFA6CC00)
+                            ? DashboardDarkPalette.selected
                             : const Color(0xFFCBB9A4),
                         borderRadius: BorderRadius.circular(4),
                       ),
@@ -1561,7 +1702,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.4,
                           color: isDarkMode
-                              ? const Color(0xFF141518)
+                              ? DashboardDarkPalette.primary
                               : const Color(0xFF1A1612),
                         ),
                       ),
@@ -1573,7 +1714,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                 Icons.unfold_more,
                 size: 16,
                 color: isDarkMode
-                    ? const Color(0xFF51436E)
+                    ? DashboardDarkPalette.icon
                     : const Color(0xFF5C5247),
               ),
             ],

@@ -1,6 +1,7 @@
 import '../widgets/console_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../landing/cinematic_button.dart';
 import '../models/anomaly.dart';
 import '../providers/navigation_provider.dart';
 import '../providers/security_provider.dart';
@@ -50,9 +51,10 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title Header
-            ConsoleRow(
+            // Title Header: Left Title vs Far Right Action Button
+            Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,23 +66,18 @@ class _AnomalyDetectionState extends ConsumerState<AnomalyDetection> {
                         style: CyberTextStyles.techMutedFor(isDarkMode)),
                   ],
                 ),
-                // Summary pill (Increased font size & readable contrast)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                  decoration: BoxDecoration(
-                    color: CyberColors.alertRed.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: CyberColors.alertRed, width: 1.2),
-                  ),
-                  child: Text(
-                    '${anomalies.where((a) => !a.isMitigated).length} UNRESOLVED INCIDENTS',
-                    style: CyberTextStyles.technical(
-                      color: CyberColors.alertRed,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
+                // Summary button (Styled like Cinematic angular outline button, shifted to far right)
+                CinematicButton(
+                  landingLight: true,
+                  label: '${anomalies.where((a) => !a.isMitigated).length} Unresolved Incidents',
+                  filled: false,
+                  compact: true,
+                  angular: true,
+                  onPressed: () {
+                    setState(() {
+                      _statusFilter = 'ACTIVE';
+                    });
+                  },
                 ),
               ],
             ),

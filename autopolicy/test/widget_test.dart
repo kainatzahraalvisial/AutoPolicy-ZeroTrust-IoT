@@ -41,18 +41,18 @@ void main() {
     // Verify MainLayout loaded successfully
     expect(find.byType(MainLayout), findsOneWidget);
 
-    // The pill displays the currently selected theme.
-    final toggleButtonFinder = find.byIcon(Icons.dark_mode_outlined);
+    // In dark mode (default), the theme toggle button shows Icons.light_mode_outlined to switch to light mode
+    final toggleButtonFinder = find.byIcon(Icons.light_mode_outlined);
     expect(toggleButtonFinder, findsOneWidget);
 
-    // Activate the current-theme pill.
+    // Activate the theme toggle.
     await tester.tap(toggleButtonFinder);
     await tester.pump(); // Start transition
 
     // Allow the palette update without waiting for continuous dashboard animations.
     await tester.pump(const Duration(milliseconds: 700));
 
-    // The pill now displays the light theme.
-    expect(find.byIcon(Icons.light_mode_outlined), findsOneWidget);
+    // In light mode, it now displays the dark mode icon to switch back.
+    expect(find.byIcon(Icons.dark_mode_outlined), findsOneWidget);
   });
 }

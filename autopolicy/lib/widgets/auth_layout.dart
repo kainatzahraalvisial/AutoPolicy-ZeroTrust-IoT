@@ -19,8 +19,8 @@ class AuthFieldPair extends StatelessWidget {
 
 class AuthHeader extends StatelessWidget {
   final bool dark;
-  final VoidCallback onTheme;
-  const AuthHeader({super.key, required this.dark, required this.onTheme});
+  final VoidCallback? onTheme;
+  const AuthHeader({super.key, required this.dark, this.onTheme});
   @override
   Widget build(BuildContext context) => SafeArea(
       bottom: false,
@@ -30,12 +30,6 @@ class AuthHeader extends StatelessWidget {
             SizedBox(
                 width: 170, height: 44, child: AutoPolicyWordmark(dark: dark)),
             const Spacer(),
-            IconButton(
-                tooltip: dark ? 'Light theme' : 'Dark theme',
-                onPressed: onTheme,
-                icon: Icon(
-                    dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-                    size: 18)),
             TextButton(
                 onPressed: () =>
                     Navigator.pushReplacementNamed(context, '/landing'),

@@ -113,6 +113,10 @@ test("attached light accents follow tower, zones and isolated devices and return
     true,
     true,
   );
+  // Light-theme tuning must not leak into the established dark emission state.
+  lighting.updateLightingForNarrative(narrative("explore",0),0,camera,false,true);
+  assert.ok(lighting.glass.every(m=>m.opacity===.075));
+  lighting.updateLightingForNarrative(narrative("explore",0),0,camera,true,true);
   assert.deepEqual(
     lighting.emissions.map((e) => [
       e.m.emissive.getHex(),

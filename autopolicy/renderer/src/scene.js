@@ -221,12 +221,12 @@ function theme() {
   // Flutter owns the continuous atmospheric field outside the model viewport.
   document.body.style.background = "transparent";
   scene.getObjectByName("fill").intensity = dark ? 0.64 : 1.0;
-  scene.getObjectByName("key").intensity = dark ? 2.25 : 2.8;
-  scene.getObjectByName("rim").intensity = dark ? 1.35 : 0.7;
-  bloom.strength = dark ? 0.62 : 0.28;
+  scene.getObjectByName("key").intensity = dark ? 2.25 : 2.35;
+  scene.getObjectByName("rim").intensity = dark ? 1.35 : 0.85;
+  bloom.strength = dark ? 0.62 : 0.40;
   bloom.radius = 0.48;
   bloom.threshold = 0.92;
-  scene.environmentIntensity = dark ? 0.56 : 0.38;
+  scene.environmentIntensity = dark ? 0.56 : 0.45;
 }
 function resize() {
   if (!renderer) return;

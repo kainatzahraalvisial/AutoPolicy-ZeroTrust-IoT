@@ -1,4 +1,5 @@
 import '../widgets/console_row.dart';
+import '../landing/cinematic_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
@@ -148,57 +149,48 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Page Header
-              ConsoleRow(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'SYSTEM SETTINGS & CONFIGURATION',
-                        style: CyberTextStyles.heading2.copyWith(
-                            color: isDarkMode
-                                ? const Color(0xFF5DD62C)
-                                : const Color(0xFF0F172A)),
+                  if (_activeSettingsTab != 0) ...[
+                    IconButton(
+                      tooltip: 'All Configuration Tiles',
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints(minWidth: 32, minHeight: 32),
+                      icon: Icon(
+                        Icons.arrow_back_ios_new,
+                        size: 18,
+                        color: isDarkMode
+                            ? const Color(0xFF5DD62C)
+                            : const Color(0xFF0F172A),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'ZEEK IDS, DETECTION THRESHOLDS, GNN MODEL, OPA SIDECAR & NOTIFICATIONS',
-                        style: CyberTextStyles.techMuted.copyWith(
-                            color: isDarkMode
-                                ? const Color(0xFF9EBA9C)
-                                : const Color(0xFF64748B)),
-                      ),
-                    ],
-                  ),
-                  if (_activeSettingsTab != 0)
-                    ElevatedButton.icon(
                       onPressed: () => setState(() => _activeSettingsTab = 0),
-                      icon: Icon(Icons.arrow_back,
-                          size: 16,
-                          color: isDarkMode
-                              ? Colors.white
-                              : const Color(0xFF0F172A)),
-                      label: Text(
-                        'ALL CONFIGURATION TILES',
-                        style: CyberTextStyles.technical(
-                            color: isDarkMode
-                                ? Colors.white
-                                : const Color(0xFF0F172A),
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isDarkMode
-                            ? const Color(0xFF1E3A8A)
-                            : const Color(0xFFFAF9F6),
-                        side: BorderSide(
-                            color: isDarkMode
-                                ? const Color(0xFF3B82F6)
-                                : const Color(0xFFCDD4B2),
-                            width: 1.0),
-                      ),
                     ),
+                    const SizedBox(width: 8),
+                  ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'SYSTEM SETTINGS & CONFIGURATION',
+                          style: CyberTextStyles.heading2.copyWith(
+                              color: isDarkMode
+                                  ? const Color(0xFF5DD62C)
+                                  : const Color(0xFF0F172A)),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'ZEEK IDS, DETECTION THRESHOLDS, GNN MODEL, OPA SIDECAR & NOTIFICATIONS',
+                          style: CyberTextStyles.techMuted.copyWith(
+                              color: isDarkMode
+                                  ? const Color(0xFF9EBA9C)
+                                  : const Color(0xFF64748B)),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -227,63 +219,63 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
       tag: 'SYS-CFG',
       borderColor:
           isDarkMode ? const Color(0xFFFFE997) : const Color(0xFFCDD4B2),
-      child: ConsoleRow(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          ConsoleRow(
-            children: [
-              CircleAvatar(
-                backgroundColor: isDarkMode
-                    ? const Color(0xFFFFE997)
-                    : const Color(0xFFEBECCC),
-                radius: 20,
-                child: Icon(Icons.settings,
-                    color: isDarkMode ? Colors.black : const Color(0xFF0F172A),
-                    size: 22),
-              ),
-              const SizedBox(width: 14),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ZERO-TRUST SYSTEM CONFIGURATION HUB',
-                    style: CyberTextStyles.technical(
-                        color:
-                            isDarkMode ? Colors.white : const Color(0xFF0F172A),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w900),
+          Expanded(
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: isDarkMode
+                      ? const Color(0xFFFFE997)
+                      : const Color(0xFFEBECCC),
+                  radius: 20,
+                  child: Icon(Icons.settings,
+                      color: isDarkMode ? Colors.black : const Color(0xFF0F172A),
+                      size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'ZERO-TRUST SYSTEM CONFIGURATION HUB',
+                        style: CyberTextStyles.technical(
+                            color: isDarkMode
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'ENCLAVE: INDUSTRIAL IOT MESH · ACTIVE OPERATOR: ${adminName.toUpperCase()} ($adminRole)',
+                        style: CyberTextStyles.technical(
+                            fontSize: 13.0,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode
+                                ? Colors.white70
+                                : const Color(0xFF475569)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'ENCLAVE: INDUSTRIAL IOT MESH · ACTIVE OPERATOR: ${adminName.toUpperCase()} ($adminRole)',
-                    style: CyberTextStyles.technical(
-                        fontSize: 13.0,
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode
-                            ? Colors.white70
-                            : const Color(0xFF475569)),
-                  ),
-                ],
-              ),
-            ],
+                ),
+              ],
+            ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFF5DD62C).withOpacity(0.15),
-              borderRadius: BorderRadius.circular(4),
-              border:
-                  Border.all(color: const Color(0xFF5DD62C).withOpacity(0.5)),
-            ),
-            child: Text(
-              'ALL SERVICES SYNCHRONIZED',
-              style: CyberTextStyles.technical(
-                  color: isDarkMode
-                      ? const Color(0xFF5DD62C)
-                      : const Color(0xFF08652C),
-                  fontSize: 11.0,
-                  fontWeight: FontWeight.bold),
-            ),
+          const SizedBox(width: 16),
+          CinematicButton(
+            landingLight: true,
+            label: 'ALL SERVICES SYNCHRONIZED',
+            filled: false,
+            compact: true,
+            navbar: true,
+            angular: true,
+            onPressed: () {},
           ),
         ],
       ),
@@ -770,23 +762,13 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
               Text('MANUAL ON-DEMAND RETRAIN',
                   style: CyberTextStyles.technical(
                       fontSize: 11, color: titleColor)),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isDarkMode
-                      ? const Color(0xFFC4E320)
-                      : const Color(0xFFB8A9C1),
-                ),
-                icon: Icon(Icons.refresh,
-                    color: isDarkMode ? Colors.black : const Color(0xFF0F172A),
-                    size: 16),
-                label: Text(
-                  _isRetrainingModel ? 'TRAINING...' : 'RETRAIN MODEL NOW',
-                  style: CyberTextStyles.technical(
-                      color:
-                          isDarkMode ? Colors.black : const Color(0xFF0F172A),
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold),
-                ),
+              CinematicButton(
+                landingLight: true,
+                label: _isRetrainingModel ? 'TRAINING...' : 'RETRAIN MODEL NOW',
+                compact: true,
+                navbar: true,
+                angular: true,
+                filled: false,
                 onPressed: _isRetrainingModel ? null : _triggerModelRetrain,
               ),
             ],
@@ -927,23 +909,13 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isDarkMode
-                      ? const Color(0xFF80A416)
-                      : const Color(0xFFB8A9C1),
-                ),
-                icon: Icon(Icons.health_and_safety,
-                    color: isDarkMode ? Colors.black : const Color(0xFF0F172A),
-                    size: 16),
-                label: Text(
-                  _isTestingOpa ? 'TESTING...' : 'PING OPA SIDECAR',
-                  style: CyberTextStyles.technical(
-                      color:
-                          isDarkMode ? Colors.black : const Color(0xFF0F172A),
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold),
-                ),
+              CinematicButton(
+                landingLight: true,
+                label: _isTestingOpa ? 'TESTING...' : 'PING OPA SIDECAR',
+                compact: true,
+                navbar: true,
+                angular: true,
+                filled: false,
                 onPressed: _isTestingOpa ? null : _testOpaConnection,
               ),
               if (_opaTestStatus.isNotEmpty)
@@ -1057,17 +1029,15 @@ class _SettingsManagementState extends ConsumerState<SettingsManagement> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFB91C1D)),
-                icon: const Icon(Icons.send, color: Colors.white, size: 16),
-                label: Text(
-                  _isTestingWebhook ? 'TESTING...' : 'TRANSMIT TEST PAYLOAD',
-                  style: CyberTextStyles.technical(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold),
-                ),
+              CinematicButton(
+                landingLight: true,
+                label: _isTestingWebhook
+                    ? 'TESTING...'
+                    : 'TRANSMIT TEST PAYLOAD',
+                compact: true,
+                navbar: true,
+                angular: true,
+                filled: false,
                 onPressed: _isTestingWebhook ? null : _testWebhook,
               ),
               if (_webhookStatus.isNotEmpty)

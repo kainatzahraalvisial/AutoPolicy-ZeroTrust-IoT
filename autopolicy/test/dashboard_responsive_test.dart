@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:autopolicy/screens/main_layout.dart';
 import 'package:autopolicy/widgets/cyber_stat_card.dart';
 import 'package:autopolicy/landing/visual_polish.dart';
+import 'package:autopolicy/widgets/sidebar_brand.dart';
 
 void main() {
   for (final size in [
@@ -52,7 +53,7 @@ void main() {
     final sidebar = find.byType(AnimatedSize);
     expect(tester.getSize(sidebar).width, 200);
     expect(tester.getTopLeft(sidebar).dy, 0);
-    expect(find.descendant(of: sidebar, matching: find.byType(AutoPolicyWordmark)), findsOneWidget);
+    expect(find.descendant(of: sidebar, matching: find.byType(SidebarBrand)), findsOneWidget);
     final highlight = find.descendant(of: find.byTooltip('Dashboard Overview'), matching: find.byType(AnimatedContainer));
     expect((tester.widget<AnimatedContainer>(highlight).decoration as BoxDecoration).color, isNotNull);
     final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
@@ -61,13 +62,13 @@ void main() {
         .moveTo(tester.getCenter(find.byTooltip('Live Traffic & Alerts')));
     await tester.pump(const Duration(milliseconds: 200));
     expect(tester.takeException(), isNull);
-    await tester.tap(find.byIcon(Icons.menu).first);
+    await tester.tap(find.byTooltip('Collapse sidebar'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 130));
     expect(tester.takeException(), isNull);
     await tester.pump(const Duration(milliseconds: 160));
     expect(tester.getSize(sidebar).width, 64);
-    await tester.tap(find.byIcon(Icons.menu).first);
+    await tester.tap(find.byTooltip('Expand sidebar'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(tester.getSize(sidebar).width, 200);

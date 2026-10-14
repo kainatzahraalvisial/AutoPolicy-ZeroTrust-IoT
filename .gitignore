@@ -117,3 +117,38 @@ app.*.symbols
 !**/ios/**/default.perspectivev3
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
+
+# ==============================================================================
+# AutoPolicy Zero-Trust IoT - Backend, Database & Sensitive Artifact Protections
+# NEVER commit passwords, database binaries, virtual environments, or heavy weights!
+# ==============================================================================
+*.db
+*.sqlite
+*.sqlite3
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+
+# Research Datasets & Binary Weight Checkpoints (>50-100MB)
+*.npy
+*.npz
+*.parquet
+*.pcap
+*.pcapng
+*.pth
+*.pt
+*.pkl
+*.joblib
+*.bin
+
+# Temporary & Sensitive Artifacts
+/scratch/
+/logs/
+/tmp/
+*.log

@@ -3,6 +3,7 @@ import '../widgets/console_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../landing/cinematic_button.dart';
 import '../providers/security_provider.dart';
 import '../providers/theme_provider.dart';
 import '../theme/text_styles.dart';
@@ -42,9 +43,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Page Header & Actions Bar
-            ConsoleRow(
+            // Page Header & Actions Bar: Left Title vs Far Right Action Button
+            Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,27 +74,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     ),
                   ],
                 ),
-                ElevatedButton.icon(
+                CinematicButton(
+                  landingLight: true,
+                  label: 'Clear All Logs',
+                  filled: false,
+                  compact: true,
+                  angular: true,
                   onPressed: () {
                     ref.read(securityProvider.notifier).clearNotifications();
                   },
-                  icon: const Icon(Icons.cleaning_services_outlined, size: 16),
-                  label: Text(
-                    'CLEAR ALL LOGS',
-                    style: CyberTextStyles.technical(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD82734),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6)),
-                    elevation: 0,
-                  ),
                 ),
               ],
             ),

@@ -1,3 +1,4 @@
+import '../widgets/cyber_stat_card.dart';
 import '../widgets/console_row.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
@@ -401,7 +402,8 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
 
                     // Top-Right Compact Floating Stat Cards (Exact 4 Swatch Colors in Sequence)
                     if (!isMobile)
-                      Row(
+                      Wrap(
+                        runSpacing: 8,
                         children: [
                           _buildMiniSwatchStatCard('TOTAL NODES', '$totalNodes',
                               const Color(0xFFFFEDA8), Icons.router_outlined),
@@ -764,51 +766,16 @@ class _GNNRelationshipState extends ConsumerState<GNNRelationship>
 
   Widget _buildMiniSwatchStatCard(
       String label, String value, Color color, IconData icon) {
-    return Container(
-      width: 125,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: const Color(0xFF0F1410), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ConsoleRow(
-            compact: true,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                label,
-                style: GoogleFonts.barlow(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF0A0A0E),
-                  letterSpacing: 0.5,
-                ),
-              ),
-              Icon(icon, size: 14, color: const Color(0xFF0A0A0E)),
-            ],
-          ),
-          const SizedBox(height: 3),
-          Text(
-            value,
-            style: GoogleFonts.orbitron(
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              color: const Color(0xFF050A07),
-            ),
-          ),
-        ],
+    return SizedBox(
+      width: 175,
+      height: 100,
+      child: CyberStatCard(
+        title: label,
+        value: value,
+        sub: '',
+        icon: icon,
+        borderColor: color,
+        compact: true,
       ),
     );
   }
