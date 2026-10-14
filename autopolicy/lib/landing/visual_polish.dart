@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../widgets/cyber_stencil_title.dart';
 
 class ExploreEyebrow extends StatelessWidget {
   final bool dark;
@@ -973,8 +974,23 @@ class HeroHeading extends StatelessWidget {
       this.delay = 0});
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final reduced = MediaQuery.of(context).disableAnimations;
     final lines = text.split('\n');
+
+    final bool isEveryDeviceHero = text.toLowerCase().contains('every device') ||
+        text.toLowerCase().contains('zero trust');
+    if (isEveryDeviceHero) {
+      return CyberStencilHeroTitle(
+        firstLine: lines.isNotEmpty ? lines[0] : 'EVERY DEVICE',
+        secondLine: lines.length > 1 ? lines[1] : 'ZERO TRUST',
+        primaryColor: foreground,
+        accentColor: accent,
+      );
+    }
+
+    final purpleColor = isDark ? const Color(0xFF9D8DF1) : const Color(0xFF7C3AED);
+
     return Semantics(
         label: text,
         child: ExcludeSemantics(
@@ -996,33 +1012,80 @@ class HeroHeading extends StatelessWidget {
                       opacity: t,
                       child: Transform.translate(
                           offset: Offset(0, 24 * (1 - t)),
-                          child: Text(lines[i],
-                              style: TextStyle(
-                                fontFamily: 'Orbitron',
-                                fontWeight: FontWeight.w800,
-                                fontSize: size,
-                                height: 1.14,
-                                letterSpacing: -1,
-                                fontStyle: i > 0 && emphasize
-                                    ? FontStyle.italic
-                                    : FontStyle.normal,
-                                color: i > 0
-                                    ? Color.lerp(foreground, accent, t)
-                                    : foreground,
-                                shadows: i > 0 &&
-                                        emphasize &&
-                                        Theme.of(context).brightness ==
-                                            Brightness.dark
-                                    ? [
-                                        Shadow(
-                                            color: accent
-                                                .withOpacity(.16 * (1 - t)),
-                                            blurRadius: 16)
-                                      ]
-                                    : null,
-                              )))));
+                          child: Text.rich(
+                            TextSpan(
+                              children: _buildHighlightedSpans(
+                                line: lines[i],
+                                baseColor: foreground,
+                                purpleColor: purpleColor,
+                                isDark: isDark,
+                              ),
+                            ),
+                            style: TextStyle(
+                              fontFamily: 'Oxanium',
+                              fontWeight: FontWeight.w800,
+                              fontSize: size,
+                              height: 1.15,
+                              letterSpacing: -0.4,
+                            ),
+                          ))));
             }),
           ),
         )));
+  }
+
+  static List<InlineSpan> _buildHighlightedSpans({
+    required String line,
+    required Color baseColor,
+    required Color purpleColor,
+    required bool isDark,
+  }) {
+    final words = line.split(' ');
+    if (words.isEmpty) return [TextSpan(text: line, style: TextStyle(color: baseColor))];
+
+    const targetKeywords = {
+      'network', 'behaves', 'security', 'intelligence', 'abnormal', 'relationships',
+      'normally', 'policy', 'decision', 'connection', 'infrastructure', 'devices',
+      'emerges', 'separate', 'enforce', 'protect', 'protected', 'zero', 'trust',
+      'telemetry', 'detection', 'layer', 'observation', 'extraction', 'generation',
+      'segmentation', 'dashboard', 'patterns', 'external', 'malicious', 'infected',
+      'exploration', 'access'
+    };
+
+    final List<int> highlightIndices = [];
+    for (int w = 0; w < words.length; w++) {
+      final clean = words[w].toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+      if (targetKeywords.contains(clean)) {
+        highlightIndices.add(w);
+        if (highlightIndices.length >= 2) break;
+      }
+    }
+
+    if (highlightIndices.isEmpty && words.isNotEmpty) {
+      highlightIndices.add(words.length - 1);
+    }
+
+    final List<InlineSpan> spans = [];
+    for (int w = 0; w < words.length; w++) {
+      final isHighlighted = highlightIndices.contains(w);
+      final wordText = words[w] + (w < words.length - 1 ? ' ' : '');
+      spans.add(
+        TextSpan(
+          text: wordText,
+          style: TextStyle(
+            color: isHighlighted ? purpleColor : baseColor,
+            shadows: isHighlighted && isDark
+                ? [
+                    Shadow(
+                      color: purpleColor.withOpacity(0.55),
+                      blurRadius: 14,
+                    ),
+                  ]
+                : null,
+          ),
+        ),
+      );
+    }
+    return spans;
   }
 }

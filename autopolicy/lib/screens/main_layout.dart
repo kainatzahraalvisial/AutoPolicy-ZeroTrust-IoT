@@ -420,11 +420,11 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                         decoration: BoxDecoration(
                           color: isSelectedDirect
                               ? (isDarkMode
-                                  ? const Color(0xFF9D8DF1)
+                                  ? const Color(0xFFA6CC00)
                                   : const Color(0xFFCBB9A4))
                               : (_hoveredCategory == catTitle
                                   ? (isDarkMode
-                                      ? const Color(0xFFA69BCD)
+                                      ? const Color(0xFFC8EA2D)
                                       : const Color(0xFFDDD0BD))
                                   : Colors.transparent),
                           borderRadius: BorderRadius.circular(8),
@@ -438,11 +438,11 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                               color: (isSelectedDirect || hasSelectedChild)
                                   ? (isDarkMode
                                       ? (isSelectedDirect
-                                          ? const Color(0xFF211B35)
-                                          : const Color(0xFF3E345C))
+                                          ? const Color(0xFF141518)
+                                          : const Color(0xFF1E2606))
                                       : const Color(0xFF1A1612))
                                   : (isDarkMode
-                                      ? const Color(0xFF3E345C)
+                                      ? const Color(0xFF283207)
                                       : const Color(0xFF5C5247)),
                             ),
                             const SizedBox(width: 12),
@@ -458,11 +458,11 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                   color: (isSelectedDirect || hasSelectedChild)
                                       ? (isDarkMode
                                           ? (isSelectedDirect
-                                              ? const Color(0xFF211B35)
-                                              : const Color(0xFF3E345C))
+                                              ? const Color(0xFF141518)
+                                              : const Color(0xFF1E2606))
                                           : const Color(0xFF1A1612))
                                       : (isDarkMode
-                                          ? const Color(0xFF3E345C)
+                                          ? const Color(0xFF283207)
                                           : const Color(0xFF4A433A)),
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -493,7 +493,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                     : Icons.keyboard_arrow_down,
                                 size: 18,
                                 color: isDarkMode
-                                    ? const Color(0xFF51436E)
+                                    ? const Color(0xFF283207)
                                     : const Color(0xFF64748B),
                               ),
                           ],
@@ -526,7 +526,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                         decoration: BoxDecoration(
                           color: isSelected
                               ? (isDarkMode
-                                  ? const Color(0xFF9D8DF1)
+                                  ? const Color(0xFFA6CC00)
                                   : const Color(0xFFCBB9A4))
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(20),
@@ -541,10 +541,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                 shape: BoxShape.circle,
                                 color: isSelected
                                     ? (isDarkMode
-                                        ? const Color(0xFF211B35)
+                                        ? const Color(0xFF141518)
                                         : const Color(0xFF1A1612))
                                     : (isDarkMode
-                                        ? const Color(0xFF6C802A)
+                                        ? const Color(0xFF384312)
                                         : const Color(0xFF9E9488)),
                               ),
                             ),
@@ -556,10 +556,10 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                   fontSize: 13.0,
                                   color: isSelected
                                       ? (isDarkMode
-                                          ? const Color(0xFF211B35)
+                                          ? const Color(0xFF141518)
                                           : const Color(0xFF1A1612))
                                       : (isDarkMode
-                                          ? const Color(0xFF3E345C)
+                                          ? const Color(0xFF283207)
                                           : const Color(0xFF4A433A)),
                                   fontWeight: isSelected
                                       ? FontWeight.bold
@@ -604,7 +604,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
       margin: const EdgeInsets.symmetric(vertical: 10),
       padding: const EdgeInsets.only(left: 4),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFFB1A9DA) : const Color(0xFFE6DAC8),
+        color: isDarkMode ? const Color(0xFFDCFF33) : const Color(0xFFE6DAC8),
         borderRadius: BorderRadius.circular(24),
       ),
       child: ClipRRect(
@@ -632,7 +632,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                     tooltip: 'Collapse sidebar',
                     icon: SidebarToggleIcon(
                         color: isDarkMode
-                            ? const Color(0xFF3E345C)
+                            ? const Color(0xFF141518)
                             : const Color(0xFF4A433A)),
                     onPressed: () => setState(() => _isSidebarCollapsed = true),
                   ),
@@ -683,13 +683,13 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     _lastRailCenterY = targetCenterY;
 
     final sidebarBg =
-        isDarkMode ? const Color(0xFF9589BF) : const Color(0xFFE6DAC8);
+        isDarkMode ? const Color(0xFFD0FF00) : const Color(0xFFE6DAC8);
     final highlightBg =
-        isDarkMode ? const Color(0xFF9D8DF1) : const Color(0xFFCBB9A4);
+        isDarkMode ? const Color(0xFFA6CC00) : const Color(0xFFCBB9A4);
     final activeIconColor =
-        isDarkMode ? const Color(0xFF211B35) : const Color(0xFF1A1612);
+        isDarkMode ? const Color(0xFF141518) : const Color(0xFF1A1612);
     final unselectedIconColor =
-        isDarkMode ? const Color(0xFF3E345C) : const Color(0xFF5C5247);
+        isDarkMode ? const Color(0xFF283207) : const Color(0xFF5C5247);
 
     return Container(
       width: 64,
@@ -792,7 +792,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                                         tooltip: 'Expand navigation',
                                         icon: SidebarToggleIcon(
                                           color: isDarkMode
-                                              ? const Color(0xFF3E345C)
+                                              ? const Color(0xFF141518)
                                               : const Color(0xFF4A433A),
                                         ),
                                         onPressed: () {
@@ -987,7 +987,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
         drawer: isMobile
             ? Drawer(
                 backgroundColor: isDarkMode
-                    ? const Color(0xFFB1A9DA)
+                    ? const Color(0xFFDCFF33)
                     : const Color(0xFFE6DAC8),
                 child: SafeArea(
                     child: Column(children: [
@@ -1006,17 +1006,16 @@ class _MainLayoutState extends ConsumerState<MainLayout>
             : null,
         body: Stack(
           children: [
-            // Base background color: when collapsed, provide clean contrasting backdrop
-            // so the floating pill rail and separated circular pocket are crisp in both themes
+            // Base background color behind main section: #E5FF66
             AnimatedContainer(
               duration: const Duration(milliseconds: 260),
               decoration: BoxDecoration(
                 color: _isSidebarCollapsed
                     ? (isDarkMode
-                        ? const Color(0xFFB1A9DA)
+                        ? const Color(0xFFE5FF66)
                         : const Color(0xFFFAF8F4))
                     : (isDarkMode
-                        ? const Color(0xFFB1A9DA)
+                        ? const Color(0xFFE5FF66)
                         : const Color(0xFFE6DAC8)),
               ),
             ),
@@ -1487,11 +1486,11 @@ class _MainLayoutState extends ConsumerState<MainLayout>
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: isDarkMode ? const Color(0xFFB1A9DA) : const Color(0xFFE6DAC8),
+        color: isDarkMode ? const Color(0xFFDCFF33) : const Color(0xFFE6DAC8),
         border: Border(
           top: BorderSide(
             color:
-                isDarkMode ? const Color(0xFF968ABF) : const Color(0xFFDDD0BD),
+                isDarkMode ? const Color(0xFFB8DB24) : const Color(0xFFDDD0BD),
             width: 1,
           ),
         ),
@@ -1503,7 +1502,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             color:
-                isDarkMode ? const Color(0xFFA79CCE) : const Color(0xFFDDD0BD),
+                isDarkMode ? const Color(0xFFCBEB2F) : const Color(0xFFDDD0BD),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -1512,17 +1511,17 @@ class _MainLayoutState extends ConsumerState<MainLayout>
               CircleAvatar(
                 radius: 16,
                 backgroundColor: isDarkMode
-                    ? const Color(0xFF9D8DF1)
+                    ? const Color(0xFFA6CC00)
                     : const Color(0xFFCBB9A4),
                 child: Text(
                   username.isNotEmpty
-                      ? username.substring(0, 1).toUpperCase()
+                       ? username.substring(0, 1).toUpperCase()
                       : 'A',
                   style: CyberTextStyles.technical(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: isDarkMode
-                        ? const Color(0xFF211B35)
+                        ? const Color(0xFF141518)
                         : const Color(0xFF1A1612),
                   ),
                 ),
@@ -1540,7 +1539,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
                         color: isDarkMode
-                            ? const Color(0xFF211B35)
+                            ? const Color(0xFF141518)
                             : const Color(0xFF1A1612),
                       ),
                       overflow: TextOverflow.ellipsis,
@@ -1551,7 +1550,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                           horizontal: 6, vertical: 1.5),
                       decoration: BoxDecoration(
                         color: isDarkMode
-                            ? const Color(0xFF9D8DF1)
+                            ? const Color(0xFFA6CC00)
                             : const Color(0xFFCBB9A4),
                         borderRadius: BorderRadius.circular(4),
                       ),
@@ -1562,7 +1561,7 @@ class _MainLayoutState extends ConsumerState<MainLayout>
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.4,
                           color: isDarkMode
-                              ? const Color(0xFF3E345C)
+                              ? const Color(0xFF141518)
                               : const Color(0xFF1A1612),
                         ),
                       ),

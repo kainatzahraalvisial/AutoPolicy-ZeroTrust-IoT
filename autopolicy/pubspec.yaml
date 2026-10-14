@@ -37,3 +37,14 @@ flutter:
     - family: SpaceGrotesk
       fonts:
         - asset: assets/fonts/SpaceGrotesk.ttf
+    - family: ChakraPetch
+      fonts:
+        - asset: assets/fonts/ChakraPetch-Bold.ttf
+          weight: 700
+    - family: BlackOpsOne
+      fonts:
+        - asset: assets/fonts/BlackOpsOne-Regular.ttf
+    - family: Oxanium
+      fonts:
+        - asset: assets/fonts/Oxanium.ttf
+          weight: 800

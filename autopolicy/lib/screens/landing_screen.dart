@@ -295,7 +295,7 @@ class _LandingScreenState extends ConsumerState<LandingScreen> with RouteAware {
             ? 'From devices.\nto zero trust.'
             : chapter == 'sec'
                 ? 'Detect. Respond.\nStay protected.'
-                : 'Every device.\nZero trust.')
+                : 'Every Device\nZero Trust')
         : stage?[1].toString() ?? '';
     final description = hero
         ? (chapter == 'arch'
